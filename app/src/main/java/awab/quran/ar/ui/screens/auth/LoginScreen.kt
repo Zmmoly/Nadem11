@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,11 +20,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -355,7 +359,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Social Login Buttons
+            // Social Login Buttons - باستخدام أيقونات مرسومة بـ Canvas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -366,7 +370,7 @@ fun LoginScreen(
                     onClick = {
                         Toast.makeText(context, "تسجيل الدخول عبر Google", Toast.LENGTH_SHORT).show()
                     },
-                    painter = painterResource(id = R.drawable.ic_google)
+                    iconType = SocialIconType.GOOGLE
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -376,7 +380,7 @@ fun LoginScreen(
                     onClick = {
                         Toast.makeText(context, "تسجيل الدخول عبر Apple", Toast.LENGTH_SHORT).show()
                     },
-                    painter = painterResource(id = R.drawable.ic_apple)
+                    iconType = SocialIconType.APPLE
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -386,7 +390,7 @@ fun LoginScreen(
                     onClick = {
                         Toast.makeText(context, "تسجيل الدخول عبر Facebook", Toast.LENGTH_SHORT).show()
                     },
-                    painter = painterResource(id = R.drawable.ic_facebook)
+                    iconType = SocialIconType.FACEBOOK
                 )
             }
 
@@ -514,10 +518,14 @@ fun TwinklingStars() {
     }
 }
 
+enum class SocialIconType {
+    GOOGLE, APPLE, FACEBOOK
+}
+
 @Composable
 fun SocialLoginButton(
     onClick: () -> Unit,
-    painter: androidx.compose.ui.graphics.painter.Painter
+    iconType: SocialIconType
 ) {
     Surface(
         modifier = Modifier
@@ -528,16 +536,119 @@ fun SocialLoginButton(
         shadowElevation = 6.dp
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .drawBehind {
+                    when (iconType) {
+                        SocialIconType.GOOGLE -> drawGoogleIcon()
+                        SocialIconType.APPLE -> drawAppleIcon()
+                        SocialIconType.FACEBOOK -> drawFacebookIcon()
+                    }
+                },
             contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        )
     }
+}
+
+// رسم أيقونة Google
+fun DrawScope.drawGoogleIcon() {
+    val centerX = size.width / 2
+    val centerY = size.height / 2
+    val iconSize = size.width * 0.45f
+    
+    // رسم G ملون
+    val gPath = Path().apply {
+        // الجزء الأزرق العلوي
+        moveTo(centerX + iconSize * 0.3f, centerY)
+        lineTo(centerX + iconSize * 0.5f, centerY)
+        lineTo(centerX + iconSize * 0.5f, centerY - iconSize * 0.15f)
+        lineTo(centerX, centerY - iconSize * 0.15f)
+    }
+    
+    drawPath(gPath, Color(0xFF4285F4))
+    
+    // G الأحمر
+    drawCircle(
+        color = Color(0xFFEA4335),
+        radius = iconSize * 0.15f,
+        center = Offset(centerX - iconSize * 0.2f, centerY - iconSize * 0.2f)
+    )
+    
+    // G الأصفر
+    drawCircle(
+        color = Color(0xFBBC05),
+        radius = iconSize * 0.12f,
+        center = Offset(centerX - iconSize * 0.3f, centerY + iconSize * 0.1f)
+    )
+    
+    // G الأخضر
+    drawCircle(
+        color = Color(0xFF34A853),
+        radius = iconSize * 0.12f,
+        center = Offset(centerX + iconSize * 0.1f, centerY + iconSize * 0.3f)
+    )
+}
+
+// رسم أيقونة Apple
+fun DrawScope.drawAppleIcon() {
+    val centerX = size.width / 2
+    val centerY = size.height / 2
+    val iconSize = size.width * 0.4f
+    
+    // رسم التفاحة
+    val applePath = Path().apply {
+        // الجسم
+        moveTo(centerX, centerY - iconSize * 0.3f)
+        cubicTo(
+            centerX - iconSize * 0.4f, centerY - iconSize * 0.2f,
+            centerX - iconSize * 0.4f, centerY + iconSize * 0.4f,
+            centerX, centerY + iconSize * 0.5f
+        )
+        cubicTo(
+            centerX + iconSize * 0.4f, centerY + iconSize * 0.4f,
+            centerX + iconSize * 0.4f, centerY - iconSize * 0.2f,
+            centerX, centerY - iconSize * 0.3f
+        )
+    }
+    
+    drawPath(applePath, Color(0xFF000000), style = Stroke(width = 3f))
+    
+    // الورقة
+    drawLine(
+        color = Color(0xFF000000),
+        start = Offset(centerX, centerY - iconSize * 0.3f),
+        end = Offset(centerX + iconSize * 0.15f, centerY - iconSize * 0.45f),
+        strokeWidth = 2f,
+        cap = StrokeCap.Round
+    )
+}
+
+// رسم أيقونة Facebook
+fun DrawScope.drawFacebookIcon() {
+    val centerX = size.width / 2
+    val centerY = size.height / 2
+    val iconSize = size.width * 0.35f
+    
+    // رسم حرف f
+    val fPath = Path().apply {
+        // العمودي
+        moveTo(centerX + iconSize * 0.1f, centerY - iconSize * 0.5f)
+        lineTo(centerX + iconSize * 0.1f, centerY + iconSize * 0.5f)
+        
+        // الأفقي العلوي
+        moveTo(centerX - iconSize * 0.2f, centerY - iconSize * 0.3f)
+        lineTo(centerX + iconSize * 0.4f, centerY - iconSize * 0.3f)
+        
+        // الأفقي الأوسط
+        moveTo(centerX - iconSize * 0.1f, centerY)
+        lineTo(centerX + iconSize * 0.3f, centerY)
+    }
+    
+    drawPath(
+        fPath,
+        Color(0xFF1877F2),
+        style = Stroke(width = 4f, cap = StrokeCap.Round)
+    )
 }
 
 private fun validateInputs(
@@ -570,3 +681,4 @@ private fun validateInputs(
 
     return isValid
 }
+ 
