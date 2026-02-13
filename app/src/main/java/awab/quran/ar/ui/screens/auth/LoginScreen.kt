@@ -89,7 +89,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // صورة الخلفية - تأكد من وجود ملف باسم login_background في الـ drawables
+        // صورة الخلفية
         Image(
             painter = painterResource(id = R.drawable.login_background),
             contentDescription = "خلفية تسجيل الدخول",
@@ -97,6 +97,7 @@ fun LoginScreen(
             contentScale = ContentScale.Crop
         )
         
+        // طبقة النجوم المتلألئة
         TwinklingStars()
         
         Column(
@@ -108,8 +109,10 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(40.dp))
             
+            // أيقونة المصحف
             QuranBookIcon()
 
+            // عنوان التطبيق
             Text(
                 text = "تسميع القرآن",
                 fontSize = 32.sp,
@@ -135,6 +138,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 40.dp)
             )
 
+            // بطاقة تسجيل الدخول
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -151,23 +155,43 @@ fun LoginScreen(
                         .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // حقل البريد الإلكتروني
                     OutlinedTextField(
                         value = email,
                         onValueChange = {
                             email = it
                             emailError = null
                         },
-                        placeholder = { Text("البريد الإلكتروني", color = Color(0xFF9B8B7A)) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF8B7355))
+                        placeholder = {
+                            Text(
+                                "البريد الإلكتروني",
+                                color = Color(0xFF9B8B7A)
+                            )
                         },
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "أيقونة البريد",
+                                tint = Color(0xFF8B7355)
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFB5A68F),
                             unfocusedBorderColor = Color(0xFFB5A68F),
+                            cursorColor = Color(0xFF8B7355),
+                            focusedTextColor = Color(0xFF6B5744),
+                            unfocusedTextColor = Color(0xFF6B5744),
                             focusedContainerColor = Color(0xFFF5F2EA),
                             unfocusedContainerColor = Color(0xFFF5F2EA)
                         ),
@@ -175,41 +199,77 @@ fun LoginScreen(
                     )
 
                     if (emailError != null) {
-                        Text(text = emailError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        Text(
+                            text = emailError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, bottom = 8.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // حقل كلمة المرور
                     OutlinedTextField(
                         value = password,
                         onValueChange = {
                             password = it
                             passwordError = null
                         },
-                        placeholder = { Text("••••••••", color = Color(0xFF9B8B7A)) },
+                        placeholder = {
+                            Text(
+                                "••••••••",
+                                color = Color(0xFF9B8B7A)
+                            )
+                        },
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF8B7355))
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "أيقونة القفل",
+                                tint = Color(0xFF8B7355)
+                            )
                         },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = null,
+                                    imageVector = if (passwordVisible)
+                                        Icons.Default.Visibility
+                                    else
+                                        Icons.Default.VisibilityOff,
+                                    contentDescription = if (passwordVisible)
+                                        "إخفاء كلمة المرور"
+                                    else
+                                        "إظهار كلمة المرور",
                                     tint = Color(0xFFB5A68F)
                                 )
                             }
                         },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
+                        visualTransformation = if (passwordVisible)
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                            performLogin()
-                        }),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                performLogin()
+                            }
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFB5A68F),
                             unfocusedBorderColor = Color(0xFFB5A68F),
+                            cursorColor = Color(0xFF8B7355),
+                            focusedTextColor = Color(0xFF6B5744),
+                            unfocusedTextColor = Color(0xFF6B5744),
                             focusedContainerColor = Color(0xFFF5F2EA),
                             unfocusedContainerColor = Color(0xFFF5F2EA)
                         ),
@@ -217,34 +277,64 @@ fun LoginScreen(
                     )
 
                     if (passwordError != null) {
-                        Text(text = passwordError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        Text(
+                            text = passwordError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, bottom = 8.dp)
+                        )
                     }
 
+                    // نسيت كلمة المرور
                     TextButton(
                         onClick = onNavigateToForgotPassword,
                         modifier = Modifier.align(Alignment.End)
                     ) {
-                        Text(text = "• نسيت كلمة المرور؟", color = Color(0xFF8B7355), fontSize = 13.sp)
+                        Text(
+                            text = "• نسيت كلمة المرور؟",
+                            color = Color(0xFF8B7355),
+                            fontSize = 13.sp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // زر تسجيل الدخول
                     Button(
                         onClick = { performLogin() },
                         enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B8A6F)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF7B8A6F),
+                            disabledContainerColor = Color(0xFF9B8B7A)
+                        ),
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
                         } else {
-                            Text("تسجيل الدخول", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(
+                                text = "تسجيل الدخول",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     }
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // فاصل
             Text(
                 text = "أو تابع التسجيل بإستخدام",
                 fontSize = 13.sp,
@@ -252,118 +342,293 @@ fun LoginScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
+            // أزرار تسجيل الدخول بوسائل التواصل الاجتماعي
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SocialButton(R.drawable.ic_google, "Google") { 
-                    Toast.makeText(context, "تسجيل الدخول عبر Google", Toast.LENGTH_SHORT).show() 
+                // زر Google
+                Surface(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            Toast
+                                .makeText(context, "تسجيل الدخول عبر Google", Toast.LENGTH_SHORT)
+                                .show()
+                        },
+                    shape = CircleShape,
+                    color = Color(0xFFFAF8F4),
+                    shadowElevation = 6.dp
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_google),
+                            contentDescription = "Google",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
-                SocialButton(R.drawable.ic_apple, "Apple") { 
-                    Toast.makeText(context, "تسجيل الدخول عبر Apple", Toast.LENGTH_SHORT).show() 
+
+                // زر Apple
+                Surface(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            Toast
+                                .makeText(context, "تسجيل الدخول عبر Apple", Toast.LENGTH_SHORT)
+                                .show()
+                        },
+                    shape = CircleShape,
+                    color = Color(0xFFFAF8F4),
+                    shadowElevation = 6.dp
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_apple),
+                            contentDescription = "Apple",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
-                SocialButton(R.drawable.ic_facebook, "Facebook") { 
-                    Toast.makeText(context, "تسجيل الدخول عبر Facebook", Toast.LENGTH_SHORT).show() 
+
+                // زر Facebook
+                Surface(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            Toast
+                                .makeText(context, "تسجيل الدخول عبر Facebook", Toast.LENGTH_SHORT)
+                                .show()
+                        },
+                    shape = CircleShape,
+                    color = Color(0xFFFAF8F4),
+                    shadowElevation = 6.dp
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_facebook),
+                            contentDescription = "Facebook",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
+            // زر الميكروفون
             Surface(
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier
+                    .size(72.dp),
                 shape = CircleShape,
                 color = Color(0xFF6B5744),
                 shadowElevation = 8.dp
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Mic, contentDescription = "الميكروفون", tint = Color(0xFFF5E6D3), modifier = Modifier.size(36.dp))
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "الميكروفون",
+                        tint = Color(0xFFF5E6D3),
+                        modifier = Modifier.size(36.dp)
+                    )
                 }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = "أضغط لبدء التسميع", fontSize = 14.sp, color = Color(0xFF8B7355))
-        }
-    }
-}
-
-@Composable
-fun SocialButton(iconRes: Int, contentDescription: String, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.size(60.dp).padding(horizontal = 8.dp).clickable { onClick() },
-        shape = CircleShape,
-        color = Color(0xFFFAF8F4),
-        shadowElevation = 6.dp
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Image(painter = painterResource(id = iconRes), contentDescription = contentDescription, modifier = Modifier.size(24.dp))
+            
+            // نص أضغط لبدء التسميع
+            Text(
+                text = "أضغط لبدء التسميع",
+                fontSize = 14.sp,
+                color = Color(0xFF8B7355),
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
 @Composable
 fun QuranBookIcon() {
-    Canvas(modifier = Modifier.size(90.dp).padding(bottom = 16.dp)) {
+    Canvas(
+        modifier = Modifier
+            .size(90.dp)
+            .padding(bottom = 16.dp)
+    ) {
         val width = size.width
         val height = size.height
         val color = Color(0xFF8B7355)
         
+        // رسم أيقونة مصحف بسيطة
         val path = Path().apply {
+            // الصفحة اليمنى
             moveTo(width * 0.25f, height * 0.25f)
             lineTo(width * 0.5f, height * 0.2f)
             lineTo(width * 0.5f, height * 0.8f)
             lineTo(width * 0.25f, height * 0.75f)
             close()
+            
+            // الصفحة اليسرى
             moveTo(width * 0.5f, height * 0.2f)
             lineTo(width * 0.75f, height * 0.25f)
             lineTo(width * 0.75f, height * 0.75f)
             lineTo(width * 0.5f, height * 0.8f)
             close()
         }
-        drawPath(path = path, color = color, style = Stroke(width = 2.5f))
         
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = 2.5f)
+        )
+        
+        // خطوط الصفحات
         for (i in 1..4) {
             val y = height * (0.3f + i * 0.12f)
-            drawLine(color, Offset(width * 0.3f, y), Offset(width * 0.48f, y), 1.2f)
-            drawLine(color, Offset(width * 0.52f, y), Offset(width * 0.7f, y), 1.2f)
+            drawLine(
+                color = color,
+                start = Offset(width * 0.3f, y),
+                end = Offset(width * 0.48f, y),
+                strokeWidth = 1.2f
+            )
+            drawLine(
+                color = color,
+                start = Offset(width * 0.52f, y),
+                end = Offset(width * 0.7f, y),
+                strokeWidth = 1.2f
+            )
         }
         
+        // رسم حامل المصحف (الرحل)
         val standPath = Path().apply {
+            // الجزء الأيسر من الحامل
             moveTo(width * 0.2f, height * 0.85f)
             lineTo(width * 0.35f, height * 0.75f)
+            
+            // الجزء الأيمن من الحامل
             moveTo(width * 0.8f, height * 0.85f)
             lineTo(width * 0.65f, height * 0.75f)
         }
-        drawPath(path = standPath, color = color, style = Stroke(width = 2f))
+        
+        drawPath(
+            path = standPath,
+            color = color,
+            style = Stroke(width = 2f)
+        )
     }
 }
 
 @Composable
 fun TwinklingStars() {
     val infiniteTransition = rememberInfiniteTransition(label = "star twinkle")
-    val starPositions = remember { listOf(Offset(0.2f, 0.15f), Offset(0.8f, 0.2f), Offset(0.15f, 0.7f), Offset(0.85f, 0.75f)) }
+    
+    val starPositions = remember {
+        listOf(
+            Offset(0.2f, 0.15f),
+            Offset(0.8f, 0.2f),
+            Offset(0.15f, 0.7f),
+            Offset(0.85f, 0.75f)
+        )
+    }
+    
+    // تحريك جميع النجوم خارج Canvas
+    val alpha1 by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "star1"
+    )
+    
+    val alpha2 by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "star2"
+    )
+    
+    val alpha3 by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "star3"
+    )
+    
+    val alpha4 by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "star4"
+    )
+    
+    val alphas = listOf(alpha1, alpha2, alpha3, alpha4)
     
     Canvas(modifier = Modifier.fillMaxSize()) {
         starPositions.forEachIndexed { index, position ->
-            val alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f, targetValue = 1f,
-                animationSpec = infiniteRepeatable(tween(1500 + index * 200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                label = ""
+            drawCircle(
+                color = Color.White.copy(alpha = alphas[index]),
+                radius = 3f,
+                center = Offset(size.width * position.x, size.height * position.y)
             )
-            drawCircle(Color.White.copy(alpha = alpha), 3f, Offset(size.width * position.x, size.height * position.y))
         }
     }
 }
 
-private fun validateInputs(email: String, password: String, onEmailError: (String?) -> Unit, onPasswordError: (String?) -> Unit): Boolean {
+private fun validateInputs(
+    email: String,
+    password: String,
+    onEmailError: (String?) -> Unit,
+    onPasswordError: (String?) -> Unit
+): Boolean {
     var isValid = true
-    if (email.isBlank()) { onEmailError("الرجاء إدخال البريد الإلكتروني"); isValid = false }
-    else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) { onEmailError("البريد الإلكتروني غير صحيح"); isValid = false }
-    else onEmailError(null)
 
-    if (password.isBlank()) { onPasswordError("الرجاء إدخال كلمة المرور"); isValid = false }
-    else if (password.length < 6) { onPasswordError("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); isValid = false }
-    else onPasswordError(null)
+    if (email.isBlank()) {
+        onEmailError("الرجاء إدخال البريد الإلكتروني")
+        isValid = false
+    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        onEmailError("البريد الإلكتروني غير صحيح")
+        isValid = false
+    } else {
+        onEmailError(null)
+    }
+
+    if (password.isBlank()) {
+        onPasswordError("الرجاء إدخال كلمة المرور")
+        isValid = false
+    } else if (password.length < 6) {
+        onPasswordError("كلمة المرور يجب أن تكون 6 أحرف على الأقل")
+        isValid = false
+    } else {
+        onPasswordError(null)
+    }
+
     return isValid
 }
- 
