@@ -138,197 +138,247 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 40.dp)
             )
 
-            // بطاقة تسجيل الدخول
-            Card(
+            // بطاقة تسجيل الدخول مع اللمسة الذهبية
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight(),
-                shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE8E4DB).copy(alpha = 0.85f)
-                ),
-                elevation = CardDefaults.cardElevation(8.dp)
+                    .wrapContentHeight()
             ) {
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .wrapContentHeight(),
+                    shape = RoundedCornerShape(32.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFEBE6DC).copy(alpha = 0.75f)
+                    ),
+                    elevation = CardDefaults.cardElevation(8.dp)
                 ) {
-                    // حقل البريد الإلكتروني
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            emailError = null
-                        },
-                        placeholder = {
-                            Text(
-                                "البريد الإلكتروني",
-                                color = Color(0xFF9B8B7A)
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "أيقونة البريد",
-                                tint = Color(0xFF8B7355)
-                            )
-                        },
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFB5A68F),
-                            unfocusedBorderColor = Color(0xFFB5A68F),
-                            cursorColor = Color(0xFF8B7355),
-                            focusedTextColor = Color(0xFF6B5744),
-                            unfocusedTextColor = Color(0xFF6B5744),
-                            focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA)
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-
-                    if (emailError != null) {
-                        Text(
-                            text = emailError!!,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, bottom = 8.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // حقل كلمة المرور
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = {
-                            password = it
-                            passwordError = null
-                        },
-                        placeholder = {
-                            Text(
-                                "••••••••",
-                                color = Color(0xFF9B8B7A)
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "أيقونة القفل",
-                                tint = Color(0xFF8B7355)
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = if (passwordVisible)
-                                        Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible)
-                                        "إخفاء كلمة المرور"
-                                    else
-                                        "إظهار كلمة المرور",
-                                    tint = Color(0xFFB5A68F)
+                            .padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // حقل البريد الإلكتروني - أصغر حجماً
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = {
+                                email = it
+                                emailError = null
+                            },
+                            placeholder = {
+                                Text(
+                                    "البريد الإلكتروني",
+                                    color = Color(0xFFB5A590),
+                                    fontSize = 14.sp
                                 )
-                            }
-                        },
-                        visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                performLogin()
-                            }
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFB5A68F),
-                            unfocusedBorderColor = Color(0xFFB5A68F),
-                            cursorColor = Color(0xFF8B7355),
-                            focusedTextColor = Color(0xFF6B5744),
-                            unfocusedTextColor = Color(0xFF6B5744),
-                            focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA)
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-
-                    if (passwordError != null) {
-                        Text(
-                            text = passwordError!!,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "أيقونة البريد",
+                                    tint = Color(0xFFB5A590),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 16.dp, bottom = 8.dp)
+                                .height(56.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = Color(0xFF8B7355),
+                                focusedTextColor = Color(0xFF6B5744),
+                                unfocusedTextColor = Color(0xFF6B5744),
+                                focusedContainerColor = Color(0xFFF5F2EA),
+                                unfocusedContainerColor = Color(0xFFF5F2EA)
+                            ),
+                            shape = RoundedCornerShape(28.dp)
                         )
-                    }
 
-                    // نسيت كلمة المرور
-                    TextButton(
-                        onClick = onNavigateToForgotPassword,
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text(
-                            text = "• نسيت كلمة المرور؟",
-                            color = Color(0xFF8B7355),
-                            fontSize = 13.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // زر تسجيل الدخول
-                    Button(
-                        onClick = { performLogin() },
-                        enabled = !isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF7B8A6F),
-                            disabledContainerColor = Color(0xFF9B8B7A)
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
+                        if (emailError != null) {
                             Text(
-                                text = "تسجيل الدخول",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                text = emailError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 4.dp)
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // حقل كلمة المرور - أصغر حجماً
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = {
+                                password = it
+                                passwordError = null
+                            },
+                            placeholder = {
+                                Text(
+                                    "••••••••",
+                                    color = Color(0xFFB5A590),
+                                    fontSize = 14.sp
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "أيقونة القفل",
+                                    tint = Color(0xFFB5A590),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        imageVector = if (passwordVisible)
+                                            Icons.Default.Visibility
+                                        else
+                                            Icons.Default.VisibilityOff,
+                                        contentDescription = if (passwordVisible)
+                                            "إخفاء كلمة المرور"
+                                        else
+                                            "إظهار كلمة المرور",
+                                        tint = Color(0xFFB5A590),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            },
+                            visualTransformation = if (passwordVisible)
+                                VisualTransformation.None
+                            else
+                                PasswordVisualTransformation(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    performLogin()
+                                }
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = Color(0xFF8B7355),
+                                focusedTextColor = Color(0xFF6B5744),
+                                unfocusedTextColor = Color(0xFF6B5744),
+                                focusedContainerColor = Color(0xFFF5F2EA),
+                                unfocusedContainerColor = Color(0xFFF5F2EA)
+                            ),
+                            shape = RoundedCornerShape(28.dp)
+                        )
+
+                        if (passwordError != null) {
+                            Text(
+                                text = passwordError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
+
+                        // نسيت كلمة المرور
+                        TextButton(
+                            onClick = onNavigateToForgotPassword,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(
+                                text = "• نسيت كلمة المرور؟",
+                                color = Color(0xFF9B8B7A),
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // زر تسجيل الدخول مع اللمسة الذهبية
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // اللمسة الذهبية (Border)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp)
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                Color(0xFFD4C3A8),
+                                                Color(0xFFC9B897),
+                                                Color(0xFFD4C3A8)
+                                            )
+                                        ),
+                                        shape = RoundedCornerShape(27.dp)
+                                    )
+                            )
+                            
+                            // الزر الفعلي
+                            Button(
+                                onClick = { performLogin() },
+                                enabled = !isLoading,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(2.dp)
+                                    .height(50.dp)
+                                    .align(Alignment.Center),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF6D7B62),
+                                    disabledContainerColor = Color(0xFF9B8B7A)
+                                ),
+                                shape = RoundedCornerShape(25.dp)
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text(
+                                        text = "تسجيل الدخول",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
                     }
+                }
+                
+                // اللمسة الذهبية في المنتصف
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                        .align(Alignment.Center)
+                ) {
+                    drawLine(
+                        color = Color(0xFFD4C3A8),
+                        start = Offset(size.width * 0.15f, size.height / 2),
+                        end = Offset(size.width * 0.85f, size.height / 2),
+                        strokeWidth = 1.5f
+                    )
                 }
             }
 
@@ -342,86 +392,119 @@ fun LoginScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // أزرار تسجيل الدخول بوسائل التواصل الاجتماعي
+            // أزرار تسجيل الدخول - دوائر صغيرة مثالية
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // زر Google
+                // زر Google - دائري مع ألوان باهتة
                 Surface(
                     modifier = Modifier
-                        .size(60.dp)
-                        .padding(horizontal = 8.dp)
+                        .size(52.dp)
                         .clickable {
                             Toast
                                 .makeText(context, "تسجيل الدخول عبر Google", Toast.LENGTH_SHORT)
                                 .show()
                         },
                     shape = CircleShape,
-                    color = Color(0xFFFAF8F4),
-                    shadowElevation = 6.dp
+                    color = Color(0xFFF5F2EA),
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_google),
-                            contentDescription = "Google",
-                            modifier = Modifier.size(24.dp)
-                        )
+                        // رسم G بألوان باهتة
+                        Canvas(modifier = Modifier.size(22.dp)) {
+                            val centerX = size.width / 2
+                            val centerY = size.height / 2
+                            
+                            // G باللون الرمادي الداكن بدلاً من الألوان الزاهية
+                            drawCircle(
+                                color = Color(0xFF7A6B5D),
+                                radius = size.width * 0.3f,
+                                style = Stroke(width = 2f)
+                            )
+                            drawLine(
+                                color = Color(0xFF7A6B5D),
+                                start = Offset(centerX + size.width * 0.1f, centerY),
+                                end = Offset(centerX + size.width * 0.3f, centerY),
+                                strokeWidth = 2f
+                            )
+                        }
                     }
                 }
 
-                // زر Apple
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // زر Apple - دائري
                 Surface(
                     modifier = Modifier
-                        .size(60.dp)
-                        .padding(horizontal = 8.dp)
+                        .size(52.dp)
                         .clickable {
                             Toast
                                 .makeText(context, "تسجيل الدخول عبر Apple", Toast.LENGTH_SHORT)
                                 .show()
                         },
                     shape = CircleShape,
-                    color = Color(0xFFFAF8F4),
-                    shadowElevation = 6.dp
+                    color = Color(0xFFF5F2EA),
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_apple),
-                            contentDescription = "Apple",
-                            modifier = Modifier.size(24.dp)
-                        )
+                        // رسم تفاحة باللون الداكن الباهت
+                        Canvas(modifier = Modifier.size(22.dp)) {
+                            val centerX = size.width / 2
+                            val centerY = size.height / 2
+                            val color = Color(0xFF7A6B5D)
+                            
+                            // جسم التفاحة
+                            drawCircle(
+                                color = color,
+                                radius = size.width * 0.35f,
+                                center = Offset(centerX, centerY + size.height * 0.05f)
+                            )
+                            
+                            // الورقة
+                            drawLine(
+                                color = color,
+                                start = Offset(centerX, centerY - size.height * 0.2f),
+                                end = Offset(centerX + size.width * 0.15f, centerY - size.height * 0.35f),
+                                strokeWidth = 1.5f,
+                                cap = StrokeCap.Round
+                            )
+                        }
                     }
                 }
 
-                // زر Facebook
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // زر Facebook - دائري
                 Surface(
                     modifier = Modifier
-                        .size(60.dp)
-                        .padding(horizontal = 8.dp)
+                        .size(52.dp)
                         .clickable {
                             Toast
                                 .makeText(context, "تسجيل الدخول عبر Facebook", Toast.LENGTH_SHORT)
                                 .show()
                         },
                     shape = CircleShape,
-                    color = Color(0xFFFAF8F4),
-                    shadowElevation = 6.dp
+                    color = Color(0xFFF5F2EA),
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_facebook),
-                            contentDescription = "Facebook",
-                            modifier = Modifier.size(24.dp)
+                        // رسم f باللون الداكن الباهت
+                        Text(
+                            text = "f",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF7A6B5D)
                         )
                     }
                 }
