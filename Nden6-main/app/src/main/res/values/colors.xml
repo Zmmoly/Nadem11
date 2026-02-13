@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="quran_green">#2E7D32</color>
+    <color name="quran_green_light">#66BB6A</color>
+    <color name="quran_gold">#D4AF37</color>
+    <color name="quran_dark_green">#1B5E20</color>
+    <color name="quran_background">#F5F5F5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#757575</color>
+    <color name="light_gray">#E0E0E0</color>
+</resources>
