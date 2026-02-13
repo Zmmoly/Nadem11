@@ -1,0 +1,167 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Gradle Wrapper
+      run: |
+        curl -L -o gradle/wrapper/gradle-wrapper.jar \
+          https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar
+        ls -lh gradle/wrapper/gradle-wrapper.jar
+        
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+      
+    - name: Validate Gradle wrapper
+      uses: gradle/wrapper-validation-action@v2
+      
+    - name: Verify google-services.json exists
+      run: |
+        if [ ! -f "app/google-services.json" ]; then
+          echo "❌ Error: app/google-services.json not found in repository"
+          echo "Please add your Firebase configuration file to the repository"
+          exit 1
+        else
+          echo "✅ google-services.json found"
+        fi
+      
+    - name: Generate Launcher Icons
+      run: |
+        echo "🎨 Installing Pillow for icon generation..."
+        pip install Pillow
+        echo "🎨 Generating launcher icons..."
+        python3 << 'PYEOF'
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        
+        sizes = {
+            'mdpi': 48,
+            'hdpi': 72,
+            'xhdpi': 96,
+            'xxhdpi': 144,
+            'xxxhdpi': 192
+        }
+        
+        for density, size in sizes.items():
+            os.makedirs(f'app/src/main/res/mipmap-{density}', exist_ok=True)
+            
+            # Create square icon
+            img = Image.new('RGB', (size, size), color='#4CAF50')
+            draw = ImageDraw.Draw(img)
+            draw.ellipse([size//8, size//8, size*7//8, size*7//8], 
+                         fill='#2E7D32', outline='white', width=max(2, size//24))
+            
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size//2)
+            except:
+                font = ImageFont.load_default()
+            
+            text = "Q"
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            x = (size - text_width) // 2
+            y = (size - text_height) // 2 - bbox[1]
+            draw.text((x, y), text, fill='white', font=font)
+            
+            img.save(f'app/src/main/res/mipmap-{density}/ic_launcher.png')
+            
+            # Create round version
+            round_img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+            draw_round = ImageDraw.Draw(round_img)
+            draw_round.ellipse([0, 0, size, size], fill='#4CAF50')
+            margin = size // 8
+            draw_round.ellipse([margin, margin, size-margin, size-margin], fill='#2E7D32')
+            draw_round.text((x, y), text, fill='white', font=font)
+            round_img.save(f'app/src/main/res/mipmap-{density}/ic_launcher_round.png')
+            
+            print(f'✅ Created icons for {density} ({size}x{size})')
+        
+        print('✅ All launcher icons created successfully!')
+        PYEOF
+    
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    - name: Gradle version
+      run: ./gradlew --version
+          
+    - name: Build with Gradle
+      run: ./gradlew build --stacktrace
+      
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace
+      
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+        
+    - name: Build Release APK
+      run: ./gradlew assembleRelease --stacktrace
+      
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-unsigned
+        path: app/build/outputs/apk/release/app-release-unsigned.apk
+        retention-days: 30
+
+    - name: Run Unit Tests
+      run: ./gradlew test --stacktrace
+      continue-on-error: true
+      
+    - name: Upload Test Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: app/build/reports/tests/
+        retention-days: 30
+        
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "## 📱 Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
+          echo "✅ Debug APK created: **$SIZE**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+          SIZE=$(du -h app/build/outputs/apk/release/app-release-unsigned.apk | cut -f1)
+          echo "✅ Release APK created: **$SIZE**" >> $GITHUB_STEP_SUMMARY
+        fi
