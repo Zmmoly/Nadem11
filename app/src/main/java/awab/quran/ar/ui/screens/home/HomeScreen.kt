@@ -1,10 +1,13 @@
 package awab.quran.ar.ui.screens.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,6 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -40,8 +46,8 @@ fun HomeScreen(
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     var userName by remember { mutableStateOf("") }
-    var totalRecitations by remember { mutableStateOf(0) }
-    var completedSurahs by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf("الكل") }
+    var searchQuery by remember { mutableStateOf("") }
 
     // جلب بيانات المستخدم
     LaunchedEffect(Unit) {
@@ -49,32 +55,44 @@ fun HomeScreen(
             firestore.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     userName = document.getString("fullName") ?: ""
-                    totalRecitations = document.getLong("totalRecitations")?.toInt() ?: 0
-                    completedSurahs = document.getLong("completedSurahs")?.toInt() ?: 0
                 }
         }
     }
 
-    // قائمة بعض السور للعرض
+    // قائمة السور
     val surahs = remember {
         listOf(
             Surah(1, "الفاتحة", "Al-Fatihah", 7, "مكية"),
             Surah(2, "البقرة", "Al-Baqarah", 286, "مدنية"),
-            Surah(3, "آل عمران", "Ali 'Imran", 200, "مدنية"),
-            Surah(18, "الكهف", "Al-Kahf", 110, "مكية"),
-            Surah(36, "يس", "Ya-Sin", 83, "مكية"),
+            Surah(60, "الأغمران", "Al-Mumtahanah", 260, "مدنية"),
+            Surah(36, "الكوف", "Al-Kahf", 110, "مكية"),
             Surah(55, "الرحمن", "Ar-Rahman", 78, "مدنية"),
             Surah(67, "الملك", "Al-Mulk", 30, "مكية"),
             Surah(78, "النبأ", "An-Naba", 40, "مكية")
         )
     }
 
+    // تصفية السور حسب البحث والتبويب
+    val filteredSurahs = surahs.filter { surah ->
+        val matchesSearch = searchQuery.isEmpty() || 
+            surah.name.contains(searchQuery) || 
+            surah.translatedName.contains(searchQuery, ignoreCase = true)
+        
+        val matchesTab = when (selectedTab) {
+            "المفضلة" -> true
+            "اخر قراءة" -> true
+            else -> true
+        }
+        
+        matchesSearch && matchesTab
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // صورة الخلفية
+        // استخدام الخلفية الخاصة بالصفحة الرئيسية
         Image(
-            painter = painterResource(id = R.drawable.app_background),
+            painter = painterResource(id = R.drawable.home_background),
             contentDescription = "خلفية الصفحة الرئيسية",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -90,7 +108,7 @@ fun HomeScreen(
                                 text = "نديم",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B5744)
+                                color = Color(0xFF4A3F35)
                             )
                             Text(
                                 text = "مرحباً ${userName.ifEmpty { "بك" }}",
@@ -109,7 +127,7 @@ fun HomeScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                        containerColor = Color.Transparent
                     )
                 )
             }
@@ -119,93 +137,109 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // بطاقة الإحصائيات
+                // عنوان "خير جليس لحفظ كتاب الله"
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = "خير جليس لحفظ كتاب اللَّهِ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF8B7355),
+                            textAlign = TextAlign.Center
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
+                // التبويبات (الكل - المفضلة - اخر قراءة)
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(25.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.85f)
                         ),
-                        elevation = CardDefaults.cardElevation(4.dp)
+                        elevation = CardDefaults.cardElevation(3.dp)
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp)
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Text(
-                                text = "إحصائياتك",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B5744),
-                                modifier = Modifier.padding(bottom = 16.dp)
+                            TabButton(
+                                text = "الكل",
+                                isSelected = selectedTab == "الكل",
+                                onClick = { selectedTab = "الكل" },
+                                modifier = Modifier.weight(1f)
                             )
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                StatCard(
-                                    title = "التسميع",
-                                    value = totalRecitations.toString(),
-                                    icon = Icons.Default.Mic
-                                )
-                                
-                                StatCard(
-                                    title = "السور المكتملة",
-                                    value = completedSurahs.toString(),
-                                    icon = Icons.Default.CheckCircle
-                                )
-                            }
+                            TabButton(
+                                text = "المفضلة",
+                                isSelected = selectedTab == "المفضلة",
+                                onClick = { selectedTab = "المفضلة" },
+                                modifier = Modifier.weight(1f)
+                            )
+                            TabButton(
+                                text = "اخر قراءة",
+                                isSelected = selectedTab == "اخر قراءة",
+                                onClick = { selectedTab = "اخر قراءة" },
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
 
-                // زر بدء التسميع
+                // شريط البحث
                 item {
-                    Button(
-                        onClick = onNavigateToRecitation,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF6B5744)
-                        ),
-                        shape = RoundedCornerShape(16.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(25.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.7f)
+                        )
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp),
-                            tint = Color.White
-                        )
-                        Text(
-                            text = "ابدأ التسميع",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "بحث",
+                                tint = Color(0xFF8B7355).copy(alpha = 0.6f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "محمدين لا حجم يمين المسطلوة",
+                                fontSize = 14.sp,
+                                color = Color(0xFF8B7355).copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
 
-                // عنوان قائمة السور
-                item {
-                    Text(
-                        text = "السور المتاحة",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6B5744),
-                        modifier = Modifier.padding(vertical = 8.dp)
+                // قائمة السور
+                items(filteredSurahs) { surah ->
+                    GoldenSurahCard(
+                        surah = surah,
+                        onClick = onNavigateToRecitation
                     )
                 }
-
-                // قائمة السور
-                items(surahs) { surah ->
-                    SurahCard(surah = surah, onClick = onNavigateToRecitation)
+                
+                // مسافة إضافية في النهاية
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -213,135 +247,157 @@ fun HomeScreen(
 }
 
 @Composable
-fun StatCard(
-    title: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+fun TabButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier
-            .width(150.dp)
-            .height(100.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE5DFCF).copy(alpha = 0.7f)
-        )
+    Box(
+        modifier = modifier
+            .height(40.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (isSelected) {
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFD4AF37),
+                            Color(0xFFC9A961)
+                        )
+                    )
+                } else {
+                    Brush.horizontalGradient(
+                        colors = listOf(Color.Transparent, Color.Transparent)
+                    )
+                }
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color(0xFF6B5744),
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(bottom = 8.dp)
-            )
-            Text(
-                text = value,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF6B5744)
-            )
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                color = Color(0xFF8B7355),
-                textAlign = TextAlign.Center
-            )
-        }
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) Color.White else Color(0xFF8B7355)
+        )
     }
 }
 
 @Composable
-fun SurahCard(
+fun GoldenSurahCard(
     surah: Surah,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(80.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.8f)
         ),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // رقم السورة
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(50.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFF6B5744).copy(alpha = 0.1f)
+                // دائرة رقم السورة الذهبية مع اللمعة
+                Box(
+                    modifier = Modifier.size(56.dp),
+                    contentAlignment = Alignment.Center
                 ) {
+                    // الحلقة الذهبية الخارجية مع اللمعة
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier
+                            .size(56.dp)
+                            .border(
+                                width = 3.dp,
+                                brush = Brush.sweepGradient(
+                                    colors = listOf(
+                                        Color(0xFFE8D7A8), // ذهبي فاتح (لمعة)
+                                        Color(0xFFD4AF37), // ذهبي رئيسي
+                                        Color(0xFFB8941E), // ذهبي داكن
+                                        Color(0xFF8B6F1B), // ذهبي أغمق
+                                        Color(0xFFB8941E), // ذهبي داكن
+                                        Color(0xFFD4AF37), // ذهبي رئيسي
+                                        Color(0xFFE8D7A8)  // ذهبي فاتح (لمعة)
+                                    )
+                                ),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color(0xFF6B5744),
+                                        Color(0xFF5A4839),
+                                        Color(0xFF4A3829)
+                                    )
+                                )
+                            )
+                    )
+                    
+                    // رقم السورة
+                    Text(
+                        text = surah.number.toString(),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFD4AF37)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // معلومات السورة
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = surah.name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4A3F35)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = surah.number.toString(),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744)
+                            text = "${surah.verses} آية",
+                            fontSize = 13.sp,
+                            color = Color(0xFF8B7355)
+                        )
+                        Text(
+                            text = " • ",
+                            fontSize = 13.sp,
+                            color = Color(0xFF8B7355)
+                        )
+                        Text(
+                            text = surah.revelationType,
+                            fontSize = 13.sp,
+                            color = Color(0xFF8B7355)
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            // معلومات السورة
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = surah.name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6B5744)
+                // أيقونة السهم
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "فتح",
+                    tint = Color(0xFF8B7355),
+                    modifier = Modifier.size(24.dp)
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${surah.verses} آية",
-                        fontSize = 13.sp,
-                        color = Color(0xFF8B7355)
-                    )
-                    Text(
-                        text = " • ",
-                        fontSize = 13.sp,
-                        color = Color(0xFF8B7355)
-                    )
-                    Text(
-                        text = surah.revelationType,
-                        fontSize = 13.sp,
-                        color = Color(0xFF8B7355)
-                    )
-                }
             }
-
-            // أيقونة السهم
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "فتح",
-                tint = Color(0xFF8B7355)
-            )
         }
     }
 }
