@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -48,7 +49,6 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf("الكل") }
     var searchQuery by remember { mutableStateOf("") }
 
-    // جلب بيانات المستخدم
     LaunchedEffect(Unit) {
         auth.currentUser?.uid?.let { userId ->
             firestore.collection("users").document(userId).get()
@@ -58,7 +58,6 @@ fun HomeScreen(
         }
     }
 
-    // قائمة السور
     val surahs = remember {
         listOf(
             Surah(1, "الفاتحة", "Al-Fatihah", 7, "مكية"),
@@ -71,7 +70,6 @@ fun HomeScreen(
         )
     }
 
-    // تصفية السور
     val filteredSurahs = surahs.filter { surah ->
         val matchesSearch = searchQuery.isEmpty() || 
             surah.name.contains(searchQuery) || 
@@ -89,7 +87,6 @@ fun HomeScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // الخلفية الخاصة بالصفحة الرئيسية
         Image(
             painter = painterResource(id = R.drawable.home_background),
             contentDescription = "خلفية الصفحة الرئيسية",
@@ -139,7 +136,6 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // عنوان "خير جليس لحفظ كتاب الله"
                 item {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -159,35 +155,34 @@ fun HomeScreen(
                     }
                 }
 
-                // التبويبات
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(25.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.7f)
-                        ),
-                        elevation = CardDefaults.cardElevation(2.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                width = 1.dp,
+                                color = Color(0xFFD4AF37).copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(25.dp)
+                            )
+                            .padding(4.dp)
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            TabButton(
+                            TransparentTabButton(
                                 text = "الكل",
                                 isSelected = selectedTab == "الكل",
                                 onClick = { selectedTab = "الكل" },
                                 modifier = Modifier.weight(1f)
                             )
-                            TabButton(
+                            TransparentTabButton(
                                 text = "المفضلة",
                                 isSelected = selectedTab == "المفضلة",
                                 onClick = { selectedTab = "المفضلة" },
                                 modifier = Modifier.weight(1f)
                             )
-                            TabButton(
+                            TransparentTabButton(
                                 text = "اخر قراءة",
                                 isSelected = selectedTab == "اخر قراءة",
                                 onClick = { selectedTab = "اخر قراءة" },
@@ -197,7 +192,6 @@ fun HomeScreen(
                     }
                 }
 
-                // شريط البحث
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -228,9 +222,8 @@ fun HomeScreen(
                     }
                 }
 
-                // قائمة السور
                 items(filteredSurahs) { surah ->
-                    GoldenCircleSurahCard(
+                    DecoratedSurahCard(
                         surah = surah,
                         onClick = onNavigateToRecitation
                     )
@@ -245,7 +238,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TabButton(
+fun TransparentTabButton(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -255,20 +248,31 @@ fun TabButton(
         modifier = modifier
             .height(40.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(
+            .then(
                 if (isSelected) {
-                    // ذهبي داكن براق (مثل الذهب الحقيقي)
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFFC9A961),
-                            Color(0xFFB8941E),
-                            Color(0xFFC9A961)
+                    Modifier
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFFC9A961).copy(alpha = 0.8f),
+                                    Color(0xFFB8941E).copy(alpha = 0.9f),
+                                    Color(0xFFC9A961).copy(alpha = 0.8f)
+                                )
+                            )
                         )
-                    )
+                        .border(
+                            width = 1.5.dp,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFFE8D7A8),
+                                    Color(0xFFD4AF37),
+                                    Color(0xFFE8D7A8)
+                                )
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
                 } else {
-                    Brush.horizontalGradient(
-                        colors = listOf(Color.Transparent, Color.Transparent)
-                    )
+                    Modifier.background(Color.Transparent)
                 }
             )
             .clickable(onClick = onClick),
@@ -284,7 +288,7 @@ fun TabButton(
 }
 
 @Composable
-fun GoldenCircleSurahCard(
+fun DecoratedSurahCard(
     surah: Surah,
     onClick: () -> Unit
 ) {
@@ -308,56 +312,94 @@ fun GoldenCircleSurahCard(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // دائرة رقم السورة الذهبية
+                // الدائرة الذهبية مع الزخرفة
                 Box(
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(80.dp), // حجم أكبر للزخرفة
                     contentAlignment = Alignment.Center
                 ) {
-                    // الإطار الذهبي الخارجي مع اللمعة الدائرية
+                    // الزخرفة الإسلامية خلف الدائرة
+                    // ملاحظة: يجب إضافة صورة الزخرفة في drawable
+                    // مثال: R.drawable.islamic_decoration
+                    
+                    // إذا كانت صورة الزخرفة موجودة:
+                    // Image(
+                    //     painter = painterResource(id = R.drawable.islamic_decoration),
+                    //     contentDescription = "زخرفة إسلامية",
+                    //     modifier = Modifier
+                    //         .size(80.dp)
+                    //         .alpha(0.4f),
+                    //     contentScale = ContentScale.Fit
+                    // )
+                    
+                    // بديل مؤقت: دوائر متداخلة للإيحاء بالزخرفة
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(75.dp)
                             .border(
-                                width = 3.dp,
-                                brush = Brush.sweepGradient(
-                                    colors = listOf(
-                                        Color(0xFFE8D7A8), // لمعة ذهبية فاتحة
-                                        Color(0xFFD4AF37), // ذهبي رئيسي
-                                        Color(0xFFC9A961), // ذهبي متوسط
-                                        Color(0xFFB8941E), // ذهبي داكن
-                                        Color(0xFFA67C00), // ذهبي أغمق
-                                        Color(0xFFB8941E), // ذهبي داكن
-                                        Color(0xFFC9A961), // ذهبي متوسط
-                                        Color(0xFFD4AF37), // ذهبي رئيسي
-                                        Color(0xFFE8D7A8)  // لمعة ذهبية فاتحة
-                                    )
-                                ),
+                                width = 0.5.dp,
+                                color = Color(0xFFD4AF37).copy(alpha = 0.2f),
                                 shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        Color(0xFF3E342B), // بني داكن جداً (مركز)
-                                        Color(0xFF2D2419), // بني أغمق
-                                        Color(0xFF1F1811)  // بني داكن جداً (تقريباً أسود)
-                                    )
-                                )
                             )
                     )
                     
-                    // رقم السورة بالذهبي الساطع
-                    Text(
-                        text = surah.number.toString(),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFD4AF37) // ذهبي براق
+                    Box(
+                        modifier = Modifier
+                            .size(68.dp)
+                            .border(
+                                width = 0.5.dp,
+                                color = Color(0xFFD4AF37).copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
                     )
+                    
+                    // الدائرة الذهبية الرئيسية
+                    Box(
+                        modifier = Modifier.size(56.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .border(
+                                    width = 3.dp,
+                                    brush = Brush.sweepGradient(
+                                        colors = listOf(
+                                            Color(0xFFE8D7A8),
+                                            Color(0xFFD4AF37),
+                                            Color(0xFFC9A961),
+                                            Color(0xFFB8941E),
+                                            Color(0xFFA67C00),
+                                            Color(0xFFB8941E),
+                                            Color(0xFFC9A961),
+                                            Color(0xFFD4AF37),
+                                            Color(0xFFE8D7A8)
+                                        )
+                                    ),
+                                    shape = CircleShape
+                                )
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            Color(0xFF3E342B),
+                                            Color(0xFF2D2419),
+                                            Color(0xFF1F1811)
+                                        )
+                                    )
+                                )
+                        )
+                        
+                        Text(
+                            text = surah.number.toString(),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD4AF37)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                // معلومات السورة
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.End
@@ -392,7 +434,6 @@ fun GoldenCircleSurahCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // أيقونة السهم
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "فتح",
@@ -403,3 +444,4 @@ fun GoldenCircleSurahCard(
         }
     }
 }
+ 
