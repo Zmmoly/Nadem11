@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -72,7 +71,7 @@ fun HomeScreen(
         )
     }
 
-    // تصفية السور حسب البحث والتبويب
+    // تصفية السور
     val filteredSurahs = surahs.filter { surah ->
         val matchesSearch = searchQuery.isEmpty() || 
             surah.name.contains(searchQuery) || 
@@ -90,7 +89,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // استخدام الخلفية الخاصة بالصفحة الرئيسية
+        // الخلفية الخاصة بالصفحة الرئيسية
         Image(
             painter = painterResource(id = R.drawable.home_background),
             contentDescription = "خلفية الصفحة الرئيسية",
@@ -152,7 +151,7 @@ fun HomeScreen(
                             text = "خير جليس لحفظ كتاب اللَّهِ",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
-                            color = Color(0xFF8B7355),
+                            color = Color(0xFF6B5744),
                             textAlign = TextAlign.Center
                         )
                         
@@ -160,15 +159,15 @@ fun HomeScreen(
                     }
                 }
 
-                // التبويبات (الكل - المفضلة - اخر قراءة)
+                // التبويبات
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(25.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.85f)
+                            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.7f)
                         ),
-                        elevation = CardDefaults.cardElevation(3.dp)
+                        elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -204,7 +203,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(25.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.7f)
+                            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.5f)
                         )
                     ) {
                         Row(
@@ -216,14 +215,14 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "بحث",
-                                tint = Color(0xFF8B7355).copy(alpha = 0.6f),
+                                tint = Color(0xFF9B8B7A).copy(alpha = 0.5f),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "محمدين لا حجم يمين المسطلوة",
                                 fontSize = 14.sp,
-                                color = Color(0xFF8B7355).copy(alpha = 0.6f)
+                                color = Color(0xFF9B8B7A).copy(alpha = 0.5f)
                             )
                         }
                     }
@@ -231,13 +230,12 @@ fun HomeScreen(
 
                 // قائمة السور
                 items(filteredSurahs) { surah ->
-                    GoldenSurahCard(
+                    GoldenCircleSurahCard(
                         surah = surah,
                         onClick = onNavigateToRecitation
                     )
                 }
                 
-                // مسافة إضافية في النهاية
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -259,9 +257,11 @@ fun TabButton(
             .clip(RoundedCornerShape(20.dp))
             .background(
                 if (isSelected) {
+                    // ذهبي داكن براق (مثل الذهب الحقيقي)
                     Brush.horizontalGradient(
                         colors = listOf(
-                            Color(0xFFD4AF37),
+                            Color(0xFFC9A961),
+                            Color(0xFFB8941E),
                             Color(0xFFC9A961)
                         )
                     )
@@ -278,13 +278,13 @@ fun TabButton(
             text = text,
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else Color(0xFF8B7355)
+            color = if (isSelected) Color.White else Color(0xFF9B8B7A)
         )
     }
 }
 
 @Composable
-fun GoldenSurahCard(
+fun GoldenCircleSurahCard(
     surah: Surah,
     onClick: () -> Unit
 ) {
@@ -295,9 +295,9 @@ fun GoldenSurahCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFD9CBB5).copy(alpha = 0.8f)
+            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.65f)
         ),
-        elevation = CardDefaults.cardElevation(3.dp)
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -308,12 +308,12 @@ fun GoldenSurahCard(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // دائرة رقم السورة الذهبية مع اللمعة
+                // دائرة رقم السورة الذهبية
                 Box(
                     modifier = Modifier.size(56.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // الحلقة الذهبية الخارجية مع اللمعة
+                    // الإطار الذهبي الخارجي مع اللمعة الدائرية
                     Box(
                         modifier = Modifier
                             .size(56.dp)
@@ -321,13 +321,15 @@ fun GoldenSurahCard(
                                 width = 3.dp,
                                 brush = Brush.sweepGradient(
                                     colors = listOf(
-                                        Color(0xFFE8D7A8), // ذهبي فاتح (لمعة)
+                                        Color(0xFFE8D7A8), // لمعة ذهبية فاتحة
                                         Color(0xFFD4AF37), // ذهبي رئيسي
+                                        Color(0xFFC9A961), // ذهبي متوسط
                                         Color(0xFFB8941E), // ذهبي داكن
-                                        Color(0xFF8B6F1B), // ذهبي أغمق
+                                        Color(0xFFA67C00), // ذهبي أغمق
                                         Color(0xFFB8941E), // ذهبي داكن
+                                        Color(0xFFC9A961), // ذهبي متوسط
                                         Color(0xFFD4AF37), // ذهبي رئيسي
-                                        Color(0xFFE8D7A8)  // ذهبي فاتح (لمعة)
+                                        Color(0xFFE8D7A8)  // لمعة ذهبية فاتحة
                                     )
                                 ),
                                 shape = CircleShape
@@ -336,20 +338,20 @@ fun GoldenSurahCard(
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        Color(0xFF6B5744),
-                                        Color(0xFF5A4839),
-                                        Color(0xFF4A3829)
+                                        Color(0xFF3E342B), // بني داكن جداً (مركز)
+                                        Color(0xFF2D2419), // بني أغمق
+                                        Color(0xFF1F1811)  // بني داكن جداً (تقريباً أسود)
                                     )
                                 )
                             )
                     )
                     
-                    // رقم السورة
+                    // رقم السورة بالذهبي الساطع
                     Text(
                         text = surah.number.toString(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFD4AF37)
+                        color = Color(0xFFD4AF37) // ذهبي براق
                     )
                 }
 
@@ -373,17 +375,17 @@ fun GoldenSurahCard(
                         Text(
                             text = "${surah.verses} آية",
                             fontSize = 13.sp,
-                            color = Color(0xFF8B7355)
+                            color = Color(0xFF7A6B5A)
                         )
                         Text(
                             text = " • ",
                             fontSize = 13.sp,
-                            color = Color(0xFF8B7355)
+                            color = Color(0xFF7A6B5A)
                         )
                         Text(
                             text = surah.revelationType,
                             fontSize = 13.sp,
-                            color = Color(0xFF8B7355)
+                            color = Color(0xFF7A6B5A)
                         )
                     }
                 }
@@ -394,7 +396,7 @@ fun GoldenSurahCard(
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "فتح",
-                    tint = Color(0xFF8B7355),
+                    tint = Color(0xFF9B8B7A),
                     modifier = Modifier.size(24.dp)
                 )
             }
