@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
@@ -97,35 +98,43 @@ fun HomeScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = "نديم",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4A3F35)
-                            )
-                            Text(
-                                text = "مرحباً ${userName.ifEmpty { "بك" }}",
-                                fontSize = 14.sp,
-                                color = Color(0xFF8B7355)
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToProfile) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "الملف الشخصي",
-                                tint = Color(0xFF6B5744)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    // أيقونة الملف الشخصي على اليسار
+                    IconButton(
+                        onClick = onNavigateToProfile,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "الملف الشخصي",
+                            tint = Color(0xFF6B5744)
+                        )
+                    }
+                    
+                    // نديم وخير جليس في المنتصف
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "نديم",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4A3F35)
+                        )
+                        Text(
+                            text = "خير جليس لحفظ كتاب اللَّهِ",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF6B5744)
+                        )
+                    }
+                }
             }
         ) { paddingValues ->
             LazyColumn(
@@ -136,6 +145,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
+                // عنوان "خير جليس لحفظ كتاب الله" في المنتصف
                 item {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -155,6 +165,7 @@ fun HomeScreen(
                     }
                 }
 
+                // التبويبات - شفافة مع حدود خفيفة
                 item {
                     Box(
                         modifier = Modifier
@@ -203,20 +214,45 @@ fun HomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "بحث",
-                                tint = Color(0xFF9B8B7A).copy(alpha = 0.5f),
+                                tint = Color(0xFF9B8B7A).copy(alpha = 0.6f),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "محمدين لا حجم يمين المسطلوة",
-                                fontSize = 14.sp,
-                                color = Color(0xFF9B8B7A).copy(alpha = 0.5f)
+                            
+                            // حقل البحث
+                            TextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = {
+                                    Text(
+                                        text = "ابحث عن سورة",
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF9B8B7A).copy(alpha = 0.5f)
+                                    )
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent,
+                                    focusedTextColor = Color(0xFF4A3F35),
+                                    unfocusedTextColor = Color(0xFF4A3F35),
+                                    cursorColor = Color(0xFFD4AF37)
+                                ),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Right
+                                )
                             )
                         }
                     }
