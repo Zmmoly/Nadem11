@@ -28,10 +28,14 @@ import awab.quran.ar.data.Ayah
 import awab.quran.ar.data.QuranRepository
 import awab.quran.ar.ui.screens.home.Surah
 
-// الخط العثماني
-private val UthmanicFont = FontFamily(
-    Font(R.font.uthmanic_hafs, FontWeight.Normal)
-)
+// الخط العثماني - استدعاء صحيح
+private val UthmanicFont = try {
+    FontFamily(
+        Font(R.font.uthmanic_hafs, FontWeight.Normal)
+    )
+} catch (e: Exception) {
+    null  // إذا فشل تحميل الخط، استخدم الافتراضي
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,6 +183,7 @@ fun BasmalaCard() {
         Text(
             text = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
             fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
             fontFamily = UthmanicFont,
             color = Color(0xFF4A3F35),
             textAlign = TextAlign.Center,
@@ -219,6 +224,7 @@ fun AyahCard(ayah: Ayah) {
             Text(
                 ayah.text,
                 fontSize = 24.sp,
+                fontWeight = FontWeight.Normal,
                 fontFamily = UthmanicFont,
                 color = Color(0xFF4A3F35),
                 textAlign = TextAlign.Right,
@@ -228,4 +234,3 @@ fun AyahCard(ayah: Ayah) {
         }
     }
 }
- 
