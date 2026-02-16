@@ -22,7 +22,13 @@ import java.nio.ByteOrder
 class DeepgramService(private val context: Context) {
     
     private val apiKey = "bd345e01709fb47368c5d12e56a124f2465fdf8d"
-    private val websocketUrl = "wss://api.deepgram.com/v1/listen?language=ar&model=nova-2&smart_format=false"
+    private val websocketUrl = "wss://api.deepgram.com/v1/listen?" +
+            "language=ar&" +
+            "model=nova-2&" +
+            "smart_format=false&" +
+            "encoding=linear16&" +
+            "sample_rate=16000&" +
+            "channels=1"
     
     private var webSocket: WebSocket? = null
     private var audioRecord: AudioRecord? = null
@@ -79,7 +85,8 @@ class DeepgramService(private val context: Context) {
      * إنشاء اتصال WebSocket مع Deepgram
      */
     private fun connectWebSocket() {
-        val client = OkHttpClient.Builder().build()
+        val client = OkHttpClient.Builder()
+            .build()
         
         val request = Request.Builder()
             .url(websocketUrl)
@@ -88,11 +95,13 @@ class DeepgramService(private val context: Context) {
         
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                println("Deepgram WebSocket opened successfully")
                 onConnectionEstablished?.invoke()
                 startAudioCapture()
             }
             
             override fun onMessage(webSocket: WebSocket, text: String) {
+                println("Received message: $text")
                 handleTranscription(text)
             }
             
@@ -101,12 +110,23 @@ class DeepgramService(private val context: Context) {
             }
             
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                onError?.invoke("خطأ في الاتصال: ${t.message}")
+                val errorMsg = "خطأ في الاتصال: ${t.message}"
+                println("WebSocket failure: ${t.message}")
+                println("Response: ${response?.code} - ${response?.message}")
+                response?.body?.string()?.let { body ->
+                    println("Response body: $body")
+                }
+                onError?.invoke(errorMsg)
                 stopRecitation()
             }
             
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                println("WebSocket closing: $code - $reason")
                 stopRecitation()
+            }
+            
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                println("WebSocket closed: $code - $reason")
             }
         })
     }
