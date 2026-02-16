@@ -48,6 +48,86 @@ fun convertToArabicNumerals(number: Int): String {
 }
 
 /**
+ * شريط اختيار الوضع (قراءة، تسميع، اختبار)
+ */
+@Composable
+fun ModeSelector(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit
+) {
+    val modes = listOf(
+        "اختبار" to "🧠",
+        "تسميع" to "🎤",
+        "قراءة" to "📖"
+    )
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(50.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF5EFE6)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            modes.forEach { (mode, icon) ->
+                ModeButton(
+                    mode = mode,
+                    icon = icon,
+                    isSelected = mode == selectedMode,
+                    onClick = { onModeSelected(mode) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * زر الوضع الواحد
+ */
+@Composable
+fun ModeButton(
+    mode: String,
+    icon: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .weight(1f)
+            .padding(4.dp),
+        shape = RoundedCornerShape(40.dp),
+        color = if (isSelected) Color(0xFFC4A962) else Color.Transparent,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = icon,
+                fontSize = 20.sp
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = mode,
+                fontSize = 16.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) Color.White else Color(0xFF6B5744)
+            )
+        }
+    }
+}
+
+/**
  * تحميل الخط العثماني من assets
  */
 @Composable
@@ -75,6 +155,9 @@ fun SurahScreen(
     val context = LocalContext.current
     val repository = remember { QuranPageRepository(context) }
     val uthmanicFont = rememberUthmanicFontFromAssets()
+    
+    // الوضع الحالي: قراءة، تسميع، اختبار
+    var selectedMode by remember { mutableStateOf("قراءة") }
     
     // البحث عن رقم الصفحة التي تبدأ بها السورة
     val initialPageNumber = remember(surah.number) {
@@ -151,29 +234,42 @@ fun SurahScreen(
                 )
             }
         ) { paddingValues ->
-            // ViewPager للتنقل بين الصفحات
-            HorizontalPager(
-                count = 604,
-                state = pagerState,
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                reverseLayout = true // من اليمين لليسار
-            ) { page ->
-                val displayPage = page + 1
+                    .padding(paddingValues)
+            ) {
+                // شريط الأوضاع (قراءة، تسميع، اختبار)
+                ModeSelector(
+                    selectedMode = selectedMode,
+                    onModeSelected = { selectedMode = it }
+                )
                 
-                when {
-                    isLoading && displayPage == currentPage -> {
-                        LoadingPage()
-                    }
-                    pageData != null && displayPage == currentPage -> {
-                        QuranPageContent(
-                            page = pageData!!,
-                            uthmanicFont = uthmanicFont
-                        )
-                    }
-                    else -> {
-                        LoadingPage()
+                // ViewPager للتنقل بين الصفحات
+                HorizontalPager(
+                    count = 604,
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    reverseLayout = true // من اليمين لليسار
+                ) { page ->
+                    val displayPage = page + 1
+                    
+                    when {
+                        isLoading && displayPage == currentPage -> {
+                            LoadingPage()
+                        }
+                        pageData != null && displayPage == currentPage -> {
+                            QuranPageContent(
+                                page = pageData!!,
+                                uthmanicFont = uthmanicFont,
+                                mode = selectedMode
+                            )
+                        }
+                        else -> {
+                            LoadingPage()
+                        }
                     }
                 }
             }
@@ -187,7 +283,8 @@ fun SurahScreen(
 @Composable
 fun QuranPageContent(
     page: QuranPage,
-    uthmanicFont: FontFamily?
+    uthmanicFont: FontFamily?,
+    mode: String = "قراءة"
 ) {
     LazyColumn(
         modifier = Modifier
@@ -415,4 +512,5 @@ fun LoadingPage() {
         )
     }
 }
+ 
  
