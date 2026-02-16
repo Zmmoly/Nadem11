@@ -143,7 +143,7 @@ class DeepgramService(private val context: Context) {
                 
                 if (readSize > 0) {
                     // تحويل البيانات إلى ByteString وإرسالها
-                    val byteString = ByteString.of(*buffer, 0, readSize)
+                    val byteString = buffer.toByteString(0, readSize)
                     webSocket?.send(byteString)
                 }
                 
