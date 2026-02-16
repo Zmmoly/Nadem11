@@ -282,7 +282,7 @@ fun QuranAyahText(
             textAlign = TextAlign.Right,
             lineHeight = 45.sp,
             modifier = Modifier.fillMaxWidth()
-        }
+        )
     }
 }
 
