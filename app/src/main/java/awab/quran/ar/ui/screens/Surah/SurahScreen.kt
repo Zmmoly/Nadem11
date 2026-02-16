@@ -93,7 +93,7 @@ fun ModeSelector(
  * زر الوضع الواحد
  */
 @Composable
-fun ModeButton(
+fun RowScope.ModeButton(
     mode: String,
     icon: String,
     isSelected: Boolean,
@@ -246,29 +246,33 @@ fun SurahScreen(
                 )
                 
                 // ViewPager للتنقل بين الصفحات
-                HorizontalPager(
-                    count = 604,
-                    state = pagerState,
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    reverseLayout = true // من اليمين لليسار
-                ) { page ->
-                    val displayPage = page + 1
-                    
-                    when {
-                        isLoading && displayPage == currentPage -> {
-                            LoadingPage()
-                        }
-                        pageData != null && displayPage == currentPage -> {
-                            QuranPageContent(
-                                page = pageData!!,
-                                uthmanicFont = uthmanicFont,
-                                mode = selectedMode
-                            )
-                        }
-                        else -> {
-                            LoadingPage()
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    HorizontalPager(
+                        count = 604,
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        reverseLayout = true // من اليمين لليسار
+                    ) { page ->
+                        val displayPage = page + 1
+                        
+                        when {
+                            isLoading && displayPage == currentPage -> {
+                                LoadingPage()
+                            }
+                            pageData != null && displayPage == currentPage -> {
+                                QuranPageContent(
+                                    page = pageData!!,
+                                    uthmanicFont = uthmanicFont,
+                                    mode = selectedMode
+                                )
+                            }
+                            else -> {
+                                LoadingPage()
+                            }
                         }
                     }
                 }
@@ -512,5 +516,4 @@ fun LoadingPage() {
         )
     }
 }
- 
  
