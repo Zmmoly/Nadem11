@@ -1,5 +1,6 @@
 package awab.quran.ar.ui.screens.surah
 
+import android.graphics.Typeface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,13 +28,17 @@ import awab.quran.ar.data.Ayah
 import awab.quran.ar.data.QuranRepository
 import awab.quran.ar.ui.screens.home.Surah
 
-// دالة آمنة لتحميل الخط العثماني
+// تحميل الخط من assets بطريقة آمنة
 @Composable
-fun rememberUthmanicFont(): FontFamily? {
+fun rememberUthmanicFontFromAssets(): FontFamily? {
+    val context = LocalContext.current
+    
     return remember {
         try {
-            FontFamily(Font(R.font.uthmanic_hafs, FontWeight.Normal))
+            val typeface = Typeface.createFromAsset(context.assets, "fonts/uthmanic_hafs.otf")
+            FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
         } catch (e: Exception) {
+            // إذا فشل، نعيد null وسيستخدم الخط الافتراضي
             null
         }
     }
@@ -48,7 +52,7 @@ fun SurahScreen(
 ) {
     val context = LocalContext.current
     val repository = remember { QuranRepository(context) }
-    val uthmanicFont = rememberUthmanicFont()
+    val uthmanicFont = rememberUthmanicFontFromAssets()
     
     var allAyahs by remember { mutableStateOf<List<Ayah>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -207,7 +211,7 @@ fun AyahCard(ayah: Ayah, font: FontFamily?) {
         )
     ) {
         Row(
-            Modifier.fillMaxSize().padding(16.dp),
+            Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -238,3 +242,4 @@ fun AyahCard(ayah: Ayah, font: FontFamily?) {
         }
     }
 }
+ 
