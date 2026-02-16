@@ -22,6 +22,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
@@ -32,6 +35,17 @@ import awab.quran.ar.ui.screens.home.Surah
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+
+/**
+ * تحويل الأرقام الإنجليزية إلى أرقام عربية
+ */
+fun convertToArabicNumerals(number: Int): String {
+    val arabicNumerals = arrayOf("٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩")
+    return number.toString().map { digit ->
+        if (digit.isDigit()) arabicNumerals[digit.toString().toInt()]
+        else digit.toString()
+    }.joinToString("")
+}
 
 /**
  * تحميل الخط العثماني من assets
@@ -182,16 +196,6 @@ fun QuranPageContent(
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // البسملة إذا كانت أول السورة (ما عدا التوبة)
-        val firstAyah = page.ayahs.firstOrNull()
-        if (firstAyah?.isFirstInSura == true && 
-            firstAyah.suraNumber != 1 && 
-            firstAyah.suraNumber != 9) {
-            item {
-                BasmalaHeader(font = uthmanicFont)
-            }
-        }
-        
         // عرض الآيات
         items(page.ayahs) { ayah ->
             QuranAyahText(
@@ -245,42 +249,39 @@ fun QuranAyahText(
                 suraNumber = ayah.suraNumber
             )
             Spacer(modifier = Modifier.height(8.dp))
+            
+            // البسملة بعد رأس السورة (ما عدا سورة التوبة والفاتحة)
+            if (ayah.suraNumber != 1 && ayah.suraNumber != 9) {
+                BasmalaHeader(font = font)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
         
-        // نص الآية
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.Top
-        ) {
-            // نص الآية
-            Text(
-                text = ayah.text,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Normal,
-                fontFamily = font,
-                color = Color(0xFF2C2416),
-                textAlign = TextAlign.Right,
-                lineHeight = 45.sp,
-                modifier = Modifier.weight(1f)
-            )
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            // رقم الآية في دائرة
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .background(Color(0xFF6B5744), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = ayah.ayaNumber.toString(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFD4AF37)
-                )
-            }
+        // نص الآية مع رقمها
+        Text(
+            text = buildAnnotatedString {
+                append(ayah.text)
+                append(" ")
+                // إضافة رقم الآية بشكل مزخرف
+                withStyle(
+                    style = SpanStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6B5744)
+                    )
+                ) {
+                    append("﴿")
+                    append(convertToArabicNumerals(ayah.ayaNumber))
+                    append("﴾")
+                }
+            },
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Normal,
+            fontFamily = font,
+            color = Color(0xFF2C2416),
+            textAlign = TextAlign.Right,
+            lineHeight = 45.sp,
+            modifier = Modifier.fillMaxWidth()
         }
     }
 }
