@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +28,18 @@ import awab.quran.ar.data.Ayah
 import awab.quran.ar.data.QuranRepository
 import awab.quran.ar.ui.screens.home.Surah
 
+// دالة آمنة لتحميل الخط العثماني
+@Composable
+fun rememberUthmanicFont(): FontFamily? {
+    return remember {
+        try {
+            FontFamily(Font(R.font.uthmanic_hafs, FontWeight.Normal))
+        } catch (e: Exception) {
+            null
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SurahScreen(
@@ -34,6 +48,7 @@ fun SurahScreen(
 ) {
     val context = LocalContext.current
     val repository = remember { QuranRepository(context) }
+    val uthmanicFont = rememberUthmanicFont()
     
     var allAyahs by remember { mutableStateOf<List<Ayah>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -147,11 +162,11 @@ fun SurahScreen(
                         contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
                         if (surah.number != 9) {
-                            item { BasmalaCard() }
+                            item { BasmalaCard(font = uthmanicFont) }
                         }
                         
                         items(processedAyahs.filter { it.text.isNotEmpty() }) { ayah ->
-                            AyahCard(ayah)
+                            AyahCard(ayah = ayah, font = uthmanicFont)
                         }
                     }
                 }
@@ -161,7 +176,7 @@ fun SurahScreen(
 }
 
 @Composable
-fun BasmalaCard() {
+fun BasmalaCard(font: FontFamily?) {
     Card(
         Modifier.fillMaxWidth().padding(vertical = 8.dp),
         shape = RoundedCornerShape(20.dp),
@@ -173,6 +188,7 @@ fun BasmalaCard() {
             text = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = font,
             color = Color(0xFF4A3F35),
             textAlign = TextAlign.Center,
             lineHeight = 50.sp,
@@ -182,7 +198,7 @@ fun BasmalaCard() {
 }
 
 @Composable
-fun AyahCard(ayah: Ayah) {
+fun AyahCard(ayah: Ayah, font: FontFamily?) {
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -191,7 +207,7 @@ fun AyahCard(ayah: Ayah) {
         )
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(16.dp),
+            Modifier.fillMaxSize().padding(16.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -213,6 +229,7 @@ fun AyahCard(ayah: Ayah) {
                 ayah.text,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Normal,
+                fontFamily = font,
                 color = Color(0xFF4A3F35),
                 textAlign = TextAlign.Right,
                 lineHeight = 50.sp,
