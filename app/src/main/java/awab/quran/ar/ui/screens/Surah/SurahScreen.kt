@@ -306,15 +306,17 @@ fun SurahScreen(
                     ) {
                         Spacer(modifier = Modifier.height(16.dp))
                         
-                        // البسملة (في الصفحة الأولى فقط، إلا سورة التوبة)
-                        if (currentPageIndex == 0 && surah.number != 9 && surah.number != 1) {
+                        // البسملة منفصلة (في الصفحة الأولى، إلا التوبة)
+                        if (currentPageIndex == 0 && surah.number != 9) {
                             BasmalaCard()
                         }
                         
-                        // صفحة الآيات
+                        // صفحة الآيات (بدون البسملة)
                         PageCard(
                             ayahs = currentPageAyahs,
-                            pageNumber = currentPageNumber
+                            pageNumber = currentPageNumber,
+                            isFirstPage = currentPageIndex == 0,
+                            surahNumber = surah.number
                         )
                         
                         Spacer(modifier = Modifier.height(80.dp))
@@ -347,7 +349,7 @@ fun BasmalaCard() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            lineHeight = 45.sp
+            lineHeight = 50.sp
         )
     }
 }
@@ -355,8 +357,27 @@ fun BasmalaCard() {
 @Composable
 fun PageCard(
     ayahs: List<Ayah>,
-    pageNumber: Int
+    pageNumber: Int,
+    isFirstPage: Boolean = false,
+    surahNumber: Int = 0
 ) {
+    val basmala = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
+    
+    // نزيل البسملة من الآية الأولى في الصفحة الأولى
+    val processedAyahs = if (isFirstPage && ayahs.isNotEmpty() && surahNumber != 9) {
+        ayahs.mapIndexed { index, ayah ->
+            if (index == 0 && ayah.text.startsWith(basmala)) {
+                // إزالة البسملة من النص
+                val textWithoutBasmala = ayah.text.substring(basmala.length).trim()
+                ayah.copy(text = textWithoutBasmala)
+            } else {
+                ayah
+            }
+        }
+    } else {
+        ayahs
+    }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -370,9 +391,11 @@ fun PageCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // الآيات
-            ayahs.forEach { ayah ->
-                AyahText(ayah)
+            // الآيات (بدون البسملة)
+            processedAyahs.forEach { ayah ->
+                if (ayah.text.isNotEmpty()) {  // تجاهل الآيات الفارغة
+                    AyahText(ayah)
+                }
             }
         }
     }
