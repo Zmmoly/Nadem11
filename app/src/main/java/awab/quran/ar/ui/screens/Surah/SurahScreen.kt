@@ -1,6 +1,11 @@
 package awab.quran.ar.ui.screens.surah
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Typeface
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,11 +32,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import awab.quran.ar.R
 import awab.quran.ar.data.QuranPageRepository
 import awab.quran.ar.data.PageAyah
 import awab.quran.ar.data.QuranPage
 import awab.quran.ar.ui.screens.home.Surah
+import awab.quran.ar.services.DeepgramService
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
@@ -290,6 +297,33 @@ fun QuranPageContent(
     uthmanicFont: FontFamily?,
     mode: String = "قراءة"
 ) {
+    val context = LocalContext.current
+    
+    when (mode) {
+        "تسميع" -> {
+            RecitationMode(
+                page = page,
+                context = context
+            )
+        }
+        "اختبار" -> {
+            // سيتم إضافة وضع الاختبار لاحقاً
+            ReadingMode(page = page, uthmanicFont = uthmanicFont)
+        }
+        else -> {
+            ReadingMode(page = page, uthmanicFont = uthmanicFont)
+        }
+    }
+}
+
+/**
+ * وضع القراءة العادي
+ */
+@Composable
+fun ReadingMode(
+    page: QuranPage,
+    uthmanicFont: FontFamily?
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -310,6 +344,197 @@ fun QuranPageContent(
         item {
             Spacer(modifier = Modifier.height(16.dp))
             PageNumberFooter(pageNumber = page.pageNumber)
+        }
+    }
+}
+
+/**
+ * وضع التسميع
+ */
+@Composable
+fun RecitationMode(
+    page: QuranPage,
+    context: Context
+) {
+    val deepgramService = remember { DeepgramService(context) }
+    var transcribedText by remember { mutableStateOf("") }
+    var isRecording by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // طلب صلاحية الميكروفون
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // تم منح الصلاحية - بدء التسميع
+            transcribedText = ""
+            errorMessage = null
+            deepgramService.startRecitation()
+        } else {
+            // لم يتم منح الصلاحية
+            errorMessage = "يجب السماح بصلاحية الميكروفون للتسميع"
+        }
+    }
+    
+    // تنظيف الموارد عند الخروج
+    DisposableEffect(Unit) {
+        onDispose {
+            if (isRecording) {
+                deepgramService.stopRecitation()
+            }
+        }
+    }
+    
+    // معالجة النصوص المستلمة
+    LaunchedEffect(Unit) {
+        deepgramService.onTranscriptionReceived = { text ->
+            transcribedText += " $text"
+        }
+        
+        deepgramService.onError = { error ->
+            errorMessage = error
+            isRecording = false
+        }
+        
+        deepgramService.onConnectionEstablished = {
+            isRecording = true
+        }
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // أيقونة الميكروفون
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // دائرة متحركة عند التسجيل
+            if (isRecording) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = Color(0xFFD4AF37).copy(alpha = 0.3f),
+                            shape = CircleShape
+                        )
+                )
+            }
+            
+            // أيقونة الميكروفون
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_btn_speak_now),
+                contentDescription = "ميكروفون",
+                modifier = Modifier.size(80.dp),
+                tint = if (isRecording) Color(0xFFD4AF37) else Color(0xFF6B5744)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // زر بدء/إيقاف التسجيل
+        Button(
+            onClick = {
+                if (isRecording) {
+                    deepgramService.stopRecitation()
+                    isRecording = false
+                } else {
+                    // التحقق من الصلاحية قبل البدء
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        transcribedText = ""
+                        errorMessage = null
+                        deepgramService.startRecitation()
+                    } else {
+                        // طلب الصلاحية
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isRecording) Color(0xFFD32F2F) else Color(0xFF6B5744)
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Text(
+                text = if (isRecording) "إيقاف التسميع" else "بدء التسميع",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // رسالة الخطأ
+        errorMessage?.let { error ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFEBEE)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = error,
+                    color = Color(0xFFD32F2F),
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        
+        // النص المنطوق
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFF5EFE6)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "النص المنطوق:",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF6B5744)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    item {
+                        Text(
+                            text = transcribedText.ifEmpty { "ابدأ التسميع..." },
+                            fontSize = 20.sp,
+                            color = Color(0xFF2C2416),
+                            textAlign = TextAlign.Right,
+                            lineHeight = 40.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }
