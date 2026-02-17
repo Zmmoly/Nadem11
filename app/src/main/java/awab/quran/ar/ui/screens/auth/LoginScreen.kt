@@ -229,10 +229,28 @@ fun LoginScreen(
                 SocialButton(R.drawable.ic_facebook, "Facebook")
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            MicButton()
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("أضغط لبدء التسميع", fontSize = 14.sp, color = Color(0xFF8B7355))
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // رابط إنشاء حساب جديد
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "ليس لديك حساب؟ ",
+                    fontSize = 14.sp,
+                    color = Color(0xFF8B7355)
+                )
+                Text(
+                    text = "إنشاء حساب",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4A7C59),
+                    modifier = Modifier.clickable { onNavigateToRegister() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
