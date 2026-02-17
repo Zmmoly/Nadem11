@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -388,16 +391,22 @@ fun RecitationMode(
     // معالجة النصوص المستلمة
     LaunchedEffect(Unit) {
         deepgramService.onTranscriptionReceived = { text ->
-            transcribedText += " $text"
+            CoroutineScope(Dispatchers.Main).launch {
+                transcribedText += " $text"
+            }
         }
         
         deepgramService.onError = { error ->
-            errorMessage = error
-            isRecording = false
+            CoroutineScope(Dispatchers.Main).launch {
+                errorMessage = error
+                isRecording = false
+            }
         }
         
         deepgramService.onConnectionEstablished = {
-            isRecording = true
+            CoroutineScope(Dispatchers.Main).launch {
+                isRecording = true
+            }
         }
     }
     
