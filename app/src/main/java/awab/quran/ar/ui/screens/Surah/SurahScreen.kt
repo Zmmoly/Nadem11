@@ -400,7 +400,7 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 fun playErrorSound() {
     try {
         val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
-        toneGen.startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR, 400)
+        toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 400)
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -412,12 +412,13 @@ fun playErrorSound() {
  */
 fun buildColoredText(
     spokenWords: List<String>,
-    referenceWords: List<String>
+    referenceWords: List<String>,
+    settings: awab.quran.ar.data.RecitationSettings = awab.quran.ar.data.RecitationSettings()
 ): androidx.compose.ui.text.AnnotatedString {
     return buildAnnotatedString {
         spokenWords.forEachIndexed { index, word ->
             val refWord = referenceWords.getOrNull(index) ?: ""
-            val isCorrect = normalizeArabic(word) == normalizeArabic(refWord)
+            val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
             withStyle(
                 SpanStyle(
                     color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
