@@ -25,7 +25,7 @@ class DeepgramService(private val context: Context) {
     private val websocketUrl = "wss://api.deepgram.com/v1/listen?" +
             "token=$apiKey&" +
             "language=ar&" +
-            "model=nova-2&" +
+            "model=nova-3&" +
             "smart_format=false&" +
             "encoding=linear16&" +
             "sample_rate=16000&" +
