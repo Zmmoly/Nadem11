@@ -23,6 +23,7 @@ class DeepgramService(private val context: Context) {
     
     private val apiKey = "bd345e01709fb47368c5d12e56a124f2465fdf8d"
     private val websocketUrl = "wss://api.deepgram.com/v1/listen?" +
+            "token=$apiKey&" +
             "language=ar&" +
             "model=nova-2&" +
             "smart_format=false&" +
@@ -86,11 +87,13 @@ class DeepgramService(private val context: Context) {
      */
     private fun connectWebSocket() {
         val client = OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(0, java.util.concurrent.TimeUnit.SECONDS)   // 0 = لا timeout للقراءة
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .build()
         
         val request = Request.Builder()
             .url(websocketUrl)
-            .addHeader("Authorization", "Token $apiKey")
             .build()
         
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
