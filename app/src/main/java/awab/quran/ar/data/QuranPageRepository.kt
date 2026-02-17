@@ -49,12 +49,22 @@ class QuranPageRepository(private val context: Context) {
                 val isLastInPage = (currentSura == pageInfo.endSura && 
                                    currentAya == pageInfo.endAya)
                 
+                // حذف البسملة من نص الآية الأولى لأنها تُعرض منفصلة كـ BasmalaHeader
+                // (ما عدا الفاتحة التي بسملتها هي الآية 1، والتوبة التي لا بسملة لها)
+                val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
+                val ayahText = if (isFirstInSura && currentSura != 1 && currentSura != 9 &&
+                    ayah.text.startsWith(basmalaPrefix)) {
+                    ayah.text.removePrefix(basmalaPrefix).trim()
+                } else {
+                    ayah.text
+                }
+
                 ayahs.add(
                     PageAyah(
                         suraNumber = currentSura,
                         suraName = suraName,
                         ayaNumber = currentAya,
-                        text = ayah.text,
+                        text = ayahText,
                         isFirstInPage = isFirstAyah,
                         isLastInPage = isLastInPage,
                         isFirstInSura = isFirstInSura,
