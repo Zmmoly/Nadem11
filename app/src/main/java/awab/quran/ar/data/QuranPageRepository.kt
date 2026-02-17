@@ -51,7 +51,7 @@ class QuranPageRepository(private val context: Context) {
                 
                 // حذف البسملة من نص الآية الأولى لأنها تُعرض منفصلة كـ BasmalaHeader
                 // (ما عدا الفاتحة التي بسملتها هي الآية 1، والتوبة التي لا بسملة لها)
-                val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
+                val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
                 val ayahText = if (isFirstInSura && currentSura != 1 && currentSura != 9 &&
                     ayah.text.startsWith(basmalaPrefix)) {
                     ayah.text.removePrefix(basmalaPrefix).trim()
