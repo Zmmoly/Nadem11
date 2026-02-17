@@ -323,29 +323,107 @@ fun QuranPageContent(
 }
 
 /**
- * وضع القراءة العادي
+ * وضع القراءة العادي - يعرض النص كمصحف متدفق
  */
 @Composable
 fun ReadingMode(
     page: QuranPage,
     uthmanicFont: FontFamily?
 ) {
+    // تجميع الآيات في مجموعات: كل مجموعة تبدأ برأس سورة أو هي استمرار
+    data class AyahGroup(
+        val surahHeader: String? = null,   // اسم السورة إذا كانت بداية سورة
+        val surahNumber: Int = 0,
+        val showBasmala: Boolean = false,
+        val ayahs: List<PageAyah>
+    )
+
+    val groups = remember(page) {
+        val result = mutableListOf<AyahGroup>()
+        var currentGroup = mutableListOf<PageAyah>()
+        var currentSura = -1
+
+        for (ayah in page.ayahs) {
+            if (ayah.isFirstInSura && ayah.isFirstInPage || 
+                (ayah.isFirstInSura && ayah.suraNumber != currentSura)) {
+                // حفظ المجموعة السابقة
+                if (currentGroup.isNotEmpty()) {
+                    result.add(AyahGroup(ayahs = currentGroup.toList()))
+                    currentGroup = mutableListOf()
+                }
+                // بدء مجموعة جديدة برأس سورة
+                currentSura = ayah.suraNumber
+                currentGroup.add(ayah)
+                result.add(AyahGroup(
+                    surahHeader = ayah.suraName,
+                    surahNumber = ayah.suraNumber,
+                    showBasmala = ayah.suraNumber != 1 && ayah.suraNumber != 9,
+                    ayahs = currentGroup.toList()
+                ))
+                currentGroup = mutableListOf()
+            } else {
+                currentSura = ayah.suraNumber
+                currentGroup.add(ayah)
+            }
+        }
+        if (currentGroup.isNotEmpty()) {
+            result.add(AyahGroup(ayahs = currentGroup.toList()))
+        }
+        result
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        // عرض الآيات
-        items(page.ayahs) { ayah ->
-            QuranAyahText(
-                ayah = ayah,
-                font = uthmanicFont,
-                showSuraHeader = ayah.isFirstInPage && ayah.isFirstInSura
-            )
+        items(groups.size) { idx ->
+            val group = groups[idx]
+
+            Column {
+                // رأس السورة
+                if (group.surahHeader != null) {
+                    SuraHeader(
+                        suraName = group.surahHeader,
+                        suraNumber = group.surahNumber
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (group.showBasmala) {
+                        BasmalaHeader(font = uthmanicFont)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                // كل آيات المجموعة في Text واحد متدفق
+                if (group.ayahs.isNotEmpty()) {
+                    Text(
+                        text = buildAnnotatedString {
+                            group.ayahs.forEach { ayah ->
+                                append(ayah.text)
+                                append(" ")
+                                withStyle(SpanStyle(
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF6B5744)
+                                )) {
+                                    append("﴿")
+                                    append(convertToArabicNumerals(ayah.ayaNumber))
+                                    append("﴾")
+                                }
+                                append(" ")
+                            }
+                        },
+                        fontSize = 22.sp,
+                        fontFamily = uthmanicFont,
+                        color = Color(0xFF2C2416),
+                        textAlign = TextAlign.Right,
+                        lineHeight = 48.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
-        
+
         // رقم الصفحة في الأسفل
         item {
             Spacer(modifier = Modifier.height(16.dp))
