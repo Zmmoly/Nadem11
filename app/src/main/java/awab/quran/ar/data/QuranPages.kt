@@ -4302,9 +4302,17 @@ object QuranPages {
      */
     fun getPageForAya(surahNumber: Int, ayaNumber: Int): Int? {
         return allPages.find { page ->
-            page.startSura == surahNumber && 
-            ayaNumber >= page.startAya && 
-            ayaNumber <= page.endAya
+            // السورة تبدأ في هذه الصفحة
+            (page.startSura == surahNumber && page.endSura == surahNumber &&
+             ayaNumber >= page.startAya && ayaNumber <= page.endAya) ||
+            // السورة تبدأ في هذه الصفحة وتمتد لما بعدها
+            (page.startSura == surahNumber && page.endSura != surahNumber &&
+             ayaNumber >= page.startAya) ||
+            // السورة تمتد من صفحة سابقة وتنتهي في هذه الصفحة
+            (page.startSura != surahNumber && page.endSura == surahNumber &&
+             ayaNumber <= page.endAya) ||
+            // السورة تمتد عبر هذه الصفحة كاملة
+            (page.startSura < surahNumber && page.endSura > surahNumber)
         }?.pageNumber
     }
 }
