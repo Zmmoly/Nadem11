@@ -371,7 +371,8 @@ fun RecitationMode(
     ) { isGranted ->
         if (isGranted) {
             // تم منح الصلاحية - بدء التسميع
-            transcribedText = ""
+            finalText = ""
+            interimText = ""
             errorMessage = null
             deepgramService.startRecitation()
         } else {
@@ -779,4 +780,5 @@ fun LoadingPage() {
         )
     }
 }
+ 
  
