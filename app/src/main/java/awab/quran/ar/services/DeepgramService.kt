@@ -19,7 +19,15 @@ import org.json.JSONObject
 class DeepgramService(private val context: Context) {
 
     private val apiKey = "bd345e01709fb47368c5d12e56a124f2465fdf8d"
-    private val websocketUrl = "wss://api.deepgram.com/v1/listen?language=ar&model=nova-3&smart_format=false"
+
+    // الـ API Key عبر Header + encoding وsample_rate في URL
+    private val websocketUrl = "wss://api.deepgram.com/v1/listen?" +
+            "language=ar&" +
+            "model=nova-3&" +
+            "smart_format=false&" +
+            "encoding=linear16&" +
+            "sample_rate=16000&" +
+            "channels=1"
 
     private var webSocket: WebSocket? = null
     private var audioRecord: AudioRecord? = null
@@ -29,8 +37,6 @@ class DeepgramService(private val context: Context) {
     private val sampleRate = 16000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-
-    // حجم buffer أكبر = 20ms من الصوت
     private val bufferSize = maxOf(
         AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4,
         3200
@@ -126,7 +132,6 @@ class DeepgramService(private val context: Context) {
             bufferSize
         )
 
-        // التحقق من أن AudioRecord تم تهيئته بشكل صحيح
         if (recorder.state != AudioRecord.STATE_INITIALIZED) {
             onError?.invoke("فشل في تهيئة الميكروفون")
             recorder.release()
@@ -144,19 +149,11 @@ class DeepgramService(private val context: Context) {
             while (isActive && isRecording) {
                 val readSize = recorder.read(buffer, 0, buffer.size)
 
-                when {
-                    readSize > 0 -> {
-                        val byteArray = buffer.copyOfRange(0, readSize)
-                        val byteString = ByteString.of(*byteArray)
-                        val sent = webSocket?.send(byteString) ?: false
-                        println("🔊 Sent $readSize bytes, success=$sent")
-                    }
-                    readSize == AudioRecord.ERROR_INVALID_OPERATION -> {
-                        println("❌ ERROR_INVALID_OPERATION")
-                    }
-                    readSize == AudioRecord.ERROR_BAD_VALUE -> {
-                        println("❌ ERROR_BAD_VALUE")
-                    }
+                if (readSize > 0) {
+                    val byteArray = buffer.copyOfRange(0, readSize)
+                    val byteString = ByteString.of(*byteArray)
+                    val sent = webSocket?.send(byteString) ?: false
+                    println("🔊 Sent $readSize bytes, success=$sent")
                 }
             }
             println("🛑 Audio capture loop ended")
