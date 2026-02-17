@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,15 +50,37 @@ fun HomeScreen(
     var userName by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf("الكل") }
     var searchQuery by remember { mutableStateOf("") }
+    var favoriteSurahs by remember { mutableStateOf<Set<Int>>(emptySet()) }
 
-    // جلب بيانات المستخدم
+    // جلب بيانات المستخدم والمفضلة
     LaunchedEffect(Unit) {
         auth.currentUser?.uid?.let { userId ->
             firestore.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     userName = document.getString("fullName") ?: ""
+                    @Suppress("UNCHECKED_CAST")
+                    val favList = document.get("favoriteSurahs") as? List<Long> ?: emptyList()
+                    favoriteSurahs = favList.map { it.toInt() }.toSet()
                 }
         }
+    }
+
+    // دالة تبديل المفضلة
+    fun toggleFavorite(surahNumber: Int) {
+        val userId = auth.currentUser?.uid ?: return
+        val newFavorites = if (surahNumber in favoriteSurahs) {
+            favoriteSurahs - surahNumber
+        } else {
+            favoriteSurahs + surahNumber
+        }
+        favoriteSurahs = newFavorites
+        firestore.collection("users").document(userId)
+            .update("favoriteSurahs", newFavorites.toList())
+            .addOnFailureListener {
+                // إذا لم يكن الحقل موجوداً، أنشئه
+                firestore.collection("users").document(userId)
+                    .set(mapOf("favoriteSurahs" to newFavorites.toList()), com.google.firebase.firestore.SetOptions.merge())
+            }
     }
 
     // قائمة السور الكاملة (114 سورة)
@@ -187,7 +210,7 @@ fun HomeScreen(
             surah.translatedName.contains(searchQuery, ignoreCase = true)
         
         val matchesTab = when (selectedTab) {
-            "المفضلة" -> true
+            "المفضلة" -> surah.number in favoriteSurahs
             "اخر قراءة" -> true
             else -> true
         }
@@ -354,6 +377,8 @@ fun HomeScreen(
                 items(filteredSurahs) { surah ->
                     GoldenSurahCard(
                         surah = surah,
+                        isFavorite = surah.number in favoriteSurahs,
+                        onFavoriteClick = { toggleFavorite(surah.number) },
                         onClick = { onSurahClick(surah) }
                     )
                 }
@@ -419,6 +444,8 @@ fun TransparentTabButton(
 @Composable
 fun GoldenSurahCard(
     surah: Surah,
+    isFavorite: Boolean = false,
+    onFavoriteClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
     Card(
@@ -435,6 +462,22 @@ fun GoldenSurahCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
+            // نجمة المفضلة في الزاوية العلوية اليسرى
+            IconButton(
+                onClick = { onFavoriteClick() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .size(32.dp)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
+                    contentDescription = if (isFavorite) "إزالة من المفضلة" else "إضافة للمفضلة",
+                    tint = if (isFavorite) Color(0xFFD4AF37) else Color(0xFFBBAA99),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxSize()
