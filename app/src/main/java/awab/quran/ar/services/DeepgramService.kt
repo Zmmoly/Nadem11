@@ -10,14 +10,11 @@ import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.*
 import okio.ByteString
 import org.json.JSONObject
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 class DeepgramService(private val context: Context) {
 
@@ -32,19 +29,20 @@ class DeepgramService(private val context: Context) {
     private val sampleRate = 16000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+
+    // حجم buffer أكبر = 20ms من الصوت
+    private val bufferSize = maxOf(
+        AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4,
+        3200
+    )
 
     var onTranscriptionReceived: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
 
-    /**
-     * بدء التسميع والاتصال بـ Deepgram
-     */
     fun startRecitation() {
         if (isRecording) return
 
-        // التحقق من صلاحية الميكروفون
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.RECORD_AUDIO
@@ -54,32 +52,30 @@ class DeepgramService(private val context: Context) {
             return
         }
 
-        // إنشاء اتصال WebSocket
         connectWebSocket()
     }
 
-    /**
-     * إيقاف التسميع
-     */
     fun stopRecitation() {
         isRecording = false
         recordingJob?.cancel()
         recordingJob = null
 
-        audioRecord?.stop()
-        audioRecord?.release()
+        try {
+            audioRecord?.stop()
+            audioRecord?.release()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         audioRecord = null
 
-        // إغلاق WebSocket
         webSocket?.close(1000, "تم إنهاء التسميع")
         webSocket = null
     }
 
-    /**
-     * إنشاء اتصال WebSocket مع Deepgram
-     */
     private fun connectWebSocket() {
-        val client = OkHttpClient.Builder().build()
+        val client = OkHttpClient.Builder()
+            .readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .build()
 
         val request = Request.Builder()
             .url(websocketUrl)
@@ -88,32 +84,31 @@ class DeepgramService(private val context: Context) {
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                println("✅ WebSocket opened")
                 onConnectionEstablished?.invoke()
                 startAudioCapture()
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                println("📩 Message: $text")
                 handleTranscription(text)
             }
 
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                // غير مستخدم
-            }
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {}
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                println("❌ WebSocket failure: ${t.message}")
                 onError?.invoke("خطأ في الاتصال: ${t.message}")
                 stopRecitation()
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                println("🔴 WebSocket closing: $code - $reason")
                 stopRecitation()
             }
         })
     }
 
-    /**
-     * بدء التقاط الصوت وإرساله للـ WebSocket
-     */
     private fun startAudioCapture() {
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -123,45 +118,55 @@ class DeepgramService(private val context: Context) {
             return
         }
 
-        audioRecord = AudioRecord(
+        val recorder = AudioRecord(
             MediaRecorder.AudioSource.MIC,
             sampleRate,
             channelConfig,
             audioFormat,
-            bufferSize * 2
+            bufferSize
         )
 
-        audioRecord?.startRecording()
-        isRecording = true
+        // التحقق من أن AudioRecord تم تهيئته بشكل صحيح
+        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+            onError?.invoke("فشل في تهيئة الميكروفون")
+            recorder.release()
+            return
+        }
 
-        // بدء إرسال الصوت في الخلفية
+        audioRecord = recorder
+        recorder.startRecording()
+        isRecording = true
+        println("🎤 Audio capture started, bufferSize=$bufferSize")
+
         recordingJob = CoroutineScope(Dispatchers.IO).launch {
             val buffer = ByteArray(bufferSize)
 
             while (isActive && isRecording) {
-                val readSize = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                val readSize = recorder.read(buffer, 0, buffer.size)
 
-                if (readSize > 0) {
-                    // تحويل البيانات إلى ByteString وإرسالها
-                    val byteArray = buffer.copyOfRange(0, readSize)
-                    val byteString = ByteString.of(*byteArray)
-                    webSocket?.send(byteString)
+                when {
+                    readSize > 0 -> {
+                        val byteArray = buffer.copyOfRange(0, readSize)
+                        val byteString = ByteString.of(*byteArray)
+                        val sent = webSocket?.send(byteString) ?: false
+                        println("🔊 Sent $readSize bytes, success=$sent")
+                    }
+                    readSize == AudioRecord.ERROR_INVALID_OPERATION -> {
+                        println("❌ ERROR_INVALID_OPERATION")
+                    }
+                    readSize == AudioRecord.ERROR_BAD_VALUE -> {
+                        println("❌ ERROR_BAD_VALUE")
+                    }
                 }
-
-                // تأخير صغير لتجنب الضغط الزائد
-                delay(10)
             }
+            println("🛑 Audio capture loop ended")
         }
     }
 
-    /**
-     * معالجة النص المستلم من Deepgram
-     */
     private fun handleTranscription(jsonText: String) {
         try {
             val json = JSONObject(jsonText)
 
-            // التحقق من وجود نتيجة
             if (json.has("channel")) {
                 val channel = json.getJSONObject("channel")
                 val alternatives = channel.getJSONArray("alternatives")
@@ -169,7 +174,6 @@ class DeepgramService(private val context: Context) {
                 if (alternatives.length() > 0) {
                     val transcript = alternatives.getJSONObject(0).getString("transcript")
 
-                    // إرسال النص المستخرج
                     if (transcript.isNotEmpty()) {
                         onTranscriptionReceived?.invoke(transcript)
                     }
@@ -180,8 +184,5 @@ class DeepgramService(private val context: Context) {
         }
     }
 
-    /**
-     * التحقق من حالة التسجيل
-     */
     fun isRecording(): Boolean = isRecording
 }
