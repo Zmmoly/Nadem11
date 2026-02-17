@@ -439,9 +439,55 @@ fun GoldenSurahCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // دائرة ذهبية مع زخرفة
+                // سهم التنقل (يمين)
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "فتح",
+                    tint = Color(0xFF9B8B7A),
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // اسم السورة ومعلوماتها (وسط - يمين)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = surah.name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4A3F35)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${surah.verses} آية",
+                            fontSize = 13.sp,
+                            color = Color(0xFF7A6B5A)
+                        )
+                        Text(
+                            text = " • ",
+                            fontSize = 13.sp,
+                            color = Color(0xFF7A6B5A)
+                        )
+                        Text(
+                            text = surah.revelationType,
+                            fontSize = 13.sp,
+                            color = Color(0xFF7A6B5A)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // دائرة ذهبية مع رقم السورة (يسار)
                 Box(
                     modifier = Modifier.size(80.dp),
                     contentAlignment = Alignment.Center
@@ -512,49 +558,6 @@ fun GoldenSurahCard(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = surah.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4A3F35)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${surah.verses} آية",
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
-                        Text(
-                            text = " • ",
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
-                        Text(
-                            text = surah.revelationType,
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Icon(
-                    imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "فتح",
-                    tint = Color(0xFF9B8B7A),
-                    modifier = Modifier.size(24.dp)
-                )
             }
         }
     }
