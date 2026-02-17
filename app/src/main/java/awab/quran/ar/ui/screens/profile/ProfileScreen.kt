@@ -362,7 +362,7 @@ fun ProfileScreen(
                         }
                     )
 
-                    HorizontalDivider(color = Color(0xFFE0D5C5))
+                    Divider(color = Color(0xFFE0D5C5))
 
                     SettingToggleRow(
                         title = "حرف الحاء",
@@ -375,7 +375,7 @@ fun ProfileScreen(
                         }
                     )
 
-                    HorizontalDivider(color = Color(0xFFE0D5C5))
+                    Divider(color = Color(0xFFE0D5C5))
 
                     SettingToggleRow(
                         title = "حرف العين",
@@ -388,7 +388,7 @@ fun ProfileScreen(
                         }
                     )
 
-                    HorizontalDivider(color = Color(0xFFE0D5C5))
+                    Divider(color = Color(0xFFE0D5C5))
 
                     SettingToggleRow(
                         title = "المدود",
@@ -401,7 +401,7 @@ fun ProfileScreen(
                         }
                     )
 
-                    HorizontalDivider(color = Color(0xFFE0D5C5))
+                    Divider(color = Color(0xFFE0D5C5))
 
                     SettingToggleRow(
                         title = "مواضع الوقف",
