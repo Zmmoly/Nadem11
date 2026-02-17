@@ -20,8 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
+import awab.quran.ar.data.RecitationSettings
+import awab.quran.ar.data.RecitationSettingsRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +42,15 @@ fun ProfileScreen(
     var totalRecitations by remember { mutableStateOf(0) }
     var completedSurahs by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
+    val settingsRepo = remember { RecitationSettingsRepository(context) }
+    val scope = rememberCoroutineScope()
+    var settings by remember { mutableStateOf(RecitationSettings()) }
+
+    LaunchedEffect(Unit) {
+        settingsRepo.settingsFlow.collect { settings = it }
+    }
 
     LaunchedEffect(Unit) {
         auth.currentUser?.let { user ->
@@ -224,9 +236,7 @@ fun ProfileScreen(
                         ProfileOption(
                             icon = Icons.Default.Settings,
                             title = "الإعدادات",
-                            onClick = {
-                                Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                            }
+                            onClick = { showSettingsDialog = true }
                         )
                         
                         Divider(color = Color(0xFFD4C5A9))
@@ -319,6 +329,103 @@ fun ProfileScreen(
             containerColor = Color(0xFFF5F3ED)
         )
     }
+
+    // Dialog إعدادات التسميع
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = {
+                Text(
+                    text = "إعدادات التسميع",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF4A3F35)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "الأخطاء التي يتم تجاهلها:",
+                        fontSize = 14.sp,
+                        color = Color(0xFF8B7355),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    SettingToggleRow(
+                        title = "التشكيل",
+                        subtitle = "تجاهل الحركات والتنوين",
+                        checked = settings.ignoreTashkeel,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreTashkeel = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+
+                    HorizontalDivider(color = Color(0xFFE0D5C5))
+
+                    SettingToggleRow(
+                        title = "حرف الحاء",
+                        subtitle = "تجاهل الخلط بين ح و ه",
+                        checked = settings.ignoreHaa,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreHaa = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+
+                    HorizontalDivider(color = Color(0xFFE0D5C5))
+
+                    SettingToggleRow(
+                        title = "حرف العين",
+                        subtitle = "تجاهل الخلط بين ع و أ و ء",
+                        checked = settings.ignoreAyn,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreAyn = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+
+                    HorizontalDivider(color = Color(0xFFE0D5C5))
+
+                    SettingToggleRow(
+                        title = "المدود",
+                        subtitle = "تجاهل أخطاء المد والقصر",
+                        checked = settings.ignoreMadd,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreMadd = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+
+                    HorizontalDivider(color = Color(0xFFE0D5C5))
+
+                    SettingToggleRow(
+                        title = "مواضع الوقف",
+                        subtitle = "تجاهل كلمات الوقف والوصل",
+                        checked = settings.ignoreWaqf,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreWaqf = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showSettingsDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744))
+                ) {
+                    Text("حفظ", color = Color.White)
+                }
+            },
+            containerColor = Color(0xFFF5F3ED)
+        )
+    }
 }
 
 @Composable
@@ -395,5 +502,45 @@ fun ProfileOption(
                 tint = Color(0xFF8B7355)
             )
         }
+    }
+}
+
+@Composable
+fun SettingToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF4A3F35)
+            )
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF9E8E7E)
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF6B5744),
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = Color(0xFFD4C5A9)
+            )
+        )
     }
 }
