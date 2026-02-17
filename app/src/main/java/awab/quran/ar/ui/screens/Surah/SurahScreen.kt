@@ -360,7 +360,8 @@ fun RecitationMode(
     context: Context
 ) {
     val deepgramService = remember { DeepgramService(context) }
-    var transcribedText by remember { mutableStateOf("") }
+    var finalText by remember { mutableStateOf("") }
+    var interimText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
@@ -390,9 +391,18 @@ fun RecitationMode(
     
     // معالجة النصوص المستلمة
     LaunchedEffect(Unit) {
+        // نتيجة نهائية - تضاف للنص الكامل وتُمسح المؤقتة
         deepgramService.onTranscriptionReceived = { text ->
             CoroutineScope(Dispatchers.Main).launch {
-                transcribedText += " $text"
+                finalText += "$text "
+                interimText = ""
+            }
+        }
+
+        // نتيجة مؤقتة - تُعرض فوراً
+        deepgramService.onInterimTranscription = { text ->
+            CoroutineScope(Dispatchers.Main).launch {
+                interimText = text
             }
         }
         
@@ -453,17 +463,16 @@ fun RecitationMode(
                     deepgramService.stopRecitation()
                     isRecording = false
                 } else {
-                    // التحقق من الصلاحية قبل البدء
                     if (ActivityCompat.checkSelfPermission(
                             context,
                             Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
-                        transcribedText = ""
+                        finalText = ""
+                        interimText = ""
                         errorMessage = null
                         deepgramService.startRecitation()
                     } else {
-                        // طلب الصلاحية
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
                 }
@@ -534,13 +543,33 @@ fun RecitationMode(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     item {
-                        Text(
-                            text = transcribedText.ifEmpty { "ابدأ التسميع..." },
-                            fontSize = 20.sp,
-                            color = Color(0xFF2C2416),
-                            textAlign = TextAlign.Right,
-                            lineHeight = 40.sp
-                        )
+                        if (finalText.isEmpty() && interimText.isEmpty()) {
+                            // لا يوجد نص بعد
+                            Text(
+                                text = "ابدأ التسميع...",
+                                fontSize = 20.sp,
+                                color = Color(0xFF9E9E9E),
+                                textAlign = TextAlign.Right,
+                                lineHeight = 40.sp
+                            )
+                        } else {
+                            Text(
+                                text = buildAnnotatedString {
+                                    // النص النهائي
+                                    withStyle(SpanStyle(color = Color(0xFF2C2416))) {
+                                        append(finalText)
+                                    }
+                                    // النص المؤقت بلون أفتح
+                                    withStyle(SpanStyle(color = Color(0xFF9E7B5A))) {
+                                        append(interimText)
+                                    }
+                                },
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Right,
+                                lineHeight = 40.sp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
