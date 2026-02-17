@@ -360,8 +360,13 @@ fun ReadingMode(
 fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSettings): String {
     var result = text
 
+    // تنظيف النص المرجعي من الرموز الخاصة
+    result = result.replace(Regex("\\(\\d+\\)"), "")  // أرقام الآيات
+    result = result.replace("ٱ", "ا")            // ٱ -> ا
+    result = result.replace("ـ", "")                   // ـ تطويل
+
     // تجاهل التشكيل دائماً (الحركات لا تُعاد من Deepgram)
-    result = result.replace(Regex("[\u064B-\u065F\u0670]"), "")
+    result = result.replace(Regex("[\u064B-\u065Fٰ]"), "")
     result = result.replace(Regex("[،؟!]"), "")
 
     // توحيد الهمزات دائماً
@@ -456,6 +461,12 @@ fun RecitationMode(
     val referenceWords = remember(page) {
         page.ayahs
             .joinToString(" ") { it.text }
+            .replace(Regex("\\(\\d+\\)"), "")   // إزالة أرقام الآيات (1) (2)
+            .replace("ٱ", "ا")             // توحيد همزة الوصل ٱ -> ا
+            .replace("ٰ", "")                    // إزالة الألف الخنجرية ٰ
+            .replace("ـ", "")                    // إزالة تطويل الكلمة ـ
+            .replace(Regex("\\s+"), " ")             // إزالة المسافات الزائدة
+            .trim()
             .split(" ")
             .filter { it.isNotEmpty() }
     }
