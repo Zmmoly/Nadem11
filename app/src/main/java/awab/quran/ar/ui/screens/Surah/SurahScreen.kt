@@ -4,11 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.media.ToneGenerator
+import android.media.AudioManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -352,6 +355,82 @@ fun ReadingMode(
 }
 
 /**
+ * تنظيف النص من التشكيل للمقارنة بناءً على الإعدادات
+ */
+fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSettings): String {
+    var result = text
+
+    // تجاهل التشكيل دائماً (الحركات لا تُعاد من Deepgram)
+    result = result.replace(Regex("[\u064B-\u065F\u0670]"), "")
+    result = result.replace(Regex("[،؟!]"), "")
+
+    // توحيد الهمزات دائماً
+    result = result.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+    result = result.replace("ة", "ه")
+    result = result.replace("ى", "ي")
+
+    // تجاهل حرف الحاء (الخلط بين ح و ه)
+    if (settings.ignoreHaa) {
+        result = result.replace("ح", "ه")
+    }
+
+    // تجاهل حرف العين (الخلط بين ع و ء)
+    if (settings.ignoreAyn) {
+        result = result.replace("ع", "ا").replace("ء", "ا").replace("ئ", "ا").replace("ؤ", "ا")
+    }
+
+    // تجاهل المدود (حذف حروف المد الزائدة)
+    if (settings.ignoreMadd) {
+        result = result.replace(Regex("ا+"), "ا")
+        result = result.replace(Regex("و+"), "و")
+        result = result.replace(Regex("ي+"), "ي")
+    }
+
+    // تجاهل مواضع الوقف (حذف آخر حرف من الكلمة)
+    if (settings.ignoreWaqf) {
+        result = result.trimEnd('ن', 'ا', 'ه', 'م')
+    }
+
+    return result.trim()
+}
+
+/**
+ * إصدار صوت خطأ
+ */
+fun playErrorSound() {
+    try {
+        val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
+        toneGen.startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR, 400)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+/**
+ * مقارنة جملة منطوقة بالمرجع وإرجاع AnnotatedString
+ * النص يُكتب كما نُطق مع تعليم الأخطاء
+ */
+fun buildColoredText(
+    spokenWords: List<String>,
+    referenceWords: List<String>
+): androidx.compose.ui.text.AnnotatedString {
+    return buildAnnotatedString {
+        spokenWords.forEachIndexed { index, word ->
+            val refWord = referenceWords.getOrNull(index) ?: ""
+            val isCorrect = normalizeArabic(word) == normalizeArabic(refWord)
+            withStyle(
+                SpanStyle(
+                    color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
+                    background = if (isCorrect) Color.Transparent else Color(0x22FF0000)
+                )
+            ) {
+                append("$word ")
+            }
+        }
+    }
+}
+
+/**
  * وضع التسميع
  */
 @Composable
@@ -360,104 +439,125 @@ fun RecitationMode(
     context: Context
 ) {
     val deepgramService = remember { DeepgramService(context) }
-    var finalText by remember { mutableStateOf("") }
+    val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
+    var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
+
+    // تحميل الإعدادات من DataStore
+
+    // النص الكامل كـ AnnotatedString مع التلوين
+    var coloredText by remember { mutableStateOf(buildAnnotatedString { }) }
     var interimText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
-    // طلب صلاحية الميكروفون
+    var wordCount by remember { mutableStateOf(0) }
+
+    // نص الصفحة كمرجع - قائمة كلمات
+    val referenceWords = remember(page) {
+        page.ayahs
+            .joinToString(" ") { it.text }
+            .split(" ")
+            .filter { it.isNotEmpty() }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // تم منح الصلاحية - بدء التسميع
-            finalText = ""
+            coloredText = buildAnnotatedString { }
             interimText = ""
+            wordCount = 0
             errorMessage = null
             deepgramService.startRecitation()
         } else {
-            // لم يتم منح الصلاحية
             errorMessage = "يجب السماح بصلاحية الميكروفون للتسميع"
         }
     }
-    
-    // تنظيف الموارد عند الخروج
+
     DisposableEffect(Unit) {
-        onDispose {
-            if (isRecording) {
-                deepgramService.stopRecitation()
-            }
-        }
+        onDispose { if (isRecording) deepgramService.stopRecitation() }
     }
-    
-    // معالجة النصوص المستلمة
+
     LaunchedEffect(Unit) {
-        // نتيجة نهائية - تضاف للنص الكامل وتُمسح المؤقتة
+        // تحميل الإعدادات
+        launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
+
+        // عند وصول نتيجة نهائية - قارن بناءً على الإعدادات
         deepgramService.onTranscriptionReceived = { text ->
+            val newWords = text.trim().split(" ").filter { it.isNotEmpty() }
+            var hasError = false
+
+            val newSegment = buildAnnotatedString {
+                newWords.forEachIndexed { i, word ->
+                    val refWord = referenceWords.getOrNull(wordCount + i) ?: ""
+                    val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
+                    if (!isCorrect) hasError = true
+                    withStyle(
+                        SpanStyle(
+                            color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
+                            background = if (isCorrect) Color.Transparent else Color(0x22FF0000)
+                        )
+                    ) {
+                        append("$word ")
+                    }
+                }
+            }
+
             CoroutineScope(Dispatchers.Main).launch {
-                finalText += "$text "
+                coloredText = buildAnnotatedString {
+                    append(coloredText)
+                    append(newSegment)
+                }
+                wordCount += newWords.size
                 interimText = ""
+
+                if (hasError) {
+                    CoroutineScope(Dispatchers.IO).launch { playErrorSound() }
+                }
             }
         }
 
-        // نتيجة مؤقتة - تُعرض فوراً
+        // النتيجة المؤقتة - تُعرض كنص عادي بدون تلوين
         deepgramService.onInterimTranscription = { text ->
-            CoroutineScope(Dispatchers.Main).launch {
-                interimText = text
-            }
+            CoroutineScope(Dispatchers.Main).launch { interimText = text }
         }
-        
+
         deepgramService.onError = { error ->
             CoroutineScope(Dispatchers.Main).launch {
                 errorMessage = error
                 isRecording = false
             }
         }
-        
+
         deepgramService.onConnectionEstablished = {
-            CoroutineScope(Dispatchers.Main).launch {
-                isRecording = true
-            }
+            CoroutineScope(Dispatchers.Main).launch { isRecording = true }
         }
     }
-    
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // أيقونة الميكروفون
         Box(
-            modifier = Modifier
-                .size(200.dp)
-                .padding(32.dp),
+            modifier = Modifier.size(140.dp).padding(20.dp),
             contentAlignment = Alignment.Center
         ) {
-            // دائرة متحركة عند التسجيل
             if (isRecording) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            color = Color(0xFFD4AF37).copy(alpha = 0.3f),
-                            shape = CircleShape
-                        )
+                        .background(Color(0xFFD4AF37).copy(alpha = 0.25f), CircleShape)
                 )
             }
-            
-            // أيقونة الميكروفون
             Icon(
                 painter = painterResource(id = android.R.drawable.ic_btn_speak_now),
                 contentDescription = "ميكروفون",
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier.size(64.dp),
                 tint = if (isRecording) Color(0xFFD4AF37) else Color(0xFF6B5744)
             )
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // زر بدء/إيقاف التسجيل
+
+        // زر بدء/إيقاف
         Button(
             onClick = {
                 if (isRecording) {
@@ -465,12 +565,12 @@ fun RecitationMode(
                     isRecording = false
                 } else {
                     if (ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
+                            context, Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
-                        finalText = ""
+                        coloredText = buildAnnotatedString { }
                         interimText = ""
+                        wordCount = 0
                         errorMessage = null
                         deepgramService.startRecitation()
                     } else {
@@ -481,91 +581,80 @@ fun RecitationMode(
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isRecording) Color(0xFFD32F2F) else Color(0xFF6B5744)
             ),
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp)
+            modifier = Modifier.fillMaxWidth(0.7f).height(52.dp),
+            shape = RoundedCornerShape(26.dp)
         ) {
             Text(
                 text = if (isRecording) "إيقاف التسميع" else "بدء التسميع",
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         // رسالة الخطأ
         errorMessage?.let { error ->
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFEBEE)
-                ),
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = error,
                     color = Color(0xFFD32F2F),
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(12.dp),
                     textAlign = TextAlign.Center
                 )
             }
+            Spacer(modifier = Modifier.height(6.dp))
         }
-        
-        // النص المنطوق
+
+        // مفتاح الألوان
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text("● صحيح  ", color = Color(0xFF1B5E20), fontSize = 13.sp)
+            Text("● خطأ", color = Color(0xFFD32F2F), fontSize = 13.sp)
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // النص مع التلوين
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF5EFE6)
-            ),
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {
-                Text(
-                    text = "النص المنطوق:",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6B5744)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    item {
-                        if (finalText.isEmpty() && interimText.isEmpty()) {
-                            // لا يوجد نص بعد
+                item {
+                    if (coloredText.text.isEmpty() && interimText.isEmpty()) {
+                        Text(
+                            text = "ابدأ التسميع...",
+                            fontSize = 20.sp,
+                            color = Color(0xFF9E9E9E),
+                            textAlign = TextAlign.Right,
+                            lineHeight = 40.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        // النص المُلوَّن (نهائي)
+                        Text(
+                            text = coloredText,
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Right,
+                            lineHeight = 40.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        // النص المؤقت أثناء الكلام (رمادي)
+                        if (interimText.isNotEmpty()) {
                             Text(
-                                text = "ابدأ التسميع...",
+                                text = interimText,
                                 fontSize = 20.sp,
-                                color = Color(0xFF9E9E9E),
-                                textAlign = TextAlign.Right,
-                                lineHeight = 40.sp
-                            )
-                        } else {
-                            Text(
-                                text = buildAnnotatedString {
-                                    // النص النهائي
-                                    withStyle(SpanStyle(color = Color(0xFF2C2416))) {
-                                        append(finalText)
-                                    }
-                                    // النص المؤقت بلون أفتح
-                                    withStyle(SpanStyle(color = Color(0xFF9E7B5A))) {
-                                        append(interimText)
-                                    }
-                                },
-                                fontSize = 20.sp,
+                                color = Color(0xFF9E7B5A),
                                 textAlign = TextAlign.Right,
                                 lineHeight = 40.sp,
                                 modifier = Modifier.fillMaxWidth()
@@ -780,5 +869,4 @@ fun LoadingPage() {
         )
     }
 }
- 
  
