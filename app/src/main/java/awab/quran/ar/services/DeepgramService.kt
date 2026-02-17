@@ -22,14 +22,6 @@ import java.nio.ByteOrder
 class DeepgramService(private val context: Context) {
     
     private val apiKey = "bd345e01709fb47368c5d12e56a124f2465fdf8d"
-    private val websocketUrl = "wss://api.deepgram.com/v1/listen?" +
-            "token=$apiKey&" +
-            "language=ar&" +
-            "model=nova-3&" +
-            "smart_format=false&" +
-            "encoding=linear16&" +
-            "sample_rate=16000&" +
-            "channels=1"
     
     private var webSocket: WebSocket? = null
     private var audioRecord: AudioRecord? = null
@@ -89,12 +81,21 @@ class DeepgramService(private val context: Context) {
     private fun connectWebSocket() {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(0, java.util.concurrent.TimeUnit.SECONDS)   // 0 = لا timeout للقراءة
+            .readTimeout(0, java.util.concurrent.TimeUnit.SECONDS)
             .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .build()
-        
+
+        val url = "wss://api.deepgram.com/v1/listen?" +
+                "language=ar&" +
+                "model=nova-3&" +
+                "smart_format=false&" +
+                "encoding=linear16&" +
+                "sample_rate=16000&" +
+                "channels=1"
+
         val request = Request.Builder()
-            .url(websocketUrl)
+            .url(url)
+            .addHeader("Authorization", "Token $apiKey")
             .build()
         
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
