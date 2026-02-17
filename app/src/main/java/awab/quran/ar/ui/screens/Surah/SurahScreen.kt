@@ -210,19 +210,15 @@ fun SurahScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "صفحة $currentPage",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4A3F35)
-                            )
                             pageData?.ayahs?.firstOrNull()?.let { firstAyah ->
                                 Text(
                                     text = firstAyah.suraName,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF8B7355)
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4A3F35)
                                 )
                             }
+                            // رقم الصفحة محذوف - يظهر فقط في الشريط السفلي
                         }
                     },
                     navigationIcon = {
