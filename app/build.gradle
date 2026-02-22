@@ -19,11 +19,11 @@ android {
         vectorDrawables {
             [span_11](start_span)useSupportLibrary true[span_11](end_span)
         }
-    [span_12](start_span)}
+    }
 
     buildTypes {
         release {
-            minifyEnabled false[span_12](end_span)
+            [span_12](start_span)minifyEnabled false[span_12](end_span)
             [span_13](start_span)proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'[span_13](end_span)
         }
     }
@@ -53,7 +53,7 @@ android {
 }
 
 dependencies {
-    // AndroidX & Compose
+    // AndroidX & Compose Core
     [span_20](start_span)implementation 'androidx.core:core-ktx:1.12.0'[span_20](end_span)
     [span_21](start_span)implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'[span_21](end_span)
     [span_22](start_span)implementation 'androidx.activity:activity-compose:1.8.1'[span_22](end_span)
@@ -73,19 +73,19 @@ dependencies {
     [span_34](start_span)implementation 'com.google.firebase:firebase-firestore-ktx'[span_34](end_span)
     [span_35](start_span)implementation 'com.google.firebase:firebase-storage-ktx'[span_35](end_span)
 
-    // Utilities & Data
+    // Data & Utilities
     [span_36](start_span)implementation 'androidx.datastore:datastore-preferences:1.0.0'[span_36](end_span)
     [span_37](start_span)implementation 'io.coil-kt:coil-compose:2.5.0'[span_37](end_span)
     [span_38](start_span)implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'[span_38](end_span)
 
-    // Accompanist
+    // Accompanist (Pager)
     [span_39](start_span)implementation "com.google.accompanist:accompanist-pager:0.32.0"[span_39](end_span)
     [span_40](start_span)implementation "com.google.accompanist:accompanist-pager-indicators:0.32.0"[span_40](end_span)
 
-    // OkHttp
+    // Networking (OkHttp)
     [span_41](start_span)implementation 'com.squareup.okhttp3:okhttp:4.12.0'[span_41](end_span)
 
-    // Google Sign-In & Credentials
+    // Google Sign-In & Authentication
     [span_42](start_span)implementation 'com.google.android.gms:play-services-auth:20.7.0'[span_42](end_span)
     [span_43](start_span)implementation 'androidx.credentials:credentials:1.2.2'[span_43](end_span)
     [span_44](start_span)implementation 'androidx.credentials:credentials-play-services-auth:1.2.2'[span_44](end_span)
