@@ -3,4 +3,5 @@
     <string name="login">تسجيل الدخول</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
+    <string name="google_web_client_id">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
 </resources>
