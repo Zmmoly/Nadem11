@@ -12,7 +12,12 @@
           "package_name": "awab.quran.ar"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCrqQ21cFgib8lCIBliEXKzRBS6vUj2lEY"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
