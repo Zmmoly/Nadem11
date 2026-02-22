@@ -1,99 +1,93 @@
 plugins {
-    [span_0](start_span)id 'com.android.application'[span_0](end_span)
-    [span_1](start_span)id 'org.jetbrains.kotlin.android'[span_1](end_span)
-    [span_2](start_span)id 'com.google.gms.google-services'[span_2](end_span)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
-    [span_3](start_span)namespace 'awab.quran.ar'[span_3](end_span)
-    [span_4](start_span)compileSdk 34[span_4](end_span)
+    namespace 'awab.quran.ar'
+    compileSdk 34
 
     defaultConfig {
-        [span_5](start_span)applicationId "awab.quran.ar"[span_5](end_span)
-        [span_6](start_span)minSdk 24[span_6](end_span)
-        [span_7](start_span)targetSdk 34[span_7](end_span)
-        [span_8](start_span)versionCode 1[span_8](end_span)
-        [span_9](start_span)versionName "1.0"[span_9](end_span)
-        [span_10](start_span)testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"[span_10](end_span)
+        applicationId "awab.quran.ar"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
-            [span_11](start_span)useSupportLibrary true[span_11](end_span)
+            useSupportLibrary true
         }
     }
 
     buildTypes {
         release {
-            [span_12](start_span)minifyEnabled false[span_12](end_span)
-            [span_13](start_span)proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'[span_13](end_span)
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
     compileOptions {
-        [span_14](start_span)sourceCompatibility JavaVersion.VERSION_1_8[span_14](end_span)
-        [span_15](start_span)targetCompatibility JavaVersion.VERSION_1_8[span_15](end_span)
-    [span_16](start_span)}
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 
     kotlinOptions {
-        jvmTarget = '1.8'[span_16](end_span)
+        jvmTarget = '1.8'
     }
 
     buildFeatures {
-        [span_17](start_span)compose true[span_17](end_span)
+        compose true
     }
 
     composeOptions {
-        [span_18](start_span)kotlinCompilerExtensionVersion '1.5.4'[span_18](end_span)
+        kotlinCompilerExtensionVersion '1.5.4'
     }
 
     packaging {
         resources {
-            [span_19](start_span)excludes.add('/META-INF/{AL2.0,LGPL2.1}')[span_19](end_span)
+            excludes.add('/META-INF/{AL2.0,LGPL2.1}')
         }
     }
 }
 
 dependencies {
-    [span_20](start_span)// الأساسيات و Jetpack Compose[span_20](end_span)
-    [span_21](start_span)implementation 'androidx.core:core-ktx:1.12.0'[span_21](end_span)
-    [span_22](start_span)implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'[span_22](end_span)
-    [span_23](start_span)implementation 'androidx.activity:activity-compose:1.8.1'[span_23](end_span)
-    [span_24](start_span)implementation platform('androidx.compose:compose-bom:2023.10.01')[span_24](end_span)
-    [span_25](start_span)implementation 'androidx.compose.ui:ui'[span_25](end_span)
-    [span_26](start_span)implementation 'androidx.compose.ui:ui-graphics'[span_26](end_span)
-    [span_27](start_span)implementation 'androidx.compose.ui:ui-tooling-preview'[span_27](end_span)
-    [span_28](start_span)implementation 'androidx.compose.material3:material3'[span_28](end_span)
-    [span_29](start_span)implementation 'androidx.compose.material:material-icons-extended'[span_29](end_span)
-    [span_30](start_span)implementation 'androidx.navigation:navigation-compose:2.7.5'[span_30](end_span)
-    [span_31](start_span)implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2'[span_31](end_span)
-    [span_32](start_span)implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.2'[span_32](end_span)
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity-compose:1.8.1'
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.navigation:navigation-compose:2.7.5'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.2'
 
-    [span_33](start_span)// خدمات Firebase[span_33](end_span)
-    [span_34](start_span)implementation platform('com.google.firebase:firebase-bom:32.7.0')[span_34](end_span)
-    [span_35](start_span)implementation 'com.google.firebase:firebase-auth-ktx'[span_35](end_span)
-    [span_36](start_span)implementation 'com.google.firebase:firebase-firestore-ktx'[span_36](end_span)
-    [span_37](start_span)implementation 'com.google.firebase:firebase-storage-ktx'[span_37](end_span)
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
 
-    [span_38](start_span)// تخزين البيانات ومعالجة الصور[span_38](end_span)
-    [span_39](start_span)implementation 'androidx.datastore:datastore-preferences:1.0.0'[span_39](end_span)
-    [span_40](start_span)implementation 'io.coil-kt:coil-compose:2.5.0'[span_40](end_span)
-    [span_41](start_span)implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'[span_41](end_span)
+    implementation 'androidx.datastore:datastore-preferences:1.0.0'
+    implementation 'io.coil-kt:coil-compose:2.5.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
-    [span_42](start_span)// أدوات إضافية (Accompanist & OkHttp)[span_42](end_span)
-    [span_43](start_span)implementation "com.google.accompanist:accompanist-pager:0.32.0"[span_43](end_span)
-    [span_44](start_span)implementation "com.google.accompanist:accompanist-pager-indicators:0.32.0"[span_44](end_span)
-    [span_45](start_span)implementation 'com.squareup.okhttp3:okhttp:4.12.0'[span_45](end_span)
+    implementation "com.google.accompanist:accompanist-pager:0.32.0"
+    implementation "com.google.accompanist:accompanist-pager-indicators:0.32.0"
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    [span_46](start_span)// تسجيل الدخول عبر Google[span_46](end_span)
-    [span_47](start_span)implementation 'com.google.android.gms:play-services-auth:20.7.0'[span_47](end_span)
-    [span_48](start_span)implementation 'androidx.credentials:credentials:1.2.2'[span_48](end_span)
-    [span_49](start_span)implementation 'androidx.credentials:credentials-play-services-auth:1.2.2'[span_49](end_span)
-    [span_50](start_span)implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.0'[span_50](end_span)
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation 'androidx.credentials:credentials:1.2.2'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.2.2'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.0'
 
-    [span_51](start_span)// الاختبارات (Testing)[span_51](end_span)
-    [span_52](start_span)testImplementation 'junit:junit:4.13.2'[span_52](end_span)
-    [span_53](start_span)androidTestImplementation 'androidx.test.ext:junit:1.1.5'[span_53](end_span)
-    [span_54](start_span)androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'[span_54](end_span)
-    [span_55](start_span)androidTestImplementation platform('androidx.compose:compose-bom:2023.10.01')[span_55](end_span)
-    [span_56](start_span)androidTestImplementation 'androidx.compose.ui:ui-test-junit4'[span_56](end_span)
-    [span_57](start_span)debugImplementation 'androidx.compose.ui:ui-tooling'[span_57](end_span)
-    [span_58](start_span)debugImplementation 'androidx.compose.ui:ui-test-manifest'[span_58](end_span)
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation platform('androidx.compose:compose-bom:2023.10.01')
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
