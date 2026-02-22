@@ -39,8 +39,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import awab.quran.ar.MainActivity
 import awab.quran.ar.R
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun LoginScreen(
@@ -54,10 +57,15 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
-    
+
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val auth = FirebaseAuth.getInstance()
+    val coroutineScope = rememberCoroutineScope()
+    val activity = context as? MainActivity
+
+    // Facebook CallbackManager من الـ Activity
+    val facebookCallbackManager = activity?.facebookCallbackManager
 
     fun performLogin() {
         if (!validateInputs(email, password,
@@ -91,9 +99,9 @@ fun LoginScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        
+
         TwinklingStars()
-        
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -120,7 +128,7 @@ fun LoginScreen(
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
-            
+
             Text(
                 text = "الذكاء الصّطناعي.",
                 fontSize = 14.sp,
@@ -154,10 +162,7 @@ fun LoginScreen(
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
                             focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA),
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            cursorColor = Color.Black
+                            unfocusedContainerColor = Color(0xFFF5F2EA)
                         ),
                         shape = RoundedCornerShape(28.dp)
                     )
@@ -187,10 +192,7 @@ fun LoginScreen(
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
                             focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA),
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            cursorColor = Color.Black
+                            unfocusedContainerColor = Color(0xFFF5F2EA)
                         ),
                         shape = RoundedCornerShape(28.dp)
                     )
@@ -205,70 +207,20 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // زر تسجيل الدخول مع الإطار الذهبي
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                    ) {
-                        // الطبقة الخارجية - التوهج الذهبي الخارجي
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(62.dp)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            Color(0xFFFFD700).copy(alpha = 0.4f),
-                                            Color(0xFFFAD55B).copy(alpha = 0.5f),
-                                            Color(0xFFFFD700).copy(alpha = 0.4f)
-                                        )
-                                    ),
-                                    shape = RoundedCornerShape(31.dp)
-                                )
-                        )
-                        // الإطار الذهبي الرئيسي
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(58.dp)
-                                .padding(2.dp)
-                                .align(Alignment.Center)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            Color(0xFFF5D060),
-                                            Color(0xFFD4A017),
-                                            Color(0xFFB8860B),
-                                            Color(0xFFD4A017),
-                                            Color(0xFFF5D060)
-                                        )
-                                    ),
-                                    shape = RoundedCornerShape(29.dp)
-                                )
-                        )
-                        // الزر الأخضر الداخلي
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.fillMaxWidth().height(54.dp).background(
+                            brush = Brush.linearGradient(colors = listOf(Color(0xFFD4C3A8), Color(0xFFC9B897), Color(0xFFD4C3A8))),
+                            shape = RoundedCornerShape(27.dp)
+                        ))
                         Button(
                             onClick = { performLogin() },
                             enabled = !isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 3.dp, vertical = 3.dp)
-                                .height(52.dp)
-                                .align(Alignment.Center),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5A6B52)
-                            ),
-                            shape = RoundedCornerShape(26.dp),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                            modifier = Modifier.fillMaxWidth().padding(2.dp).height(50.dp).align(Alignment.Center),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6D7B62)),
+                            shape = RoundedCornerShape(25.dp)
                         ) {
                             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-                            else Text(
-                                "تسجيل الدخول",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            else Text("تسجيل الدخول", fontSize = 16.sp, color = Color.White)
                         }
                     }
                 }
@@ -278,16 +230,46 @@ fun LoginScreen(
             Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF9B8B7A), modifier = Modifier.padding(vertical = 16.dp))
 
             Row(horizontalArrangement = Arrangement.Center) {
-                SocialButton(R.drawable.ic_google, "Google")
+                // زر Google
+                SocialButton(R.drawable.ic_google, "Google") {
+                    signInWithGoogle(
+                        context = context,
+                        coroutineScope = coroutineScope,
+                        onSuccess = {
+                            Toast.makeText(context, "تم تسجيل الدخول بـ Google", Toast.LENGTH_SHORT).show()
+                            onLoginSuccess()
+                        },
+                        onError = { msg ->
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_apple, "Apple")
+                // زر Apple (غير مفعّل)
+                SocialButton(R.drawable.ic_apple, "Apple") {
+                    Toast.makeText(context, "تسجيل الدخول بـ Apple غير متاح حالياً", Toast.LENGTH_SHORT).show()
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_facebook, "Facebook")
+                // زر Facebook
+                SocialButton(R.drawable.ic_facebook, "Facebook") {
+                    if (activity != null && facebookCallbackManager != null) {
+                        signInWithFacebook(
+                            activity = activity,
+                            callbackManager = facebookCallbackManager,
+                            onSuccess = {
+                                Toast.makeText(context, "تم تسجيل الدخول بـ Facebook", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess()
+                            },
+                            onError = { msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(28.dp))
 
-            // رابط إنشاء حساب جديد
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -312,9 +294,9 @@ fun LoginScreen(
 }
 
 @Composable
-fun SocialButton(iconRes: Int, name: String) {
+fun SocialButton(iconRes: Int, name: String, onClick: () -> Unit = {}) {
     Surface(
-        modifier = Modifier.size(52.dp).clickable { /* Handle Login */ },
+        modifier = Modifier.size(52.dp).clickable { onClick() },
         shape = CircleShape,
         color = Color(0xFFF5F2EA),
         shadowElevation = 4.dp
