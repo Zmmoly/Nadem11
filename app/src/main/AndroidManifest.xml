@@ -2,35 +2,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    [span_0](start_span)<uses-permission android:name="android.permission.INTERNET" />[span_0](end_span)
-    [span_1](start_span)<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />[span_1](end_span)
-    [span_2](start_span)<uses-permission android:name="android.permission.RECORD_AUDIO" />[span_2](end_span)
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        [span_3](start_span)android:maxSdkVersion="32" />[span_3](end_span)
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        [span_4](start_span)android:maxSdkVersion="32" />[span_4](end_span)
+        android:maxSdkVersion="32" />
 
     <application
-        [span_5](start_span)android:name=".NadeemApplication"[span_5](end_span)
-        [span_6](start_span)android:allowBackup="true"[span_6](end_span)
-        [span_7](start_span)android:dataExtractionRules="@xml/data_extraction_rules"[span_7](end_span)
-        [span_8](start_span)android:fullBackupContent="@xml/backup_rules"[span_8](end_span)
-        [span_9](start_span)android:icon="@mipmap/ic_launcher"[span_9](end_span)
-        [span_10](start_span)android:label="@string/app_name"[span_10](end_span)
-        [span_11](start_span)android:roundIcon="@mipmap/ic_launcher_round"[span_11](end_span)
-        [span_12](start_span)android:supportsRtl="true"[span_12](end_span)
-        [span_13](start_span)android:theme="@style/Theme.Nadeem"[span_13](end_span)
-        [span_14](start_span)tools:targetApi="31">[span_14](end_span)
+        android:name=".NadeemApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Nadeem"
+        tools:targetApi="31">
 
         <activity
-            [span_15](start_span)android:name=".MainActivity"[span_15](end_span)
-            [span_16](start_span)android:exported="true"[span_16](end_span)
-            [span_17](start_span)android:label="@string/app_name"[span_17](end_span)
-            [span_18](start_span)android:theme="@style/Theme.Nadeem"[span_18](end_span)
-            [span_19](start_span)android:screenOrientation="portrait">[span_19](end_span)
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Nadeem"
+            android:screenOrientation="portrait">
             <intent-filter>
-                [span_20](start_span)<action android:name="android.intent.action.MAIN" />[span_20](end_span)
-                [span_21](start_span)<category android:name="android.intent.category.LAUNCHER" />[span_21](end_span)
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
