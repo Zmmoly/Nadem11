@@ -28,7 +28,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import awab.quran.ar.MainActivity
 import awab.quran.ar.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -58,8 +57,6 @@ fun RegisterScreen(
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
-    val activity = context as? MainActivity
-    val facebookCallbackManager = activity?.facebookCallbackManager
 
     fun performRegister() {
         // التحقق من المدخلات
@@ -427,41 +424,24 @@ fun RegisterScreen(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // زر Google
+                        // زر Google - مفعّل
                         SocialButton(R.drawable.ic_google, "Google") {
                             signInWithGoogle(
                                 context = context,
                                 coroutineScope = coroutineScope,
-                                onSuccess = {
-                                    android.widget.Toast.makeText(context, "تم التسجيل بـ Google", android.widget.Toast.LENGTH_SHORT).show()
-                                    onRegisterSuccess()
-                                },
-                                onError = { msg ->
-                                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
-                                }
+                                onSuccess = { onRegisterSuccess() },
+                                onError = { msg -> android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show() }
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        // زر Apple (غير مفعّل)
+                        // زر Apple - غير مفعّل
                         SocialButton(R.drawable.ic_apple, "Apple") {
                             android.widget.Toast.makeText(context, "تسجيل الدخول بـ Apple غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show()
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        // زر Facebook
+                        // زر Facebook - غير مفعّل
                         SocialButton(R.drawable.ic_facebook, "Facebook") {
-                            if (activity != null && facebookCallbackManager != null) {
-                                signInWithFacebook(
-                                    activity = activity,
-                                    callbackManager = facebookCallbackManager,
-                                    onSuccess = {
-                                        android.widget.Toast.makeText(context, "تم التسجيل بـ Facebook", android.widget.Toast.LENGTH_SHORT).show()
-                                        onRegisterSuccess()
-                                    },
-                                    onError = { msg ->
-                                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
-                                    }
-                                )
-                            }
+                            android.widget.Toast.makeText(context, "تسجيل الدخول بـ Facebook غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
 
