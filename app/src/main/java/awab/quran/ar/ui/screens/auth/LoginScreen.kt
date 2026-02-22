@@ -154,7 +154,10 @@ fun LoginScreen(
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
                             focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA)
+                            unfocusedContainerColor = Color(0xFFF5F2EA),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         ),
                         shape = RoundedCornerShape(28.dp)
                     )
@@ -184,7 +187,10 @@ fun LoginScreen(
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
                             focusedContainerColor = Color(0xFFF5F2EA),
-                            unfocusedContainerColor = Color(0xFFF5F2EA)
+                            unfocusedContainerColor = Color(0xFFF5F2EA),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black
                         ),
                         shape = RoundedCornerShape(28.dp)
                     )
@@ -199,20 +205,70 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Box(modifier = Modifier.fillMaxWidth().height(54.dp).background(
-                            brush = Brush.linearGradient(colors = listOf(Color(0xFFD4C3A8), Color(0xFFC9B897), Color(0xFFD4C3A8))),
-                            shape = RoundedCornerShape(27.dp)
-                        ))
+                    // زر تسجيل الدخول مع الإطار الذهبي
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        // الطبقة الخارجية - التوهج الذهبي الخارجي
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(62.dp)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFFFFD700).copy(alpha = 0.4f),
+                                            Color(0xFFFAD55B).copy(alpha = 0.5f),
+                                            Color(0xFFFFD700).copy(alpha = 0.4f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(31.dp)
+                                )
+                        )
+                        // الإطار الذهبي الرئيسي
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(58.dp)
+                                .padding(2.dp)
+                                .align(Alignment.Center)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFFF5D060),
+                                            Color(0xFFD4A017),
+                                            Color(0xFFB8860B),
+                                            Color(0xFFD4A017),
+                                            Color(0xFFF5D060)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(29.dp)
+                                )
+                        )
+                        // الزر الأخضر الداخلي
                         Button(
                             onClick = { performLogin() },
                             enabled = !isLoading,
-                            modifier = Modifier.fillMaxWidth().padding(2.dp).height(50.dp).align(Alignment.Center),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6D7B62)),
-                            shape = RoundedCornerShape(25.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 3.dp, vertical = 3.dp)
+                                .height(52.dp)
+                                .align(Alignment.Center),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5A6B52)
+                            ),
+                            shape = RoundedCornerShape(26.dp),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                         ) {
                             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-                            else Text("تسجيل الدخول", fontSize = 16.sp, color = Color.White)
+                            else Text(
+                                "تسجيل الدخول",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     }
                 }
