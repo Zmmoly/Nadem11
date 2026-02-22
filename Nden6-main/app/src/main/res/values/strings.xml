@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">نديم</string>
+
     <string name="login">تسجيل الدخول</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
+
+    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
+    <string name="fb_login_protocol_scheme">fbYOUR_FACEBOOK_APP_ID</string>
+    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
+
+    <string name="google_web_client_id">YOUR_GOOGLE_WEB_CLIENT_ID</string>
 </resources>
