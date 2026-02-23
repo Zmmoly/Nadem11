@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.media.ToneGenerator
 import android.media.AudioManager
+import android.media.MediaPlayer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.CoroutineScope
@@ -309,8 +310,11 @@ fun QuranPageContent(
             )
         }
         "اختبار" -> {
-            // سيتم إضافة وضع الاختبار لاحقاً
-            ReadingMode(page = page, uthmanicFont = uthmanicFont)
+            ExamMode(
+                page = page,
+                context = context,
+                uthmanicFont = uthmanicFont
+            )
         }
         else -> {
             ReadingMode(page = page, uthmanicFont = uthmanicFont)
@@ -937,6 +941,597 @@ fun PageNavigationBar(
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF4A3F35)
             )
+        }
+    }
+}
+
+/**
+ * وضع الاختبار
+ */
+@Composable
+fun ExamMode(
+    page: QuranPage,
+    context: Context,
+    uthmanicFont: FontFamily?
+) {
+    val repository = remember { QuranPageRepository(context) }
+    val deepgramService = remember { DeepgramService(context) }
+    val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
+    var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
+
+    // نطاق الصفحات
+    var fromPage by remember { mutableStateOf("1") }
+    var toPage by remember { mutableStateOf("604") }
+    var questionCount by remember { mutableStateOf("10") }
+    var questionLength by remember { mutableStateOf("متوسط") } // قصير=40، متوسط=60، طويل=80
+    var targetWordCount by remember { mutableStateOf(60) }
+    var totalQuestions by remember { mutableStateOf(10) }
+    var currentQuestion by remember { mutableStateOf(0) }
+    var showSetup by remember { mutableStateOf(true) }
+    var showFinished by remember { mutableStateOf(false) }
+
+    // الآية العشوائية المختارة
+    var randomAyah by remember { mutableStateOf<PageAyah?>(null) }
+    var randomPageData by remember { mutableStateOf<QuranPage?>(null) }
+    var ayahAudioUrl by remember { mutableStateOf("") }
+    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var isPlayingAudio by remember { mutableStateOf(false) }
+
+    // التسميع
+    var coloredText by remember { mutableStateOf(buildAnnotatedString { }) }
+    var interimText by remember { mutableStateOf("") }
+    var isRecording by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var wordCount by remember { mutableStateOf(0) }
+    var referenceWords by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // تنظيف MediaPlayer عند الخروج
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer?.release()
+            mediaPlayer = null
+            if (isRecording) deepgramService.stopRecitation()
+        }
+    }
+
+    // تحميل إعدادات التسميع
+    LaunchedEffect(Unit) {
+        launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
+
+        deepgramService.onTranscriptionReceived = { text ->
+            val newWords = text.trim().split(" ").filter { it.isNotEmpty() }
+            var hasError = false
+            val newSegment = buildAnnotatedString {
+                newWords.forEachIndexed { i, word ->
+                    val refWord = referenceWords.getOrNull(wordCount + i) ?: ""
+                    val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
+                    if (!isCorrect) hasError = true
+                    withStyle(SpanStyle(
+                        color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
+                        background = if (isCorrect) Color.Transparent else Color(0x22FF0000)
+                    )) { append("$word ") }
+                }
+            }
+            CoroutineScope(Dispatchers.Main).launch {
+                coloredText = buildAnnotatedString { append(coloredText); append(newSegment) }
+                wordCount += newWords.size
+                interimText = ""
+                if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound() }
+
+                // تحقق إذا أنهى المستخدم الآية:
+                // نقارن آخر كلمات المنطوق بآخر كلمات المرجع
+                if (referenceWords.isNotEmpty()) {
+                    val spokenText = coloredText.text.trim()
+                    val refText = referenceWords.joinToString(" ")
+                    val refLastWords = referenceWords.takeLast(3).map { normalizeArabic(it, settings) }
+                    val spokenWords2 = spokenText.split(" ").filter { it.isNotEmpty() }
+                    val spokenLastWords = spokenWords2.takeLast(3).map { normalizeArabic(it, settings) }
+                    val matchCount = refLastWords.zip(spokenLastWords).count { (a, b) -> a == b }
+
+                    // إذا تطابقت على الأقل كلمتان من آخر ٣ كلمات وقرأ بما يكفي → انتهى السؤال
+                    if (matchCount >= 2 && spokenWords2.size >= targetWordCount) {
+                        deepgramService.stopRecitation()
+                        isRecording = false
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 800)
+                            } catch (e: Exception) { e.printStackTrace() }
+                        }
+                        kotlinx.coroutines.delay(1500)
+                        if (currentQuestion >= totalQuestions) {
+                            showFinished = true
+                        } else {
+                            pickRandomAyah()
+                        }
+                    }
+                }
+            }
+        }
+
+        deepgramService.onInterimTranscription = { text ->
+            CoroutineScope(Dispatchers.Main).launch { interimText = text }
+        }
+
+        deepgramService.onError = { error ->
+            CoroutineScope(Dispatchers.Main).launch { errorMessage = error; isRecording = false }
+        }
+
+        deepgramService.onConnectionEstablished = {
+            CoroutineScope(Dispatchers.Main).launch { isRecording = true }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            coloredText = buildAnnotatedString { }
+            interimText = ""
+            wordCount = 0
+            errorMessage = null
+            deepgramService.startRecitation()
+        } else {
+            errorMessage = "يجب السماح بصلاحية الميكروفون للتسميع"
+        }
+    }
+
+    // دالة اختيار آية عشوائية
+    fun pickRandomAyah() {
+        val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
+        val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
+        val randomPageNum = (from..to).random()
+        val pageData = repository.getPage(randomPageNum) ?: return
+        val ayah = pageData.ayahs.randomOrNull() ?: return
+
+        randomAyah = ayah
+        randomPageData = pageData
+
+        // بناء المرجع من باقي الآيات بعد الآية المختارة
+        // المرجع هو نص الآية العشوائية نفسها فقط
+        referenceWords = ayah.text
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
+            .replace(Regex("\\s+"), " ").trim()
+            .split(" ").filter { it.isNotEmpty() }
+
+        // رابط الصوت من everyayah.com
+        val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
+        val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
+        ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
+
+        // إعادة ضبط التسميع
+        coloredText = buildAnnotatedString { }
+        interimText = ""
+        wordCount = 0
+        errorMessage = null
+        isRecording = false
+        isPlayingAudio = false
+        mediaPlayer?.release()
+        mediaPlayer = null
+
+        currentQuestion += 1
+        showSetup = false
+        showFinished = false
+    }
+
+    // دالة تشغيل الصوت
+    fun playAudio() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        isPlayingAudio = true
+        try {
+            val player = MediaPlayer().apply {
+                setDataSource(ayahAudioUrl)
+                setOnPreparedListener { start() }
+                setOnCompletionListener { isPlayingAudio = false }
+                setOnErrorListener { _, _, _ -> isPlayingAudio = false; false }
+                prepareAsync()
+            }
+            mediaPlayer = player
+        } catch (e: Exception) {
+            isPlayingAudio = false
+        }
+    }
+
+    if (showSetup) {
+        // شاشة إعداد النطاق
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "🧠 وضع الاختبار",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4A3F35),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Text(
+                text = "حدد نطاق الصفحات للاختبار",
+                fontSize = 15.sp,
+                color = Color(0xFF8B7355),
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("من صفحة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                            OutlinedTextField(
+                                value = fromPage,
+                                onValueChange = { if (it.length <= 3) fromPage = it.filter { c -> c.isDigit() } },
+                                modifier = Modifier.width(100.dp),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2C2C2C)
+                                ),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFD4AF37),
+                                    unfocusedBorderColor = Color(0xFFB5A590),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+
+                        Text("—", fontSize = 24.sp, color = Color(0xFF8B7355))
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("إلى صفحة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                            OutlinedTextField(
+                                value = toPage,
+                                onValueChange = { if (it.length <= 3) toPage = it.filter { c -> c.isDigit() } },
+                                modifier = Modifier.width(100.dp),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2C2C2C)
+                                ),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFD4AF37),
+                                    unfocusedBorderColor = Color(0xFFB5A590),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // عدد الأسئلة
+                    Text("عدد الأسئلة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                    OutlinedTextField(
+                        value = questionCount,
+                        onValueChange = { if (it.length <= 3) questionCount = it.filter { c -> c.isDigit() } },
+                        modifier = Modifier.width(120.dp),
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            textAlign = TextAlign.Center,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2C2C2C)
+                        ),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD4AF37),
+                            unfocusedBorderColor = Color(0xFFB5A590),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // طول السؤال
+                    Text("طول السؤال", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf(
+                            Triple("قصير", "40 كلمة", Color(0xFF4A7C59)),
+                            Triple("متوسط", "60 كلمة", Color(0xFF6B5744)),
+                            Triple("طويل", "80 كلمة", Color(0xFF8B4513))
+                        ).forEach { (label, sub, color) ->
+                            val isSelected = questionLength == label
+                            Surface(
+                                onClick = { questionLength = label },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) color else Color(0xFFEDE8DF),
+                                modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) Color.White else Color(0xFF6B5744)
+                                    )
+                                    Text(
+                                        text = sub,
+                                        fontSize = 12.sp,
+                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color(0xFF9B8B7A)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            totalQuestions = questionCount.toIntOrNull()?.coerceIn(1, 100) ?: 10
+                            targetWordCount = when (questionLength) {
+                                "قصير" -> 40
+                                "طويل" -> 80
+                                else -> 60
+                            }
+                            currentQuestion = 0
+                            showFinished = false
+                            pickRandomAyah()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                        shape = RoundedCornerShape(26.dp)
+                    ) {
+                        Text("ابدأ الاختبار 🎲", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    } else if (showFinished) {
+        // شاشة انتهاء الاختبار
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("🎉", fontSize = 60.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("أحسنت! أكملت الاختبار", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35), textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("لقد أجبت على $totalQuestions سؤال", fontSize = 16.sp, color = Color(0xFF8B7355))
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = {
+                    currentQuestion = 0
+                    showFinished = false
+                    showSetup = true
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                shape = RoundedCornerShape(26.dp)
+            ) {
+                Text("اختبار جديد 🔄", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+    } else {
+        // شاشة الاختبار
+        val ayah = randomAyah ?: return
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // شريط التقدم
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "السؤال $currentQuestion من $totalQuestions",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4A3F35)
+                )
+                Text(
+                    text = "${((currentQuestion.toFloat() / totalQuestions) * 100).toInt()}%",
+                    fontSize = 14.sp,
+                    color = Color(0xFF6B5744)
+                )
+            }
+            LinearProgressIndicator(
+                progress = currentQuestion.toFloat() / totalQuestions,
+                modifier = Modifier.fillMaxWidth().height(6.dp).padding(bottom = 12.dp),
+                color = Color(0xFFD4AF37),
+                trackColor = Color(0xFFD4AF37).copy(alpha = 0.2f)
+            )
+
+            // بطاقة الآية العشوائية
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5744)),
+                elevation = CardDefaults.cardElevation(6.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "سورة ${ayah.suraName} — الآية ${convertToArabicNumerals(ayah.ayaNumber)}",
+                        fontSize = 14.sp,
+                        color = Color(0xFFD4AF37),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = ayah.text + " ﴿${convertToArabicNumerals(ayah.ayaNumber)}﴾",
+                        fontSize = 22.sp,
+                        fontFamily = uthmanicFont,
+                        color = Color.White,
+                        textAlign = TextAlign.Right,
+                        lineHeight = 42.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // زر تشغيل الصوت
+            Button(
+                onClick = { playAudio() },
+                enabled = !isPlayingAudio,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37)),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth().height(46.dp)
+            ) {
+                Text(
+                    text = if (isPlayingAudio) "⏸ جارٍ التشغيل" else "▶ استمع للآية",
+                    fontSize = 14.sp,
+                    color = Color(0xFF2C2416),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // زر تغيير النطاق
+            TextButton(onClick = { showSetup = true }) {
+                Text("⚙ تغيير نطاق الصفحات", color = Color(0xFF8B7355), fontSize = 13.sp)
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "واصل القراءة من بعد هذه الآية...",
+                fontSize = 14.sp,
+                color = Color(0xFF8B7355),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // مفتاح الألوان وزر التسميع
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row {
+                    Text("● صحيح  ", color = Color(0xFF1B5E20), fontSize = 13.sp)
+                    Text("● خطأ", color = Color(0xFFD32F2F), fontSize = 13.sp)
+                }
+                Button(
+                    onClick = {
+                        if (isRecording) {
+                            deepgramService.stopRecitation()
+                            isRecording = false
+                        } else {
+                            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                coloredText = buildAnnotatedString { }
+                                interimText = ""
+                                wordCount = 0
+                                errorMessage = null
+                                deepgramService.startRecitation()
+                            } else {
+                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRecording) Color(0xFFD32F2F) else Color(0xFF6B5744)
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.height(40.dp)
+                ) {
+                    Text(
+                        text = if (isRecording) "⏹ إيقاف" else "🎤 تسميع",
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // منطقة النص المُلوَّن
+            errorMessage?.let { error ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = error, color = Color(0xFFD32F2F), modifier = Modifier.padding(12.dp), textAlign = TextAlign.Center)
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    item {
+                        if (coloredText.text.isEmpty() && interimText.isEmpty()) {
+                            Text(
+                                text = "اضغط تسميع وواصل القراءة...",
+                                fontSize = 20.sp,
+                                color = Color(0xFF9E9E9E),
+                                textAlign = TextAlign.Right,
+                                lineHeight = 40.sp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            Text(
+                                text = coloredText,
+                                fontSize = 20.sp,
+                                fontFamily = uthmanicFont,
+                                textAlign = TextAlign.Right,
+                                lineHeight = 40.sp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (interimText.isNotEmpty()) {
+                                Text(
+                                    text = interimText,
+                                    fontSize = 20.sp,
+                                    color = Color(0xFF9E7B5A),
+                                    textAlign = TextAlign.Right,
+                                    lineHeight = 40.sp,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
