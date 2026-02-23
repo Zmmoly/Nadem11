@@ -168,7 +168,6 @@ fun SurahScreen(
 ) {
     val context = LocalContext.current
     val repository = remember { QuranPageRepository(context) }
-    var pickRandomAyah by remember { mutableStateOf<() -> Unit>({}) }
     val uthmanicFont = rememberUthmanicFontFromAssets()
     
     // الوضع الحالي: قراءة، تسميع، اختبار
@@ -554,6 +553,46 @@ fun RecitationMode(
             .split(" ")
             .filter { it.isNotEmpty() }
     }
+
+    // دالة اختيار آية عشوائية
+    fun pickRandomAyah() {
+        val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
+        val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
+        val randomPageNum = (from..to).random()
+        val pageData = repository.getPage(randomPageNum) ?: return
+        val ayah = pageData.ayahs.randomOrNull() ?: return
+
+        randomAyah = ayah
+        randomPageData = pageData
+
+        // بناء المرجع من باقي الآيات بعد الآية المختارة
+        // المرجع هو نص الآية العشوائية نفسها فقط
+        referenceWords = ayah.text
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
+            .replace(Regex("\\s+"), " ").trim()
+            .split(" ").filter { it.isNotEmpty() }
+
+        // رابط الصوت من everyayah.com
+        val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
+        val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
+        ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
+
+        // إعادة ضبط التسميع
+        coloredText = buildAnnotatedString { }
+        interimText = ""
+        wordCount = 0
+        errorMessage = null
+        isRecording = false
+        isPlayingAudio = false
+        mediaPlayer?.release()
+        mediaPlayer = null
+
+        currentQuestion += 1
+        showSetup = false
+        showFinished = false
+    }
+
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -1048,7 +1087,34 @@ fun ExamMode(
                         if (currentQuestion >= totalQuestions) {
                             showFinished = true
                         } else {
-                            pickRandomAyah()
+                            val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
+                            val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
+                            val randomPageNum = (from..to).random()
+                            val pageData = repository.getPage(randomPageNum)
+                            val ayah = pageData?.ayahs?.randomOrNull()
+                            if (ayah != null && pageData != null) {
+                                randomAyah = ayah
+                                randomPageData = pageData
+                                referenceWords = ayah.text
+                                    .replace(Regex("\\(\\d+\\)"), "")
+                                    .replace("ٱ", "ا").replace("ٰ", "ا").replace("ـ", "")
+                                    .replace(Regex("\\s+"), " ").trim()
+                                    .split(" ").filter { it.isNotEmpty() }
+                                val suraF = ayah.suraNumber.toString().padStart(3, '0')
+                                val ayahF = ayah.ayaNumber.toString().padStart(3, '0')
+                                ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraF}${ayahF}.mp3"
+                                coloredText = buildAnnotatedString { }
+                                interimText = ""
+                                wordCount = 0
+                                errorMessage = null
+                                isRecording = false
+                                isPlayingAudio = false
+                                mediaPlayer?.release()
+                                mediaPlayer = null
+                                currentQuestion += 1
+                                showSetup = false
+                                showFinished = false
+                            }
                         }
                     }
                 }
@@ -1082,44 +1148,6 @@ fun ExamMode(
         }
     }
 
-    // دالة اختيار آية عشوائية
-    pickRandomAyah = {
-        val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
-        val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
-        val randomPageNum = (from..to).random()
-        val pageData = repository.getPage(randomPageNum) ?: return
-        val ayah = pageData.ayahs.randomOrNull() ?: return
-
-        randomAyah = ayah
-        randomPageData = pageData
-
-        // بناء المرجع من باقي الآيات بعد الآية المختارة
-        // المرجع هو نص الآية العشوائية نفسها فقط
-        referenceWords = ayah.text
-            .replace(Regex("\\(\\d+\\)"), "")
-            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
-            .replace(Regex("\\s+"), " ").trim()
-            .split(" ").filter { it.isNotEmpty() }
-
-        // رابط الصوت من everyayah.com
-        val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
-        val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
-        ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
-
-        // إعادة ضبط التسميع
-        coloredText = buildAnnotatedString { }
-        interimText = ""
-        wordCount = 0
-        errorMessage = null
-        isRecording = false
-        isPlayingAudio = false
-        mediaPlayer?.release()
-        mediaPlayer = null
-
-        currentQuestion += 1
-        showSetup = false
-        showFinished = false
-    }
 
     // دالة تشغيل الصوت
     fun playAudio() {
