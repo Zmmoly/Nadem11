@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.media.ToneGenerator
 import android.media.AudioManager
+import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.VibrationEffect
@@ -489,6 +490,7 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 /**
  * إصدار صوت خطأ
  */
+@SuppressLint("MissingPermission")
 fun playErrorSound(context: Context? = null) {
     try {
         // صوت
