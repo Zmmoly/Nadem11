@@ -399,7 +399,7 @@ fun ReadingMode(
                                 append(ayah.text)
                                 append(" ")
                                 withStyle(SpanStyle(
-                                    fontSize = 16.sp,
+                                    fontSize = 24.sp,
                                     color = Color(0xFF6B5744)
                                 )) {
                                     append("﴿")
@@ -805,7 +805,7 @@ fun QuranAyahText(
                 // إضافة رقم الآية بشكل مزخرف
                 withStyle(
                     style = SpanStyle(
-                        fontSize = 18.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF6B5744)
                     )
