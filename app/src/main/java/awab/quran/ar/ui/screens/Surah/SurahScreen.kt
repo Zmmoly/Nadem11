@@ -438,38 +438,43 @@ fun ReadingMode(
 fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSettings): String {
     var result = text
 
-    // تنظيف النص المرجعي من الرموز الخاصة
-    result = result.replace(Regex("\\(\\d+\\)"), "")  // أرقام الآيات
-    result = result.replace("ٱ", "ا")            // ٱ -> ا
-    result = result.replace("ـ", "")                   // ـ تطويل
+    // حذف أرقام الآيات والرموز الخاصة
+    result = result.replace(Regex("\\(\\d+\\)"), "")
+    result = result.replace("ـ", "")  // تطويل
 
-    // تجاهل التشكيل دائماً (الحركات لا تُعاد من Deepgram)
-    result = result.replace(Regex("[\u064B-\u065Fٰ]"), "")
+    // توحيد جميع أشكال الألف → ا (هذا يحل مشكلة الكلمات التي فيها ألف)
+    result = result.replace("ٱ", "ا")  // همزة الوصل
+    result = result.replace("أ", "ا")  // همزة فوق
+    result = result.replace("إ", "ا")  // همزة تحت
+    result = result.replace("آ", "ا")  // مد
+    result = result.replace("ٰ", "ا")  // ألف خنجرية (سبب المشكلة الرئيسي)
+
+    // حذف التشكيل (الحركات)
+    result = result.replace(Regex("[\u064B-\u065F]"), "")
     result = result.replace(Regex("[،؟!]"), "")
 
-    // توحيد الهمزات دائماً
-    result = result.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+    // توحيد التاء المربوطة والياء
     result = result.replace("ة", "ه")
     result = result.replace("ى", "ي")
 
-    // تجاهل حرف الحاء (الخلط بين ح و ه)
+    // تجاهل حرف الحاء
     if (settings.ignoreHaa) {
         result = result.replace("ح", "ه")
     }
 
-    // تجاهل حرف العين (الخلط بين ع و ء)
+    // تجاهل حرف العين
     if (settings.ignoreAyn) {
         result = result.replace("ع", "ا").replace("ء", "ا").replace("ئ", "ا").replace("ؤ", "ا")
     }
 
-    // تجاهل المدود (حذف حروف المد الزائدة)
+    // تجاهل المدود
     if (settings.ignoreMadd) {
         result = result.replace(Regex("ا+"), "ا")
         result = result.replace(Regex("و+"), "و")
         result = result.replace(Regex("ي+"), "ي")
     }
 
-    // تجاهل مواضع الوقف (حذف آخر حرف من الكلمة)
+    // تجاهل مواضع الوقف
     if (settings.ignoreWaqf) {
         result = result.trimEnd('ن', 'ا', 'ه', 'م')
     }
