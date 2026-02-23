@@ -168,6 +168,7 @@ fun SurahScreen(
 ) {
     val context = LocalContext.current
     val repository = remember { QuranPageRepository(context) }
+    var pickRandomAyah by remember { mutableStateOf<() -> Unit>({}) }
     val uthmanicFont = rememberUthmanicFontFromAssets()
     
     // الوضع الحالي: قراءة، تسميع، اختبار
@@ -1082,7 +1083,7 @@ fun ExamMode(
     }
 
     // دالة اختيار آية عشوائية
-    fun pickRandomAyah() {
+    pickRandomAyah = {
         val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
         val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
         val randomPageNum = (from..to).random()
