@@ -1034,7 +1034,7 @@ fun ExamMode(
         showFinished = false
     }
 
-    // دالة تشغيل الصوت
+    // دالة تشغيل الصوت مع كشف الصمت
     fun playAudio() {
         mediaPlayer?.release()
         mediaPlayer = null
@@ -1042,7 +1042,42 @@ fun ExamMode(
         try {
             val player = MediaPlayer().apply {
                 setDataSource(ayahAudioUrl)
-                setOnPreparedListener { start() }
+                setOnPreparedListener { mp ->
+                    mp.start()
+                    // راقب مستوى الصوت كل 100ms لكشف الصمت
+                    CoroutineScope(Dispatchers.Main).launch {
+                        var silenceStart = 0L
+                        var lastPosition = -1
+                        val silenceThresholdMs = 600L // صمت لأكثر من 600ms = وقفة القارئ
+                        val minPlayMs = 2000L          // على الأقل ثانيتين قبل الكشف
+                        val startTime = System.currentTimeMillis()
+
+                        while (isPlayingAudio && mp.isPlaying) {
+                            val pos = mp.currentPosition
+                            val elapsed = System.currentTimeMillis() - startTime
+
+                            if (elapsed >= minPlayMs) {
+                                if (pos == lastPosition) {
+                                    // الموضع لم يتغير = صمت أو وقف
+                                    if (silenceStart == 0L) silenceStart = System.currentTimeMillis()
+                                    val silenceDuration = System.currentTimeMillis() - silenceStart
+                                    if (silenceDuration >= silenceThresholdMs) {
+                                        // وقفة مكتشفة → أوقف التشغيل
+                                        mp.pause()
+                                        isPlayingAudio = false
+                                        break
+                                    }
+                                } else {
+                                    silenceStart = 0L
+                                    lastPosition = pos
+                                }
+                            } else {
+                                lastPosition = pos
+                            }
+                            kotlinx.coroutines.delay(100)
+                        }
+                    }
+                }
                 setOnCompletionListener { isPlayingAudio = false }
                 setOnErrorListener { _, _, _ -> isPlayingAudio = false; false }
                 prepareAsync()
