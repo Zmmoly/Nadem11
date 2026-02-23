@@ -115,7 +115,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA)),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA), focusedTextColor = Color(0xFF2C2C2C), unfocusedTextColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(28.dp)
                     )
                     if (emailError != null) Text(text = emailError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
@@ -135,7 +135,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); performLogin() }),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA)),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA), focusedTextColor = Color(0xFF2C2C2C), unfocusedTextColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(28.dp)
                     )
                     if (passwordError != null) Text(text = passwordError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
