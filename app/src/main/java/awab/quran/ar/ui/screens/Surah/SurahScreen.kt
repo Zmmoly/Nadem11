@@ -1014,6 +1014,7 @@ fun ExamMode(
     var currentQuestion by remember { mutableStateOf(0) }
     var showSetup by remember { mutableStateOf(true) }
     var showFinished by remember { mutableStateOf(false) }
+    var shouldAdvance by remember { mutableStateOf(false) }
 
     // الآية العشوائية المختارة
     var randomAyah by remember { mutableStateOf<PageAyah?>(null) }
@@ -1036,6 +1037,14 @@ fun ExamMode(
             mediaPlayer?.release()
             mediaPlayer = null
             if (isRecording) deepgramService.stopRecitation()
+        }
+    }
+
+    // مراقبة shouldAdvance للانتقال للسؤال التالي من composable scope
+    LaunchedEffect(shouldAdvance) {
+        if (shouldAdvance) {
+            shouldAdvance = false
+            pickRandomAyah()
         }
     }
 
@@ -1087,34 +1096,7 @@ fun ExamMode(
                         if (currentQuestion >= totalQuestions) {
                             showFinished = true
                         } else {
-                            val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
-                            val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
-                            val randomPageNum = (from..to).random()
-                            val pageData = repository.getPage(randomPageNum)
-                            val ayah = pageData?.ayahs?.randomOrNull()
-                            if (ayah != null && pageData != null) {
-                                randomAyah = ayah
-                                randomPageData = pageData
-                                referenceWords = ayah.text
-                                    .replace(Regex("\\(\\d+\\)"), "")
-                                    .replace("ٱ", "ا").replace("ٰ", "ا").replace("ـ", "")
-                                    .replace(Regex("\\s+"), " ").trim()
-                                    .split(" ").filter { it.isNotEmpty() }
-                                val suraF = ayah.suraNumber.toString().padStart(3, '0')
-                                val ayahF = ayah.ayaNumber.toString().padStart(3, '0')
-                                ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraF}${ayahF}.mp3"
-                                coloredText = buildAnnotatedString { }
-                                interimText = ""
-                                wordCount = 0
-                                errorMessage = null
-                                isRecording = false
-                                isPlayingAudio = false
-                                mediaPlayer?.release()
-                                mediaPlayer = null
-                                currentQuestion += 1
-                                showSetup = false
-                                showFinished = false
-                            }
+                            shouldAdvance = true
                         }
                     }
                 }
