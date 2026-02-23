@@ -7,6 +7,10 @@ import android.graphics.Typeface
 import android.media.ToneGenerator
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.CoroutineScope
@@ -485,10 +489,27 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 /**
  * إصدار صوت خطأ
  */
-fun playErrorSound() {
+fun playErrorSound(context: Context? = null) {
     try {
+        // صوت
         val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
-        toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 400)
+        toneGen.startTone(ToneGenerator.TONE_PROP_NACK, 300)
+        // اهتزاز
+        context?.let { ctx ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(300)
+                }
+            }
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -607,10 +628,7 @@ fun RecitationMode(
                 }
                 wordCount += newWords.size
                 interimText = ""
-
-                if (hasError) {
-                    CoroutineScope(Dispatchers.IO).launch { playErrorSound() }
-                }
+                if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
             }
         }
 
@@ -1172,7 +1190,7 @@ fun ExamMode(
                 coloredText = buildAnnotatedString { append(coloredText); append(newSegment) }
                 wordCount += newWords.size
                 interimText = ""
-                if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound() }
+                if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
 
                 // أوقف التسميع تلقائياً عند بلوغ عدد الكلمات المطلوب
                 if (wordCount >= targetWordCount) {
