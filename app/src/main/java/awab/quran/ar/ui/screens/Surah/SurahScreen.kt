@@ -994,6 +994,65 @@ fun ExamMode(
     var wordCount by remember { mutableStateOf(0) }
     var referenceWords by remember { mutableStateOf<List<String>>(emptyList()) }
 
+
+    fun pickRandomAyah() {
+        val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
+        val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
+        val randomPageNum = (from..to).random()
+        val pageData = repository.getPage(randomPageNum)
+        val ayah = pageData?.ayahs?.randomOrNull()
+        if (pageData == null || ayah == null) return
+
+        randomAyah = ayah
+        randomPageData = pageData
+
+        // بناء المرجع من باقي الآيات بعد الآية المختارة
+        // المرجع هو نص الآية العشوائية نفسها فقط
+        referenceWords = ayah.text
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
+            .replace(Regex("\\s+"), " ").trim()
+            .split(" ").filter { it.isNotEmpty() }
+
+        // رابط الصوت من everyayah.com
+        val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
+        val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
+        ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
+
+        // إعادة ضبط التسميع
+        coloredText = buildAnnotatedString { }
+        interimText = ""
+        wordCount = 0
+        errorMessage = null
+        isRecording = false
+        isPlayingAudio = false
+        mediaPlayer?.release()
+        mediaPlayer = null
+
+        currentQuestion += 1
+        showSetup = false
+        showFinished = false
+    }
+
+    // دالة تشغيل الصوت
+    fun playAudio() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        isPlayingAudio = true
+        try {
+            val player = MediaPlayer().apply {
+                setDataSource(ayahAudioUrl)
+                setOnPreparedListener { start() }
+                setOnCompletionListener { isPlayingAudio = false }
+                setOnErrorListener { _, _, _ -> isPlayingAudio = false; false }
+                prepareAsync()
+            }
+            mediaPlayer = player
+        } catch (e: Exception) {
+            isPlayingAudio = false
+        }
+    }
+
     // تنظيف MediaPlayer عند الخروج
     DisposableEffect(Unit) {
         onDispose {
@@ -1095,63 +1154,6 @@ fun ExamMode(
 
 
 
-    fun pickRandomAyah() {
-        val from = fromPage.toIntOrNull()?.coerceIn(1, 604) ?: 1
-        val to = toPage.toIntOrNull()?.coerceIn(from, 604) ?: 604
-        val randomPageNum = (from..to).random()
-        val pageData = repository.getPage(randomPageNum)
-        val ayah = pageData?.ayahs?.randomOrNull()
-        if (pageData == null || ayah == null) return
-
-        randomAyah = ayah
-        randomPageData = pageData
-
-        // بناء المرجع من باقي الآيات بعد الآية المختارة
-        // المرجع هو نص الآية العشوائية نفسها فقط
-        referenceWords = ayah.text
-            .replace(Regex("\\(\\d+\\)"), "")
-            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
-            .replace(Regex("\\s+"), " ").trim()
-            .split(" ").filter { it.isNotEmpty() }
-
-        // رابط الصوت من everyayah.com
-        val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
-        val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
-        ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
-
-        // إعادة ضبط التسميع
-        coloredText = buildAnnotatedString { }
-        interimText = ""
-        wordCount = 0
-        errorMessage = null
-        isRecording = false
-        isPlayingAudio = false
-        mediaPlayer?.release()
-        mediaPlayer = null
-
-        currentQuestion += 1
-        showSetup = false
-        showFinished = false
-    }
-
-    // دالة تشغيل الصوت
-    fun playAudio() {
-        mediaPlayer?.release()
-        mediaPlayer = null
-        isPlayingAudio = true
-        try {
-            val player = MediaPlayer().apply {
-                setDataSource(ayahAudioUrl)
-                setOnPreparedListener { start() }
-                setOnCompletionListener { isPlayingAudio = false }
-                setOnErrorListener { _, _, _ -> isPlayingAudio = false; false }
-                prepareAsync()
-            }
-            mediaPlayer = player
-        } catch (e: Exception) {
-            isPlayingAudio = false
-        }
-    }
 
     if (showSetup) {
         // شاشة إعداد النطاق
