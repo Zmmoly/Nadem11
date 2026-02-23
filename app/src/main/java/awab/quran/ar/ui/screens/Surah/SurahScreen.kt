@@ -978,6 +978,7 @@ fun ExamMode(
     var showSetup by remember { mutableStateOf(true) }
     var showFinished by remember { mutableStateOf(false) }
     var shouldAdvance by remember { mutableStateOf(false) }
+    var shouldStartRecording by remember { mutableStateOf(false) }
 
     // الآية العشوائية المختارة
     var randomAyah by remember { mutableStateOf<PageAyah?>(null) }
@@ -1062,9 +1063,21 @@ fun ExamMode(
                                     if (silenceStart == 0L) silenceStart = System.currentTimeMillis()
                                     val silenceDuration = System.currentTimeMillis() - silenceStart
                                     if (silenceDuration >= silenceThresholdMs) {
-                                        // وقفة مكتشفة → أوقف التشغيل
+                                        // وقفة مكتشفة → أوقف التشغيل وأصدر تنبيه للمستخدم
                                         mp.pause()
                                         isPlayingAudio = false
+                                        // صوت تنبيه ثم ابدأ التسميع تلقائياً
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            try {
+                                                val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                                                toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                                                kotlinx.coroutines.delay(250)
+                                                toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                                                kotlinx.coroutines.delay(300)
+                                            } catch (e: Exception) { e.printStackTrace() }
+                                        }
+                                        kotlinx.coroutines.delay(750)
+                                        shouldStartRecording = true
                                         break
                                     }
                                 } else {
@@ -1078,7 +1091,19 @@ fun ExamMode(
                         }
                     }
                 }
-                setOnCompletionListener { isPlayingAudio = false }
+                setOnCompletionListener {
+                    isPlayingAudio = false
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                            toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                            kotlinx.coroutines.delay(250)
+                            toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                            kotlinx.coroutines.delay(300)
+                        } catch (e: Exception) { e.printStackTrace() }
+                        shouldStartRecording = true
+                    }
+                }
                 setOnErrorListener { _, _, _ -> isPlayingAudio = false; false }
                 prepareAsync()
             }
@@ -1102,6 +1127,26 @@ fun ExamMode(
         if (shouldAdvance) {
             shouldAdvance = false
             pickRandomAyah()
+        }
+    }
+
+    // فتح الميكروفون تلقائياً بعد الصفارة
+    LaunchedEffect(shouldStartRecording) {
+        if (shouldStartRecording) {
+            shouldStartRecording = false
+            coloredText = buildAnnotatedString { }
+            interimText = ""
+            wordCount = 0
+            errorMessage = null
+            deepgramService.startRecitation()
+        }
+    }
+
+    // تشغيل الصوت تلقائياً عند اختيار آية جديدة
+    LaunchedEffect(randomAyah) {
+        if (randomAyah != null && ayahAudioUrl.isNotEmpty()) {
+            kotlinx.coroutines.delay(300)
+            playAudio()
         }
     }
 
@@ -1129,32 +1174,22 @@ fun ExamMode(
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound() }
 
-                // تحقق إذا أنهى المستخدم الآية:
-                // نقارن آخر كلمات المنطوق بآخر كلمات المرجع
-                if (referenceWords.isNotEmpty()) {
-                    val spokenText = coloredText.text.trim()
-                    val refText = referenceWords.joinToString(" ")
-                    val refLastWords = referenceWords.takeLast(3).map { normalizeArabic(it, settings) }
-                    val spokenWords2 = spokenText.split(" ").filter { it.isNotEmpty() }
-                    val spokenLastWords = spokenWords2.takeLast(3).map { normalizeArabic(it, settings) }
-                    val matchCount = refLastWords.zip(spokenLastWords).count { (a, b) -> a == b }
-
-                    // إذا تطابقت على الأقل كلمتان من آخر ٣ كلمات وقرأ بما يكفي → انتهى السؤال
-                    if (matchCount >= 2 && spokenWords2.size >= targetWordCount) {
-                        deepgramService.stopRecitation()
-                        isRecording = false
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-                                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 800)
-                            } catch (e: Exception) { e.printStackTrace() }
-                        }
-                        kotlinx.coroutines.delay(1500)
-                        if (currentQuestion >= totalQuestions) {
-                            showFinished = true
-                        } else {
-                            shouldAdvance = true
-                        }
+                // أوقف التسميع تلقائياً عند بلوغ عدد الكلمات المطلوب
+                if (wordCount >= targetWordCount) {
+                    deepgramService.stopRecitation()
+                    isRecording = false
+                    // نغمة إنهاء تنبّه المستخدم بالتوقف
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                            toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 800)
+                        } catch (e: Exception) { e.printStackTrace() }
+                    }
+                    kotlinx.coroutines.delay(1200)
+                    if (currentQuestion >= totalQuestions) {
+                        showFinished = true
+                    } else {
+                        shouldAdvance = true
                     }
                 }
             }
