@@ -7,211 +7,207 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.core.app.ActivityCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import okhttp3.*
-import okio.ByteString
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 
 class DeepgramService(private val context: Context) {
-    
-    private val apiKey = "bd345e01709fb47368c5d12e56a124f2465fdf8d"
-    
-    private var webSocket: WebSocket? = null
+
+    private val API_URL = "https://scanor-ndem.hf.space/api/predict"
+
+    private val SILENCE_THRESHOLD = 500
+    private val SILENCE_DURATION_MS = 800L
+
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
     private var recordingJob: Job? = null
-    
+    private val audioBuffer = ByteArrayOutputStream()
+
     private val sampleRate = 16000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-    
+    private val bufferSize = AudioRecord.getMinBufferSize(
+        sampleRate, channelConfig, audioFormat
+    )
+
     var onTranscriptionReceived: ((String) -> Unit)? = null
     var onInterimTranscription: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
-    
-    /**
-     * بدء التسميع والاتصال بـ Deepgram
-     */
+
     fun startRecitation() {
         if (isRecording) return
-        
-        // التحقق من صلاحية الميكروفون
         if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
+                context, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             onError?.invoke("صلاحية الميكروفون غير ممنوحة")
             return
         }
-        
-        // إنشاء اتصال WebSocket
-        connectWebSocket()
+        audioBuffer.reset()
+        onConnectionEstablished?.invoke()
+        startAudioCapture()
     }
-    
-    /**
-     * إيقاف التسميع
-     */
+
     fun stopRecitation() {
         isRecording = false
         recordingJob?.cancel()
-        recordingJob = null
-        
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
-        
-        // إغلاق WebSocket
-        webSocket?.close(1000, "تم إنهاء التسميع")
-        webSocket = null
+        audioBuffer.reset()
     }
-    
-    /**
-     * إنشاء اتصال WebSocket مع Deepgram
-     */
-    private fun connectWebSocket() {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(0, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .build()
 
-        val url = "wss://api.deepgram.com/v1/listen?" +
-                "language=ar&" +
-                "model=nova-3&" +
-                "smart_format=false&" +
-                "encoding=linear16&" +
-                "sample_rate=16000&" +
-                "channels=1"
-
-        val request = Request.Builder()
-            .url(url)
-            .addHeader("Authorization", "Token $apiKey")
-            .build()
-        
-        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                println("Deepgram WebSocket opened successfully")
-                onConnectionEstablished?.invoke()
-                startAudioCapture()
-            }
-            
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                println("Received message: $text")
-                handleTranscription(text)
-            }
-            
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                // غير مستخدم
-            }
-            
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                val errorMsg = "خطأ في الاتصال: ${t.message}"
-                println("WebSocket failure: ${t.message}")
-                println("Response: ${response?.code} - ${response?.message}")
-                response?.body?.string()?.let { body ->
-                    println("Response body: $body")
-                }
-                onError?.invoke(errorMsg)
-                stopRecitation()
-            }
-            
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                println("WebSocket closing: $code - $reason")
-                stopRecitation()
-            }
-            
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                println("WebSocket closed: $code - $reason")
-            }
-        })
-    }
-    
-    /**
-     * بدء التقاط الصوت وإرساله للـ WebSocket
-     */
     private fun startAudioCapture() {
         if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
+                context, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        
+        ) return
+
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            channelConfig,
-            audioFormat,
+            sampleRate, channelConfig, audioFormat,
             bufferSize * 2
         )
-        
         audioRecord?.startRecording()
         isRecording = true
-        
-        // بدء إرسال الصوت في الخلفية
+
         recordingJob = CoroutineScope(Dispatchers.IO).launch {
-            val buffer = ByteArray(bufferSize)
-            
+            val buffer = ShortArray(bufferSize)
+            var silenceStart = 0L
+            var isSilent = false
+            var hasAudio = false
+
             while (isActive && isRecording) {
-                val readSize = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                
-                if (readSize > 0) {
-                    // تحويل البيانات إلى ByteString وإرسالها
-                    val byteArray = buffer.copyOfRange(0, readSize)
-                    val byteString = ByteString.of(*byteArray)
-                    webSocket?.send(byteString)
-                }
-                
-                // تأخير صغير لتجنب الضغط الزائد
-                delay(10)
-            }
-        }
-    }
-    
-    /**
-     * معالجة النص المستلم من Deepgram
-     */
-    private fun handleTranscription(jsonText: String) {
-        try {
-            val json = JSONObject(jsonText)
+                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
 
-            if (json.has("channel")) {
-                val channel = json.getJSONObject("channel")
-                val alternatives = channel.getJSONArray("alternatives")
-                val isFinal = json.optBoolean("is_final", false)
+                if (read > 0) {
+                    // حساب مستوى الصوت
+                    val amplitude = buffer.take(read).map {
+                        Math.abs(it.toInt())
+                    }.average()
 
-                if (alternatives.length() > 0) {
-                    val transcript = alternatives.getJSONObject(0).getString("transcript")
+                    // تحويل ShortArray إلى ByteArray
+                    val byteBuffer = ByteArray(read * 2)
+                    for (i in 0 until read) {
+                        byteBuffer[i * 2] = (buffer[i].toInt() and 0xFF).toByte()
+                        byteBuffer[i * 2 + 1] = (buffer[i].toInt() shr 8).toByte()
+                    }
+                    audioBuffer.write(byteBuffer)
 
-                    if (transcript.isNotEmpty()) {
-                        if (isFinal) {
-                            // نتيجة نهائية - أضفها للنص الكامل
-                            onTranscriptionReceived?.invoke(transcript)
-                        } else {
-                            // نتيجة مؤقتة - اعرضها فوراً
-                            onInterimTranscription?.invoke(transcript)
+                    if (amplitude > SILENCE_THRESHOLD) {
+                        // يوجد صوت
+                        isSilent = false
+                        hasAudio = true
+                        silenceStart = 0L
+                    } else {
+                        // سكوت
+                        if (!isSilent) {
+                            silenceStart = System.currentTimeMillis()
+                            isSilent = true
+                        }
+
+                        val silenceDuration = System.currentTimeMillis() - silenceStart
+                        if (isSilent &&
+                            silenceStart > 0 &&
+                            silenceDuration >= SILENCE_DURATION_MS &&
+                            hasAudio
+                        ) {
+                            // إرسال الآية
+                            val audioData = audioBuffer.toByteArray()
+                            audioBuffer.reset()
+                            hasAudio = false
+                            isSilent = false
+                            silenceStart = 0L
+
+                            launch {
+                                sendAudioToAPI(audioData)
+                            }
                         }
                     }
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
-    
-    /**
-     * التحقق من حالة التسجيل
-     */
+
+    private fun sendAudioToAPI(pcmData: ByteArray) {
+        try {
+            if (pcmData.isEmpty()) return
+
+            val wavBytes = pcmToWav(pcmData, sampleRate)
+            val base64Audio = android.util.Base64.encodeToString(
+                wavBytes, android.util.Base64.NO_WRAP
+            )
+
+            val json = """
+                {
+                  "data": [{
+                    "name": "audio.wav",
+                    "data": "data:audio/wav;base64,$base64Audio"
+                  }]
+                }
+            """.trimIndent()
+
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
+            val request = Request.Builder()
+                .url(API_URL)
+                .post(json.toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val body = response.body?.string()
+
+            if (response.isSuccessful && body != null) {
+                val text = JSONObject(body)
+                    .getJSONArray("data")
+                    .getJSONObject(0)
+                    .getString("text")
+
+                if (text.isNotEmpty()) {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        onTranscriptionReceived?.invoke(text)
+                    }
+                }
+            } else {
+                onError?.invoke("خطأ: ${response.code}")
+            }
+
+        } catch (e: Exception) {
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ: ${e.message}")
+            }
+        }
+    }
+
+    private fun pcmToWav(pcm: ByteArray, sampleRate: Int): ByteArray {
+        val out = ByteArrayOutputStream()
+        val dataSize = pcm.size
+        DataOutputStream(out).apply {
+            writeBytes("RIFF")
+            writeInt(Integer.reverseBytes(dataSize + 36))
+            writeBytes("WAVE")
+            writeBytes("fmt ")
+            writeInt(Integer.reverseBytes(16))
+            writeShort(java.lang.Short.reverseBytes(1))
+            writeShort(java.lang.Short.reverseBytes(1))
+            writeInt(Integer.reverseBytes(sampleRate))
+            writeInt(Integer.reverseBytes(sampleRate * 2))
+            writeShort(java.lang.Short.reverseBytes(2))
+            writeShort(java.lang.Short.reverseBytes(16))
+            writeBytes("data")
+            writeInt(Integer.reverseBytes(dataSize))
+            write(pcm)
+        }
+        return out.toByteArray()
+    }
+
     fun isRecording(): Boolean = isRecording
 }
