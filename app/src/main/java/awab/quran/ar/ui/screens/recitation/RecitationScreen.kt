@@ -1,6 +1,5 @@
 package awab.quran.ar.ui.screens.recitation
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,35 +20,76 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
+import awab.quran.ar.services.DeepgramService
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecitationScreen(
-    onNavigateBack: () -> Unit
-) {
+fun RecitationScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var isRecording by remember { mutableStateOf(false) }
-    var recordingTime by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // صورة الخلفية
+    var isRecording by remember { mutableStateOf(false) }
+    var isAnalyzing by remember { mutableStateOf(false) }
+    var recordingSeconds by remember { mutableStateOf(0) }
+    var transcribedLines by remember { mutableStateOf(listOf<String>()) }
+    var statusMessage by remember { mutableStateOf("") }
+
+    // إنشاء الخدمة
+    val service = remember {
+        DeepgramService(context).apply {
+
+            onConnectionEstablished = {
+                statusMessage = "جاري الاستماع..."
+            }
+
+            onTranscriptionReceived = { text ->
+                // إضافة كل آية في سطر جديد
+                transcribedLines = transcribedLines + text
+                isAnalyzing = false
+                statusMessage = "جاري الاستماع..."
+            }
+
+            onInterimTranscription = {
+                isAnalyzing = true
+                statusMessage = "جاري التحليل..."
+            }
+
+            onError = { error ->
+                isAnalyzing = false
+                statusMessage = "خطأ: $error"
+            }
+        }
+    }
+
+    // مؤقت التسجيل
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            recordingSeconds = 0
+            while (isRecording) {
+                delay(1000)
+                recordingSeconds++
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.app_background),
-            contentDescription = "خلفية التسميع",
+            contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
                         Text(
-                            text = "تسميع القرآن",
+                            "تسميع القرآن",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF6B5744)
@@ -58,7 +98,7 @@ fun RecitationScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                Icons.Default.ArrowBack,
                                 contentDescription = "رجوع",
                                 tint = Color(0xFF6B5744)
                             )
@@ -77,61 +117,11 @@ fun RecitationScreen(
                     .verticalScroll(scrollState)
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // بطاقة اختيار السورة
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "اختر السورة للتسميع",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744),
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        
-                        // قائمة منسدلة للسور (مبسطة)
-                        Button(
-                            onClick = {
-                                Toast.makeText(context, "اختر السورة", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF6B5744)
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Book,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp),
-                                tint = Color.White
-                            )
-                            Text(
-                                text = "اختر سورة",
-                                fontSize = 16.sp,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-
-                // بطاقة التسجيل
+                // ── بطاقة الميكروفون ──
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -146,80 +136,92 @@ fun RecitationScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // أيقونة الميكروفون
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .padding(bottom = 24.dp),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = RoundedCornerShape(60.dp),
+                            modifier = Modifier.size(120.dp),
+                            color = if (isRecording)
+                                Color(0xFFDC3545).copy(alpha = 0.15f)
+                            else
+                                Color(0xFF6B5744).copy(alpha = 0.1f)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(60.dp),
-                                color = if (isRecording) 
-                                    Color(0xFFDC3545).copy(alpha = 0.2f)
-                                else 
-                                    Color(0xFF6B5744).copy(alpha = 0.1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Mic,
-                                        contentDescription = "ميكروفون",
-                                        modifier = Modifier.size(60.dp),
-                                        tint = if (isRecording) 
-                                            Color(0xFFDC3545)
-                                        else 
-                                            Color(0xFF6B5744)
-                                    )
-                                }
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (isAnalyzing)
+                                        Icons.Default.HourglassEmpty
+                                    else
+                                        Icons.Default.Mic,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(60.dp),
+                                    tint = if (isRecording)
+                                        Color(0xFFDC3545)
+                                    else
+                                        Color(0xFF6B5744)
+                                )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // وقت التسجيل
                         if (isRecording) {
                             Text(
-                                text = String.format("%02d:%02d", recordingTime / 60, recordingTime % 60),
+                                text = String.format(
+                                    "%02d:%02d",
+                                    recordingSeconds / 60,
+                                    recordingSeconds % 60
+                                ),
                                 fontSize = 32.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B5744),
+                                color = Color(0xFF6B5744)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        // حالة النظام
+                        if (statusMessage.isNotEmpty()) {
+                            Text(
+                                text = statusMessage,
+                                fontSize = 14.sp,
+                                color = Color(0xFF6B5744).copy(alpha = 0.7f),
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
                         }
 
-                        // زر بدء/إيقاف التسجيل
+                        // زر البدء/الإيقاف
                         Button(
                             onClick = {
-                                isRecording = !isRecording
                                 if (isRecording) {
-                                    Toast.makeText(context, "بدأ التسجيل", Toast.LENGTH_SHORT).show()
+                                    service.stopRecitation()
+                                    isRecording = false
+                                    statusMessage = ""
                                 } else {
-                                    recordingTime = 0
-                                    Toast.makeText(context, "تم إيقاف التسجيل", Toast.LENGTH_SHORT).show()
+                                    transcribedLines = listOf()
+                                    service.startRecitation()
+                                    isRecording = true
                                 }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isRecording) 
+                                containerColor = if (isRecording)
                                     Color(0xFFDC3545)
-                                else 
+                                else
                                     Color(0xFF6B5744)
                             ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(
-                                imageVector = if (isRecording) 
+                                imageVector = if (isRecording)
                                     Icons.Default.Stop
-                                else 
+                                else
                                     Icons.Default.Mic,
                                 contentDescription = null,
                                 modifier = Modifier.padding(end = 8.dp),
                                 tint = Color.White
                             )
                             Text(
-                                text = if (isRecording) "إيقاف التسجيل" else "ابدأ التسميع",
+                                text = if (isRecording) "إيقاف التسميع" else "ابدأ التسميع",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -228,7 +230,46 @@ fun RecitationScreen(
                     }
                 }
 
-                // نصيحة
+                // ── بطاقة النص المُخرَج ──
+                if (transcribedLines.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp)
+                        ) {
+                            Text(
+                                text = "النص المُسمَّع",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF6B5744),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+
+                            transcribedLines.forEach { line ->
+                                Text(
+                                    text = line,
+                                    fontSize = 22.sp,
+                                    color = Color(0xFF3D2B1F),
+                                    textAlign = TextAlign.Right,
+                                    lineHeight = 36.sp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                )
+                                Divider(color = Color(0xFF6B5744).copy(alpha = 0.1f))
+                            }
+                        }
+                    }
+                }
+
+                // ── نصيحة ──
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -243,7 +284,7 @@ fun RecitationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Lightbulb,
+                            Icons.Default.Lightbulb,
                             contentDescription = null,
                             tint = Color(0xFF6B5744),
                             modifier = Modifier
