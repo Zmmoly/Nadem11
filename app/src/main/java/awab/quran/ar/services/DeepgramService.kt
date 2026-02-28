@@ -19,7 +19,7 @@ class DeepgramService(private val context: Context) {
 
     private val API_URL = "https://Scanor-Ndem.hf.space/transcribe"
 
-    private val SILENCE_THRESHOLD = 500
+    private val SILENCE_THRESHOLD = 1500
     private val SILENCE_DURATION_MS = 800L
 
     private var audioRecord: AudioRecord? = null
@@ -156,18 +156,24 @@ class DeepgramService(private val context: Context) {
             val response = client.newCall(request).execute()
             val body = response.body?.string()
 
+            android.util.Log.d("API_RESPONSE", "الرد: $body")
+
             if (response.isSuccessful && body != null) {
+                android.util.Log.d("API_RESPONSE", "ناجح: $body")
                 val text = JSONObject(body).getString("text")
+                android.util.Log.d("API_RESPONSE", "النص: $text")
                 if (text.isNotEmpty()) {
                     CoroutineScope(Dispatchers.Main).launch {
                         onTranscriptionReceived?.invoke(text)
                     }
                 }
             } else {
+                android.util.Log.d("API_RESPONSE", "فشل: ${response.code}")
                 onError?.invoke("خطأ: ${response.code}")
             }
 
         } catch (e: Exception) {
+            android.util.Log.d("API_RESPONSE", "استثناء: ${e.message}")
             CoroutineScope(Dispatchers.Main).launch {
                 onError?.invoke("خطأ: ${e.message}")
             }
