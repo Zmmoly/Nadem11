@@ -17,7 +17,7 @@ import java.io.DataOutputStream
 
 class DeepgramService(private val context: Context) {
 
-    private val API_URL = "https://scanor-ndem.hf.space/api/predict"
+    private val API_URL = "https://scanor-ndem.hf.space/transcribe"
 
     private val SILENCE_THRESHOLD = 500
     private val SILENCE_DURATION_MS = 800L
@@ -86,12 +86,10 @@ class DeepgramService(private val context: Context) {
                 val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
 
                 if (read > 0) {
-                    // حساب مستوى الصوت
                     val amplitude = buffer.take(read).map {
                         Math.abs(it.toInt())
                     }.average()
 
-                    // تحويل ShortArray إلى ByteArray
                     val byteBuffer = ByteArray(read * 2)
                     for (i in 0 until read) {
                         byteBuffer[i * 2] = (buffer[i].toInt() and 0xFF).toByte()
@@ -100,12 +98,10 @@ class DeepgramService(private val context: Context) {
                     audioBuffer.write(byteBuffer)
 
                     if (amplitude > SILENCE_THRESHOLD) {
-                        // يوجد صوت
                         isSilent = false
                         hasAudio = true
                         silenceStart = 0L
                     } else {
-                        // سكوت
                         if (!isSilent) {
                             silenceStart = System.currentTimeMillis()
                             isSilent = true
@@ -117,7 +113,6 @@ class DeepgramService(private val context: Context) {
                             silenceDuration >= SILENCE_DURATION_MS &&
                             hasAudio
                         ) {
-                            // إرسال الآية
                             val audioData = audioBuffer.toByteArray()
                             audioBuffer.reset()
                             hasAudio = false
@@ -139,38 +134,30 @@ class DeepgramService(private val context: Context) {
             if (pcmData.isEmpty()) return
 
             val wavBytes = pcmToWav(pcmData, sampleRate)
-            val base64Audio = android.util.Base64.encodeToString(
-                wavBytes, android.util.Base64.NO_WRAP
-            )
-
-            val json = """
-                {
-                  "data": [{
-                    "name": "audio.wav",
-                    "data": "data:audio/wav;base64,$base64Audio"
-                  }]
-                }
-            """.trimIndent()
 
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
                 .build()
 
+            val requestBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                    "file", "audio.wav",
+                    wavBytes.toRequestBody("audio/wav".toMediaType())
+                )
+                .build()
+
             val request = Request.Builder()
                 .url(API_URL)
-                .post(json.toRequestBody("application/json".toMediaType()))
+                .post(requestBody)
                 .build()
 
             val response = client.newCall(request).execute()
             val body = response.body?.string()
 
             if (response.isSuccessful && body != null) {
-                val text = JSONObject(body)
-                    .getJSONArray("data")
-                    .getJSONObject(0)
-                    .getString("text")
-
+                val text = JSONObject(body).getString("text")
                 if (text.isNotEmpty()) {
                     CoroutineScope(Dispatchers.Main).launch {
                         onTranscriptionReceived?.invoke(text)
