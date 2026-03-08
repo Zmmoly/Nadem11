@@ -86,13 +86,18 @@ class QuranPageRepository(private val context: Context) {
             }
         }
         
-        // بعض الصفحات تنتهي بسورة معينة لكن الصفحة التالية تبدأ من منتصف السورة التالية.
-        // هذا يعني أن الآيات من (1) حتى (startAya - 1) من السورة التالية
+        // بعض الصفحات تنتهي بسورة معينة لكن الصفحة التالية تبدأ من منتصف سورة جديدة مختلفة.
+        // هذا يعني أن الآيات من (1) حتى (startAya - 1) من السورة الجديدة
         // تقع فعلياً في نهاية هذه الصفحة ولكنها غير مسجّلة في pageInfo.
         // مثال: الصفحة 221 تنتهي عند يونس 109، والصفحة 222 تبدأ من هود 6،
         //        إذن هود 1-5 تقع في الصفحة 221 وتحتاج أن تُضاف يدوياً.
+        // الشرط المهم: السورة يجب أن تكون مختلفة عن آخر سورة في الصفحة
+        // لتجنب تكرار الآيات (مثلاً صفحة 222 تنتهي بهود 12 والصفحة 223 تبدأ من هود 13).
         val nextPageInfo = QuranPages.getPageInfo(pageNumber + 1)
-        if (nextPageInfo != null && nextPageInfo.startAya > 1) {
+        if (nextPageInfo != null &&
+            nextPageInfo.startAya > 1 &&
+            nextPageInfo.startSura != pageInfo.endSura) {
+
             val gapSura = nextPageInfo.startSura
             val gapSuraAyahs = quranRepository.getSurahAyahs(gapSura)
             val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
@@ -103,9 +108,14 @@ class QuranPageRepository(private val context: Context) {
                 val isLastInSura = (gapAya == gapSuraAyahs.size)
                 val isLastInPage = (gapAya == nextPageInfo.startAya - 1)
 
+                // حذف البسملة بطريقة مرنة تتجاهل اختلافات Unicode في quran.json
+                val normalizedText = ayah.text
+                    .replace("\u0671", "\u0627") // ٱ → ا
+                    .replace(Regex("[\u064B-\u065F\u0670]"), "") // حذف التشكيل
                 val ayahText = if (isFirstInSura && gapSura != 1 && gapSura != 9 &&
-                    ayah.text.startsWith(basmalaPrefix)) {
-                    ayah.text.removePrefix(basmalaPrefix).trim()
+                    normalizedText.startsWith("\u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062D\u0645\u0646 \u0627\u0644\u0631\u062D\u064A\u0645")) {
+                    // احذف أول 4 كلمات (بسم الله الرحمن الرحيم) من النص الأصلي
+                    ayah.text.split(" ").drop(4).joinToString(" ").trim()
                 } else {
                     ayah.text
                 }
