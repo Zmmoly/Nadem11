@@ -95,10 +95,24 @@ class QuranPageRepository(private val context: Context) {
     }
     
     /**
-     * البحث عن رقم الصفحة التي تحتوي على سورة وآية معينة
+     * البحث عن رقم الصفحة التي تحتوي على سورة وآية معينة.
+     *
+     * بعض السور لا تبدأ من الآية 1 في جدول QuranPages لأن بداياتها
+     * تقع في نفس الصفحة مع نهاية السورة السابقة (مثل سورة هود التي
+     * تبدأ من الآية 6 في الصفحة 222). في هذه الحالة نرجع الصفحة السابقة
+     * بدلاً من الوقوع في القيمة الافتراضية 1 (الفاتحة).
      */
     fun findPageNumber(suraNumber: Int, ayaNumber: Int): Int? {
-        return QuranPages.getPageForAya(suraNumber, ayaNumber)
+        val page = QuranPages.getPageForAya(suraNumber, ayaNumber)
+        if (page != null) return page
+
+        // السورة تبدأ في منتصف صفحة — أول صفحة مسجّلة لها تبدأ بآية > ayaNumber
+        val firstRecordedPage = QuranPages.getPagesForSurah(suraNumber).firstOrNull()
+        if (firstRecordedPage != null && firstRecordedPage.startAya > ayaNumber) {
+            return (firstRecordedPage.pageNumber - 1).coerceAtLeast(1)
+        }
+
+        return null
     }
     
     /**
