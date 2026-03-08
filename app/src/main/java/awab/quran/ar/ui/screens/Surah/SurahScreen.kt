@@ -183,9 +183,20 @@ fun SurahScreen(
         repository.findPageNumber(surah.number, 1) ?: 1
     }
     
-    // Pager state - مع reverseLayout=true: index 0 = صفحة 604، index 603 = صفحة 1
-    val pagerState = rememberPagerState(initialPage = 604 - initialPageNumber)
-    val currentPage = 604 - pagerState.currentPage
+    // Pager state - الصفحة الحالية
+    val pagerState = rememberPagerState(initialPage = initialPageNumber - 1)
+    val currentPage = pagerState.currentPage + 1
+    
+    // تحميل بيانات الصفحة الحالية
+    var pageData by remember { mutableStateOf<QuranPage?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    
+    // تحميل الصفحة عند تغيير رقم الصفحة
+    LaunchedEffect(currentPage) {
+        isLoading = true
+        pageData = repository.getPage(currentPage)
+        isLoading = false
+    }
     
     Box(modifier = Modifier.fillMaxSize()) {
         // الخلفية
@@ -205,12 +216,15 @@ fun SurahScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = surah.name,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4A3F35)
-                            )
+                            pageData?.ayahs?.firstOrNull()?.let { firstAyah ->
+                                Text(
+                                    text = firstAyah.suraName,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4A3F35)
+                                )
+                            }
+                            // رقم الصفحة محذوف - يظهر فقط في الشريط السفلي
                         }
                     },
                     navigationIcon = {
@@ -258,45 +272,27 @@ fun SurahScreen(
                         modifier = Modifier.fillMaxSize(),
                         reverseLayout = true // من اليمين لليسار
                     ) { page ->
-                        val displayPage = 604 - page
-                        // كل صفحة تحمّل بياناتها بشكل مستقل
-                        SingleQuranPage(
-                            pageNumber = displayPage,
-                            repository = repository,
-                            uthmanicFont = uthmanicFont,
-                            mode = selectedMode
-                        )
+                        val displayPage = page + 1
+                        
+                        when {
+                            isLoading && displayPage == currentPage -> {
+                                LoadingPage()
+                            }
+                            pageData != null && displayPage == currentPage -> {
+                                QuranPageContent(
+                                    page = pageData!!,
+                                    uthmanicFont = uthmanicFont,
+                                    mode = selectedMode
+                                )
+                            }
+                            else -> {
+                                LoadingPage()
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-/**
- * كل صفحة تحمّل بياناتها بشكل مستقل - هذا يحل مشكلة فتح الفاتحة بدلاً من السورة المطلوبة
- */
-@Composable
-fun SingleQuranPage(
-    pageNumber: Int,
-    repository: QuranPageRepository,
-    uthmanicFont: FontFamily?,
-    mode: String
-) {
-    var pageData by remember(pageNumber) { mutableStateOf<QuranPage?>(null) }
-
-    LaunchedEffect(pageNumber) {
-        pageData = repository.getPage(pageNumber)
-    }
-
-    if (pageData != null) {
-        QuranPageContent(
-            page = pageData!!,
-            uthmanicFont = uthmanicFont,
-            mode = mode
-        )
-    } else {
-        LoadingPage()
     }
 }
 
