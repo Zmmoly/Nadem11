@@ -86,6 +86,45 @@ class QuranPageRepository(private val context: Context) {
             }
         }
         
+        // بعض الصفحات تنتهي بسورة معينة لكن الصفحة التالية تبدأ من منتصف السورة التالية.
+        // هذا يعني أن الآيات من (1) حتى (startAya - 1) من السورة التالية
+        // تقع فعلياً في نهاية هذه الصفحة ولكنها غير مسجّلة في pageInfo.
+        // مثال: الصفحة 221 تنتهي عند يونس 109، والصفحة 222 تبدأ من هود 6،
+        //        إذن هود 1-5 تقع في الصفحة 221 وتحتاج أن تُضاف يدوياً.
+        val nextPageInfo = QuranPages.getPageInfo(pageNumber + 1)
+        if (nextPageInfo != null && nextPageInfo.startAya > 1) {
+            val gapSura = nextPageInfo.startSura
+            val gapSuraAyahs = quranRepository.getSurahAyahs(gapSura)
+            val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
+
+            for (gapAya in 1 until nextPageInfo.startAya) {
+                val ayah = gapSuraAyahs.getOrNull(gapAya - 1) ?: continue
+                val isFirstInSura = (gapAya == 1)
+                val isLastInSura = (gapAya == gapSuraAyahs.size)
+                val isLastInPage = (gapAya == nextPageInfo.startAya - 1)
+
+                val ayahText = if (isFirstInSura && gapSura != 1 && gapSura != 9 &&
+                    ayah.text.startsWith(basmalaPrefix)) {
+                    ayah.text.removePrefix(basmalaPrefix).trim()
+                } else {
+                    ayah.text
+                }
+
+                ayahs.add(
+                    PageAyah(
+                        suraNumber = gapSura,
+                        suraName = getSuraName(gapSura),
+                        ayaNumber = gapAya,
+                        text = ayahText,
+                        isFirstInPage = false,
+                        isLastInPage = isLastInPage,
+                        isFirstInSura = isFirstInSura,
+                        isLastInSura = isLastInSura
+                    )
+                )
+            }
+        }
+
         return QuranPage(
             pageNumber = pageNumber,
             startSura = pageInfo.startSura,
