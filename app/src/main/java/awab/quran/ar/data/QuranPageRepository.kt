@@ -108,9 +108,10 @@ class QuranPageRepository(private val context: Context) {
                 val isLastInSura = (gapAya == gapSuraAyahs.size)
                 val isLastInPage = (gapAya == nextPageInfo.startAya - 1)
 
-                // حذف البسملة بطريقة مرنة تتجاهل اختلافات Unicode في quran.json
+                // حذف البسملة بطريقة مرنة تتجاهل اختلافات Unicode والتطويل في quran.json
                 val normalizedText = ayah.text
                     .replace("\u0671", "\u0627") // ٱ → ا
+                    .replace("\u0640", "")         // حذف التطويل ـ
                     .replace(Regex("[\u064B-\u065F\u0670]"), "") // حذف التشكيل
                 val ayahText = if (isFirstInSura && gapSura != 1 && gapSura != 9 &&
                     normalizedText.startsWith("\u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062D\u0645\u0646 \u0627\u0644\u0631\u062D\u064A\u0645")) {
