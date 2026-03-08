@@ -183,9 +183,9 @@ fun SurahScreen(
         repository.findPageNumber(surah.number, 1) ?: 1
     }
     
-    // Pager state - الصفحة الحالية
-    val pagerState = rememberPagerState(initialPage = initialPageNumber - 1)
-    val currentPage = pagerState.currentPage + 1
+    // Pager state - مع reverseLayout=true: index 0 = صفحة 604، index 603 = صفحة 1
+    val pagerState = rememberPagerState(initialPage = 604 - initialPageNumber)
+    val currentPage = 604 - pagerState.currentPage
     
     Box(modifier = Modifier.fillMaxSize()) {
         // الخلفية
@@ -258,7 +258,7 @@ fun SurahScreen(
                         modifier = Modifier.fillMaxSize(),
                         reverseLayout = true // من اليمين لليسار
                     ) { page ->
-                        val displayPage = page + 1
+                        val displayPage = 604 - page
                         // كل صفحة تحمّل بياناتها بشكل مستقل
                         SingleQuranPage(
                             pageNumber = displayPage,
