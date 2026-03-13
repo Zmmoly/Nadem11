@@ -154,7 +154,7 @@ fun rememberUthmanicFontFromAssets(): FontFamily? {
     val context = LocalContext.current
     return remember {
         try {
-            val typeface = Typeface.createFromAsset(context.assets, "fonts/uthmanic_hafs.otf")
+            val typeface = Typeface.createFromAsset(context.assets, "fonts/kfgqpc_uthman_taha.ttf")
             FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
         } catch (e: Exception) {
             null
