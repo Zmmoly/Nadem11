@@ -17,7 +17,7 @@ import java.io.DataOutputStream
 
 class DeepgramService(private val context: Context) {
 
-    private val API_URL = "https://Scanor-Ndem.hf.space/transcribe"
+    private val API_URL = "https://zmmoly--quran-transcribe-fastapi-app.modal.run/transcribe"
 
     private val SILENCE_THRESHOLD = 1500
     private val SILENCE_DURATION_MS = 800L
