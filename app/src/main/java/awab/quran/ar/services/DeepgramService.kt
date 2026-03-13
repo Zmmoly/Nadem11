@@ -137,7 +137,7 @@ class DeepgramService(private val context: Context) {
 
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
                 .build()
 
             val requestBody = MultipartBody.Builder()
