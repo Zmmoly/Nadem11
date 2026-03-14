@@ -68,41 +68,37 @@ fun ProfileScreen(
         }
     }
 
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val topBarColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val dividerColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFD4C5A9)
+    val avatarColor = if (isDarkMode) Color(0xFF3A3A3A) else Color(0xFF6B5744)
+
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(bgColor)
     ) {
-        // صورة الخلفية
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = "خلفية الملف الشخصي",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
+        if (!isDarkMode) {
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = "خلفية الملف الشخصي",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = {
-                        Text(
-                            text = "الملف الشخصي",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744)
-                        )
-                    },
+                    title = { Text(text = "الملف الشخصي", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "رجوع",
-                                tint = Color(0xFF6B5744)
-                            )
+                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                    )
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
                 )
             }
         ) { paddingValues ->
@@ -122,7 +118,7 @@ fun ProfileScreen(
                     modifier = Modifier.size(120.dp),
                     shape = RoundedCornerShape(60.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF6B5744)
+                        containerColor = avatarColor
                     )
                 ) {
                     Box(
@@ -143,7 +139,7 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                        containerColor = cardColor
                     )
                 ) {
                     Column(
@@ -156,7 +152,7 @@ fun ProfileScreen(
                             text = userName.ifEmpty { "المستخدم" },
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744)
+                            color = titleColor
                         )
                         
                         Row(
@@ -165,14 +161,14 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = null,
-                                tint = Color(0xFF8B7355),
+                                tint = subColor,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = userEmail,
                                 fontSize = 14.sp,
-                                color = Color(0xFF8B7355)
+                                color = subColor
                             )
                         }
                     }
@@ -183,7 +179,7 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                        containerColor = cardColor
                     )
                 ) {
                     Column(
@@ -196,7 +192,7 @@ fun ProfileScreen(
                             text = "إحصائيات التسميع",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744)
+                            color = titleColor
                         )
                         
                         StatRow(
@@ -205,7 +201,7 @@ fun ProfileScreen(
                             value = totalRecitations.toString()
                         )
                         
-                        Divider(color = Color(0xFFD4C5A9))
+                        Divider(color = dividerColor)
                         
                         StatRow(
                             icon = Icons.Default.CheckCircle,
@@ -220,7 +216,7 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
+                        containerColor = cardColor
                     )
                 ) {
                     Column(
@@ -233,7 +229,7 @@ fun ProfileScreen(
                             text = "إعدادات الحساب",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744),
+                            color = titleColor,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
@@ -256,7 +252,7 @@ fun ProfileScreen(
                                 Text(
                                     text = if (isDarkMode) "الوضع الليلي" else "الوضع النهاري",
                                     fontSize = 16.sp,
-                                    color = Color(0xFF6B5744)
+                                    color = titleColor
                                 )
                             }
                             Switch(
@@ -274,7 +270,7 @@ fun ProfileScreen(
                             )
                         }
 
-                        Divider(color = Color(0xFFD4C5A9))
+                        Divider(color = dividerColor)
 
                         ProfileOption(
                             icon = Icons.Default.Settings,
@@ -282,7 +278,7 @@ fun ProfileScreen(
                             onClick = { showSettingsDialog = true }
                         )
                         
-                        Divider(color = Color(0xFFD4C5A9))
+                        Divider(color = dividerColor)
                         
                         ProfileOption(
                             icon = Icons.Default.Notifications,
@@ -292,7 +288,7 @@ fun ProfileScreen(
                             }
                         )
                         
-                        Divider(color = Color(0xFFD4C5A9))
+                        Divider(color = dividerColor)
                         
                         ProfileOption(
                             icon = Icons.Default.Info,
@@ -341,13 +337,13 @@ fun ProfileScreen(
             title = {
                 Text(
                     text = "تسجيل الخروج",
-                    color = Color(0xFF6B5744)
+                    color = titleColor
                 )
             },
             text = {
                 Text(
                     text = "هل أنت متأكد من تسجيل الخروج؟",
-                    color = Color(0xFF8B7355)
+                    color = subColor
                 )
             },
             confirmButton = {
@@ -366,10 +362,10 @@ fun ProfileScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("إلغاء", color = Color(0xFF6B5744))
+                    Text("إلغاء", color = titleColor)
                 }
             },
-            containerColor = Color(0xFFF5F3ED)
+            containerColor = cardColor
         )
     }
 
@@ -390,7 +386,7 @@ fun ProfileScreen(
                     Text(
                         text = "الأخطاء التي يتم تجاهلها:",
                         fontSize = 14.sp,
-                        color = Color(0xFF8B7355),
+                        color = subColor,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -461,12 +457,12 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = { showSettingsDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744))
+                    colors = ButtonDefaults.buttonColors(containerColor = avatarColor)
                 ) {
                     Text("حفظ", color = Color.White)
                 }
             },
-            containerColor = Color(0xFFF5F3ED)
+            containerColor = cardColor
         )
     }
 }
@@ -488,14 +484,14 @@ fun StatRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFF6B5744),
+                tint = titleColor,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = label,
                 fontSize = 16.sp,
-                color = Color(0xFF6B5744)
+                color = titleColor
             )
         }
         
@@ -503,7 +499,7 @@ fun StatRow(
             text = value,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF6B5744)
+            color = titleColor
         )
     }
 }
@@ -527,14 +523,14 @@ fun ProfileOption(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFF6B5744),
+                tint = titleColor,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = title,
                 fontSize = 16.sp,
-                color = Color(0xFF6B5744)
+                color = titleColor
             )
         }
         
@@ -542,7 +538,7 @@ fun ProfileOption(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "فتح",
-                tint = Color(0xFF8B7355)
+                tint = subColor
             )
         }
     }
