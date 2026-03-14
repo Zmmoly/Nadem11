@@ -64,7 +64,8 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                }
+                },
+                isDarkMode = isDarkMode
             )
         }
 
@@ -77,7 +78,8 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                }
+                },
+                isDarkMode = isDarkMode
             )
         }
 
@@ -85,7 +87,8 @@ fun NadeemNavigation(
             ForgotPasswordScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                isDarkMode = isDarkMode
             )
         }
 
@@ -110,7 +113,8 @@ fun NadeemNavigation(
             RecitationScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                isDarkMode = isDarkMode
             )
         }
 
