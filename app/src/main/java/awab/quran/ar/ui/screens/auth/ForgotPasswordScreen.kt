@@ -30,16 +30,25 @@ import com.google.firebase.auth.FirebaseAuth
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     var email by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var emailSent by remember { mutableStateOf(false) }
-    
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val auth = FirebaseAuth.getInstance()
+
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val borderFocused = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF8B7355)
+    val borderUnfocused = if (isDarkMode) Color(0xFF444444) else Color(0xFFD4C5A9)
+    val fieldText = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val btnColor = if (isDarkMode) Color(0xFF4A7C59) else Color(0xFF6B5744)
 
     fun sendResetEmail() {
         if (email.isBlank()) {
@@ -72,199 +81,57 @@ fun ForgotPasswordScreen(
             }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // صورة الخلفية
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = "خلفية استعادة كلمة المرور",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
-        // زر الرجوع
-        IconButton(
-            onClick = onNavigateBack,
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.TopStart)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "رجوع",
-                tint = Color(0xFF6B5744)
-            )
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
+        if (!isDarkMode) {
+            Image(painter = painterResource(id = R.drawable.app_background), contentDescription = "خلفية", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         }
-        
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // الأيقونة
-            Text(
-                text = "🔐",
-                fontSize = 80.sp,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
 
-            // العنوان
-            Text(
-                text = "نسيت كلمة المرور؟",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF6B5744),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Text(
-                text = "لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور",
-                fontSize = 14.sp,
-                color = Color(0xFF8B7355),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+        IconButton(onClick = onNavigateBack, modifier = Modifier.padding(16.dp).align(Alignment.TopStart)) {
+            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
+        }
+
+        Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(text = "🔐", fontSize = 80.sp, modifier = Modifier.padding(bottom = 24.dp))
+            Text(text = "نسيت كلمة المرور؟", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+            Text(text = "لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور", fontSize = 14.sp, color = subColor, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // بطاقة إعادة تعيين كلمة المرور
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                ),
-                elevation = CardDefaults.cardElevation(8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+            Card(modifier = Modifier.fillMaxWidth().wrapContentHeight(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = cardColor), elevation = CardDefaults.cardElevation(8.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (!emailSent) {
-                        // حقل البريد الإلكتروني
                         OutlinedTextField(
                             value = email,
-                            onValueChange = {
-                                email = it
-                                emailError = null
-                            },
-                            label = { Text("البريد الإلكتروني", color = Color(0xFF8B7355)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Email,
-                                    contentDescription = "Email Icon",
-                                    tint = Color(0xFF8B7355)
-                                )
-                            },
+                            onValueChange = { email = it; emailError = null },
+                            label = { Text("البريد الإلكتروني", color = subColor) },
+                            leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = subColor) },
                             isError = emailError != null,
-                            supportingText = {
-                                emailError?.let { Text(it, color = Color.Red) }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Email,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    focusManager.clearFocus()
-                                    sendResetEmail()
-                                }
-                            ),
+                            supportingText = { emailError?.let { Text(it, color = Color.Red) } },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); sendResetEmail() }),
                             singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 24.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF8B7355),
-                                unfocusedBorderColor = Color(0xFFD4C5A9),
-                                focusedLabelColor = Color(0xFF8B7355),
-                                unfocusedLabelColor = Color(0xFF8B7355),
-                                cursorColor = Color(0xFF8B7355),
-                                focusedTextColor = Color(0xFF6B5744),
-                                unfocusedTextColor = Color(0xFF6B5744)
+                                focusedBorderColor = borderFocused, unfocusedBorderColor = borderUnfocused,
+                                focusedLabelColor = borderFocused, unfocusedLabelColor = subColor,
+                                cursorColor = borderFocused, focusedTextColor = fieldText, unfocusedTextColor = fieldText,
+                                focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.Unspecified,
+                                unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.Unspecified
                             ),
                             shape = RoundedCornerShape(16.dp)
                         )
 
-                        // زر إرسال
-                        Button(
-                            onClick = { sendResetEmail() },
-                            enabled = !isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF6B5744)
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(
-                                    text = "إرسال رابط إعادة التعيين",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
+                        Button(onClick = { sendResetEmail() }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = btnColor), shape = RoundedCornerShape(16.dp)) {
+                            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                            else Text(text = "إرسال رابط إعادة التعيين", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     } else {
-                        // رسالة النجاح
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "تم الإرسال",
-                            modifier = Modifier
-                                .size(80.dp)
-                                .padding(bottom = 16.dp),
-                            tint = Color(0xFF6B5744)
-                        )
-                        
-                        Text(
-                            text = "تم إرسال البريد!",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        
-                        Text(
-                            text = "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والبريد المزعج.",
-                            fontSize = 14.sp,
-                            color = Color(0xFF8B7355),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-
+                        Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.size(80.dp).padding(bottom = 16.dp), tint = titleColor)
+                        Text(text = "تم إرسال البريد!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+                        Text(text = "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والبريد المزعج.", fontSize = 14.sp, color = subColor, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                         Spacer(modifier = Modifier.height(24.dp))
-
-                        // زر الرجوع لتسجيل الدخول
-                        OutlinedButton(
-                            onClick = onNavigateBack,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFF6B5744)
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                text = "العودة لتسجيل الدخول",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                        OutlinedButton(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = titleColor), shape = RoundedCornerShape(16.dp)) {
+                            Text(text = "العودة لتسجيل الدخول", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
