@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecitationScreen(onNavigateBack: () -> Unit) {
+fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -36,6 +36,16 @@ fun RecitationScreen(onNavigateBack: () -> Unit) {
     var recordingSeconds by remember { mutableStateOf(0) }
     var transcribedLines by remember { mutableStateOf(listOf<String>()) }
     var statusMessage by remember { mutableStateOf("") }
+
+    // ألوان
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val topBarColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.7f)
+    val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF3D2B1F)
+    val hintCardColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE5DFCF).copy(alpha = 0.7f)
+    val micIdleColor = if (isDarkMode) Color(0xFF3A3A3A) else Color(0xFF6B5744).copy(alpha = 0.1f)
 
     // إنشاء الخدمة
     val service = remember {
@@ -75,228 +85,89 @@ fun RecitationScreen(onNavigateBack: () -> Unit) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
+        if (!isDarkMode) {
+            Image(painter = painterResource(id = R.drawable.app_background), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        }
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = {
-                        Text(
-                            "تسميع القرآن",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B5744)
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "رجوع",
-                                tint = Color(0xFF6B5744)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                    )
+                    title = { Text("تسميع القرآن", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor) } },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
                 )
             }
         ) { paddingValues ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(scrollState)
-                    .padding(24.dp),
+                modifier = Modifier.fillMaxSize().padding(paddingValues).verticalScroll(scrollState).padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ── بطاقة الميكروفون ──
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // أيقونة الميكروفون
-                        Surface(
-                            shape = RoundedCornerShape(60.dp),
-                            modifier = Modifier.size(120.dp),
-                            color = if (isRecording)
-                                Color(0xFFDC3545).copy(alpha = 0.15f)
-                            else
-                                Color(0xFF6B5744).copy(alpha = 0.1f)
-                        ) {
+                // بطاقة الميكروفون
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = cardColor)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(shape = RoundedCornerShape(60.dp), modifier = Modifier.size(120.dp), color = if (isRecording) Color(0xFFDC3545).copy(alpha = 0.15f) else micIdleColor) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = if (isAnalyzing)
-                                        Icons.Default.HourglassEmpty
-                                    else
-                                        Icons.Default.Mic,
+                                    imageVector = if (isAnalyzing) Icons.Default.HourglassEmpty else Icons.Default.Mic,
                                     contentDescription = null,
                                     modifier = Modifier.size(60.dp),
-                                    tint = if (isRecording)
-                                        Color(0xFFDC3545)
-                                    else
-                                        Color(0xFF6B5744)
+                                    tint = if (isRecording) Color(0xFFDC3545) else titleColor
                                 )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // وقت التسجيل
                         if (isRecording) {
-                            Text(
-                                text = String.format(
-                                    "%02d:%02d",
-                                    recordingSeconds / 60,
-                                    recordingSeconds % 60
-                                ),
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B5744)
-                            )
+                            Text(text = String.format("%02d:%02d", recordingSeconds / 60, recordingSeconds % 60), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = titleColor)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
-                        // حالة النظام
                         if (statusMessage.isNotEmpty()) {
-                            Text(
-                                text = statusMessage,
-                                fontSize = 14.sp,
-                                color = Color(0xFF6B5744).copy(alpha = 0.7f),
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
+                            Text(text = statusMessage, fontSize = 14.sp, color = subColor, modifier = Modifier.padding(bottom = 16.dp))
                         }
 
-                        // زر البدء/الإيقاف
                         Button(
                             onClick = {
                                 if (isRecording) {
-                                    service.stopRecitation()
-                                    isRecording = false
-                                    statusMessage = ""
+                                    service.stopRecitation(); isRecording = false; statusMessage = ""
                                 } else {
-                                    transcribedLines = listOf()
-                                    service.startRecitation()
-                                    isRecording = true
+                                    transcribedLines = listOf(); service.startRecitation(); isRecording = true
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isRecording)
-                                    Color(0xFFDC3545)
-                                else
-                                    Color(0xFF6B5744)
-                            ),
+                            modifier = Modifier.fillMaxWidth().height(60.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isRecording) Color(0xFFDC3545) else if (isDarkMode) Color(0xFF4A7C59) else Color(0xFF6B5744)),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Icon(
-                                imageVector = if (isRecording)
-                                    Icons.Default.Stop
-                                else
-                                    Icons.Default.Mic,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp),
-                                tint = Color.White
-                            )
-                            Text(
-                                text = if (isRecording) "إيقاف التسميع" else "ابدأ التسميع",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Icon(imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
+                            Text(text = if (isRecording) "إيقاف التسميع" else "ابدأ التسميع", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }
 
-                // ── بطاقة النص المُخرَج ──
+                // بطاقة النص
                 if (transcribedLines.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp)
-                        ) {
-                            Text(
-                                text = "النص المُسمَّع",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B5744),
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = cardColor)) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                            Text(text = "النص المُسمَّع", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
                             transcribedLines.forEach { line ->
-                                Text(
-                                    text = line,
-                                    fontSize = 22.sp,
-                                    color = Color(0xFF3D2B1F),
-                                    textAlign = TextAlign.Right,
-                                    lineHeight = 36.sp,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                )
-                                Divider(color = Color(0xFF6B5744).copy(alpha = 0.1f))
+                                Text(text = line, fontSize = 22.sp, color = textColor, textAlign = TextAlign.Right, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                                Divider(color = titleColor.copy(alpha = 0.1f))
                             }
                         }
                     }
                 }
 
-                // ── نصيحة ──
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE5DFCF).copy(alpha = 0.7f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Lightbulb,
-                            contentDescription = null,
-                            tint = Color(0xFF6B5744),
-                            modifier = Modifier
-                                .size(32.dp)
-                                .padding(end = 12.dp)
-                        )
-                        Text(
-                            text = "تأكد من وجودك في مكان هادئ للحصول على أفضل نتيجة",
-                            fontSize = 14.sp,
-                            color = Color(0xFF6B5744),
-                            lineHeight = 20.sp
-                        )
+                // نصيحة
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = hintCardColor)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Lightbulb, contentDescription = null, tint = titleColor, modifier = Modifier.size(32.dp).padding(end = 12.dp))
+                        Text(text = "تأكد من وجودك في مكان هادئ للحصول على أفضل نتيجة", fontSize = 14.sp, color = titleColor, lineHeight = 20.sp)
                     }
                 }
 
