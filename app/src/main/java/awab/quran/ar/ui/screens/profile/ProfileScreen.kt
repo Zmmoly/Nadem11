@@ -275,6 +275,8 @@ fun ProfileScreen(
                         }
 
                         Divider(color = Color(0xFFD4C5A9))
+
+                        ProfileOption(
                             icon = Icons.Default.Settings,
                             title = "الإعدادات",
                             onClick = { showSettingsDialog = true }
