@@ -445,14 +445,16 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 
     // حذف أرقام الآيات والرموز الخاصة
     result = result.replace(Regex("\\(\\d+\\)"), "")
-    result = result.replace("ـ", "")  // تطويل
 
-    // توحيد جميع أشكال الألف → ا (هذا يحل مشكلة الكلمات التي فيها ألف)
+    // حذف الكشيدة ثم تحويل الألف الخنجرية إلى ألف عادية
+    result = result.replace("ـ", "")   // كشيدة → تُحذف
+    result = result.replace("ٰ", "ا")  // ألف خنجرية → ألف عادية
+
+    // توحيد جميع أشكال الألف → ا
     result = result.replace("ٱ", "ا")  // همزة الوصل
     result = result.replace("أ", "ا")  // همزة فوق
     result = result.replace("إ", "ا")  // همزة تحت
     result = result.replace("آ", "ا")  // مد
-    result = result.replace("ٰ", "ا")  // ألف خنجرية (سبب المشكلة الرئيسي)
 
     // حذف التشكيل (الحركات)
     result = result.replace(Regex("[\u064B-\u065F]"), "")
@@ -461,6 +463,10 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
     // توحيد التاء المربوطة والياء
     result = result.replace("ة", "ه")
     result = result.replace("ى", "ي")
+
+    // استثناء خاص: الرحمان ← الرحمن (الألف الخنجرية هنا لا تُنطق ألف كاملة)
+    result = result.replace("الرحمان", "الرحمن")
+    result = result.replace("رحمان", "رحمن")
 
     // تجاهل حرف الحاء
     if (settings.ignoreHaa) {
