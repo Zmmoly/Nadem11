@@ -758,14 +758,7 @@ fun QuranAyahText(
             text = buildAnnotatedString {
                 append(ayah.text)
                 append(" ")
-                // إضافة رقم الآية بشكل مزخرف
-                withStyle(
-                    style = SpanStyle(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = titleColor
-                    )
-                ) {
+                withStyle(style = SpanStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B5744))) {
                     append("﴿")
                     append(convertToArabicNumerals(ayah.ayaNumber))
                     append("﴾")
@@ -774,7 +767,7 @@ fun QuranAyahText(
             fontSize = 22.sp,
             fontWeight = FontWeight.Normal,
             fontFamily = font,
-            color = quranTextColor,
+            color = Color(0xFF2C2416),
             textAlign = TextAlign.Right,
             lineHeight = 45.sp,
             modifier = Modifier.fillMaxWidth()
@@ -807,15 +800,8 @@ fun SuraHeader(suraName: String, suraNumber: Int, isDarkMode: Boolean = false) {
  */
 @Composable
 fun PageNumberFooter(pageNumber: Int) {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = titleColor,
-            modifier = Modifier.padding(8.dp)
-        ) {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFF6B5744), modifier = Modifier.padding(8.dp)) {
             Text(
                 text = pageNumber.toString(),
                 fontSize = 16.sp,
