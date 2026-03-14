@@ -72,8 +72,12 @@ fun convertToArabicNumerals(number: Int): String {
 @Composable
 fun ModeSelector(
     selectedMode: String,
-    onModeSelected: (String) -> Unit
+    onModeSelected: (String) -> Unit,
+    isDarkMode: Boolean = false
 ) {
+    val bgColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F0E8)
+    val selectedBg = if (isDarkMode) Color(0xFF3A3A1E) else Color(0xFFD4AF37).copy(alpha = 0.9f)
+    val unselectedText = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
     val modes = listOf(
         "اختبار" to "🧠",
         "تسميع" to "🎤",
@@ -81,66 +85,41 @@ fun ModeSelector(
     )
     
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(50.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5EFE6)
-        ),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             modes.forEach { (mode, icon) ->
-                ModeButton(
-                    mode = mode,
-                    icon = icon,
-                    isSelected = mode == selectedMode,
-                    onClick = { onModeSelected(mode) }
-                )
+                ModeButton(mode = mode, icon = icon, isSelected = mode == selectedMode, onClick = { onModeSelected(mode) }, isDarkMode = isDarkMode)
             }
         }
     }
 }
 
-/**
- * زر الوضع الواحد
- */
 @Composable
 fun RowScope.ModeButton(
     mode: String,
     icon: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     Surface(
-        modifier = Modifier
-            .weight(1f)
-            .padding(4.dp),
+        modifier = Modifier.weight(1f).padding(4.dp),
         shape = RoundedCornerShape(40.dp),
         color = if (isSelected) Color(0xFFC4A962) else Color.Transparent,
         onClick = onClick
     ) {
-        Row(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = icon,
-                fontSize = 20.sp
-            )
+        Row(modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = icon, fontSize = 20.sp)
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = mode,
                 fontSize = 16.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) Color.White else Color(0xFF6B5744)
+                color = if (isSelected) Color.White else if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
             )
         }
     }
@@ -169,11 +148,17 @@ fun rememberUthmanicFontFromAssets(): FontFamily? {
 @Composable
 fun SurahScreen(
     surah: Surah,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     val context = LocalContext.current
     val repository = remember { QuranPageRepository(context) }
     val uthmanicFont = rememberUthmanicFontFromAssets()
+
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val topBarBg = if (isDarkMode) Color(0xFF1E1E1E) else Color.Transparent
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
+    val iconColor = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
     
     // الوضع الحالي: قراءة، تسميع، اختبار
     var selectedMode by remember { mutableStateOf("قراءة") }
@@ -198,96 +183,49 @@ fun SurahScreen(
         isLoading = false
     }
     
-    Box(modifier = Modifier.fillMaxSize()) {
-        // الخلفية
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
+        if (!isDarkMode) {
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                             pageData?.ayahs?.firstOrNull()?.let { firstAyah ->
-                                Text(
-                                    text = firstAyah.suraName,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4A3F35)
-                                )
+                                Text(text = firstAyah.suraName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = titleColor)
                             }
-                            // رقم الصفحة محذوف - يظهر فقط في الشريط السفلي
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "رجوع",
-                                tint = Color(0xFF6B5744)
-                            )
+                            Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = iconColor)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBg)
                 )
             },
             bottomBar = {
-                // شريط التنقل السفلي
-                PageNavigationBar(
-                    currentPage = currentPage,
-                    totalPages = 604
-                )
+                PageNavigationBar(currentPage = currentPage, totalPages = 604, isDarkMode = isDarkMode)
             }
         ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                // شريط الأوضاع (قراءة، تسميع، اختبار)
-                ModeSelector(
-                    selectedMode = selectedMode,
-                    onModeSelected = { selectedMode = it }
-                )
-                
-                // ViewPager للتنقل بين الصفحات
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    HorizontalPager(
-                        count = 604,
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize(),
-                        reverseLayout = true // من اليمين لليسار
-                    ) { page ->
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                ModeSelector(selectedMode = selectedMode, onModeSelected = { selectedMode = it }, isDarkMode = isDarkMode)
+
+                Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                    HorizontalPager(count = 604, state = pagerState, modifier = Modifier.fillMaxSize(), reverseLayout = true) { page ->
                         val displayPage = page + 1
-                        
                         when {
-                            isLoading && displayPage == currentPage -> {
-                                LoadingPage()
-                            }
-                            pageData != null && displayPage == currentPage -> {
-                                QuranPageContent(
-                                    page = pageData!!,
-                                    uthmanicFont = uthmanicFont,
-                                    mode = selectedMode
-                                )
-                            }
-                            else -> {
-                                LoadingPage()
-                            }
+                            isLoading && displayPage == currentPage -> LoadingPage()
+                            pageData != null && displayPage == currentPage -> QuranPageContent(page = pageData!!, uthmanicFont = uthmanicFont, mode = selectedMode, isDarkMode = isDarkMode)
+                            else -> LoadingPage()
                         }
                     }
                 }
@@ -303,27 +241,14 @@ fun SurahScreen(
 fun QuranPageContent(
     page: QuranPage,
     uthmanicFont: FontFamily?,
-    mode: String = "قراءة"
+    mode: String = "قراءة",
+    isDarkMode: Boolean = false
 ) {
     val context = LocalContext.current
-    
     when (mode) {
-        "تسميع" -> {
-            RecitationMode(
-                page = page,
-                context = context
-            )
-        }
-        "اختبار" -> {
-            ExamMode(
-                page = page,
-                context = context,
-                uthmanicFont = uthmanicFont
-            )
-        }
-        else -> {
-            ReadingMode(page = page, uthmanicFont = uthmanicFont)
-        }
+        "تسميع" -> RecitationMode(page = page, context = context, isDarkMode = isDarkMode)
+        "اختبار" -> ExamMode(page = page, context = context, uthmanicFont = uthmanicFont, isDarkMode = isDarkMode)
+        else -> ReadingMode(page = page, uthmanicFont = uthmanicFont, isDarkMode = isDarkMode)
     }
 }
 
@@ -333,8 +258,11 @@ fun QuranPageContent(
 @Composable
 fun ReadingMode(
     page: QuranPage,
-    uthmanicFont: FontFamily?
+    uthmanicFont: FontFamily?,
+    isDarkMode: Boolean = false
 ) {
+    val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
+    val ayahNumColor = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
     // تجميع الآيات في مجموعات: كل مجموعة تبدأ برأس سورة أو هي استمرار
     data class AyahGroup(
         val surahHeader: String? = null,   // اسم السورة إذا كانت بداية سورة
@@ -387,30 +315,22 @@ fun ReadingMode(
             val group = groups[idx]
 
             Column {
-                // رأس السورة
                 if (group.surahHeader != null) {
-                    SuraHeader(
-                        suraName = group.surahHeader,
-                        suraNumber = group.surahNumber
-                    )
+                    SuraHeader(suraName = group.surahHeader, suraNumber = group.surahNumber, isDarkMode = isDarkMode)
                     Spacer(modifier = Modifier.height(8.dp))
                     if (group.showBasmala) {
-                        BasmalaHeader(font = uthmanicFont)
+                        BasmalaHeader(font = uthmanicFont, isDarkMode = isDarkMode)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
 
-                // كل آيات المجموعة في Text واحد متدفق
                 if (group.ayahs.isNotEmpty()) {
                     Text(
                         text = buildAnnotatedString {
                             group.ayahs.forEach { ayah ->
                                 append(ayah.text)
                                 append(" ")
-                                withStyle(SpanStyle(
-                                    fontSize = 24.sp,
-                                    color = Color(0xFF6B5744)
-                                )) {
+                                withStyle(SpanStyle(fontSize = 24.sp, color = ayahNumColor)) {
                                     append("﴿")
                                     append(convertToArabicNumerals(ayah.ayaNumber))
                                     append("﴾")
@@ -420,7 +340,7 @@ fun ReadingMode(
                         },
                         fontSize = 22.sp,
                         fontFamily = uthmanicFont,
-                        color = Color(0xFF2C2416),
+                        color = quranTextColor,
                         textAlign = TextAlign.Right,
                         lineHeight = 48.sp,
                         modifier = Modifier.fillMaxWidth()
@@ -445,16 +365,14 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 
     // حذف أرقام الآيات والرموز الخاصة
     result = result.replace(Regex("\\(\\d+\\)"), "")
+    result = result.replace("ـ", "")  // تطويل
 
-    // حذف الكشيدة ثم تحويل الألف الخنجرية إلى ألف عادية
-    result = result.replace("ـ", "")   // كشيدة → تُحذف
-    result = result.replace("ٰ", "ا")  // ألف خنجرية → ألف عادية
-
-    // توحيد جميع أشكال الألف → ا
+    // توحيد جميع أشكال الألف → ا (هذا يحل مشكلة الكلمات التي فيها ألف)
     result = result.replace("ٱ", "ا")  // همزة الوصل
     result = result.replace("أ", "ا")  // همزة فوق
     result = result.replace("إ", "ا")  // همزة تحت
     result = result.replace("آ", "ا")  // مد
+    result = result.replace("ٰ", "ا")  // ألف خنجرية (سبب المشكلة الرئيسي)
 
     // حذف التشكيل (الحركات)
     result = result.replace(Regex("[\u064B-\u065F]"), "")
@@ -463,10 +381,6 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
     // توحيد التاء المربوطة والياء
     result = result.replace("ة", "ه")
     result = result.replace("ى", "ي")
-
-    // استثناء خاص: الرحمان ← الرحمن (الألف الخنجرية هنا لا تُنطق ألف كاملة)
-    result = result.replace("الرحمان", "الرحمن")
-    result = result.replace("رحمان", "رحمن")
 
     // تجاهل حرف الحاء
     if (settings.ignoreHaa) {
@@ -554,8 +468,14 @@ fun buildColoredText(
 @Composable
 fun RecitationMode(
     page: QuranPage,
-    context: Context
+    context: Context,
+    isDarkMode: Boolean = false
 ) {
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
@@ -795,18 +715,16 @@ fun RecitationMode(
  * رأس البسملة
  */
 @Composable
-fun BasmalaHeader(font: FontFamily?) {
+fun BasmalaHeader(font: FontFamily?, isDarkMode: Boolean = false) {
     Text(
         text = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold,
         fontFamily = font,
-        color = Color(0xFF4A3F35),
+        color = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF4A3F35),
         textAlign = TextAlign.Center,
         lineHeight = 45.sp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
     )
 }
 
@@ -845,7 +763,7 @@ fun QuranAyahText(
                     style = SpanStyle(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6B5744)
+                        color = titleColor
                     )
                 ) {
                     append("﴿")
@@ -856,7 +774,7 @@ fun QuranAyahText(
             fontSize = 22.sp,
             fontWeight = FontWeight.Normal,
             fontFamily = font,
-            color = Color(0xFF2C2416),
+            color = quranTextColor,
             textAlign = TextAlign.Right,
             lineHeight = 45.sp,
             modifier = Modifier.fillMaxWidth()
@@ -868,37 +786,17 @@ fun QuranAyahText(
  * رأس السورة
  */
 @Composable
-fun SuraHeader(suraName: String, suraNumber: Int) {
+fun SuraHeader(suraName: String, suraNumber: Int, isDarkMode: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF6B5744)
-        )
+        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C2416) else Color(0xFF6B5744))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // زخرفة يمين
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Text("۞", fontSize = 20.sp, color = Color(0xFFD4AF37))
-            
             Spacer(modifier = Modifier.width(12.dp))
-            
-            // اسم السورة
-            Text(
-                text = "سورة $suraName",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFD4AF37)
-            )
-            
+            Text(text = "سورة $suraName", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37))
             Spacer(modifier = Modifier.width(12.dp))
-            
-            // زخرفة يسار
             Text("۞", fontSize = 20.sp, color = Color(0xFFD4AF37))
         }
     }
@@ -915,7 +813,7 @@ fun PageNumberFooter(pageNumber: Int) {
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = Color(0xFF6B5744),
+            color = titleColor,
             modifier = Modifier.padding(8.dp)
         ) {
             Text(
@@ -935,46 +833,24 @@ fun PageNumberFooter(pageNumber: Int) {
 @Composable
 fun PageNavigationBar(
     currentPage: Int,
-    totalPages: Int
+    totalPages: Int,
+    isDarkMode: Boolean = false
 ) {
     Surface(
-        color = Color(0xFFE8DDD0).copy(alpha = 0.95f),
+        color = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFE8DDD0).copy(alpha = 0.95f),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // معلومات الصفحة
-            Text(
-                text = "$currentPage من $totalPages",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF4A3F35)
-            )
-            
-            // شريط التقدم
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
+            Text(text = "$currentPage من $totalPages", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = textColor)
             LinearProgressIndicator(
                 progress = currentPage.toFloat() / totalPages,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-                    .height(4.dp),
-                color = Color(0xFF6B5744),
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp).height(4.dp),
+                color = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744),
                 trackColor = Color(0xFFD4AF37).copy(alpha = 0.3f)
             )
-            
-            // الجزء
             val juzNumber = ((currentPage - 1) / 20) + 1
-            Text(
-                text = "الجزء $juzNumber",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF4A3F35)
-            )
+            Text(text = "الجزء $juzNumber", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = textColor)
         }
     }
 }
@@ -986,8 +862,14 @@ fun PageNavigationBar(
 fun ExamMode(
     page: QuranPage,
     context: Context,
-    uthmanicFont: FontFamily?
+    uthmanicFont: FontFamily?,
+    isDarkMode: Boolean = false
 ) {
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
     val repository = remember { QuranPageRepository(context) }
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
@@ -1262,13 +1144,13 @@ fun ExamMode(
                 text = "🧠 وضع الاختبار",
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF4A3F35),
+                color = titleColor,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
                 text = "حدد نطاق الصفحات للاختبار",
                 fontSize = 15.sp,
-                color = Color(0xFF8B7355),
+                color = subColor,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
@@ -1288,7 +1170,7 @@ fun ExamMode(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("من صفحة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                            Text("من صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
                             OutlinedTextField(
                                 value = fromPage,
                                 onValueChange = { if (it.length <= 3) fromPage = it.filter { c -> c.isDigit() } },
@@ -1313,10 +1195,10 @@ fun ExamMode(
                             )
                         }
 
-                        Text("—", fontSize = 24.sp, color = Color(0xFF8B7355))
+                        Text("—", fontSize = 24.sp, color = subColor)
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("إلى صفحة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                            Text("إلى صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
                             OutlinedTextField(
                                 value = toPage,
                                 onValueChange = { if (it.length <= 3) toPage = it.filter { c -> c.isDigit() } },
@@ -1345,7 +1227,7 @@ fun ExamMode(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // عدد الأسئلة
-                    Text("عدد الأسئلة", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
+                    Text("عدد الأسئلة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
                     OutlinedTextField(
                         value = questionCount,
                         onValueChange = { if (it.length <= 3) questionCount = it.filter { c -> c.isDigit() } },
@@ -1372,7 +1254,7 @@ fun ExamMode(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // طول السؤال
-                    Text("طول السؤال", fontSize = 14.sp, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 12.dp))
+                    Text("طول السؤال", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -1441,9 +1323,9 @@ fun ExamMode(
         ) {
             Text("🎉", fontSize = 60.sp)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("أحسنت! أكملت الاختبار", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35), textAlign = TextAlign.Center)
+            Text("أحسنت! أكملت الاختبار", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = titleColor, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("لقد أجبت على $totalQuestions سؤال", fontSize = 16.sp, color = Color(0xFF8B7355))
+            Text("لقد أجبت على $totalQuestions سؤال", fontSize = 16.sp, color = subColor)
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
@@ -1476,12 +1358,12 @@ fun ExamMode(
                     text = "السؤال $currentQuestion من $totalQuestions",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4A3F35)
+                    color = titleColor
                 )
                 Text(
                     text = "${((currentQuestion.toFloat() / totalQuestions) * 100).toInt()}%",
                     fontSize = 14.sp,
-                    color = Color(0xFF6B5744)
+                    color = titleColor
                 )
             }
             LinearProgressIndicator(
@@ -1533,7 +1415,7 @@ fun ExamMode(
                 Text(
                     text = if (isPlayingAudio) "⏸ جارٍ التشغيل" else "▶ استمع للآية",
                     fontSize = 14.sp,
-                    color = Color(0xFF2C2416),
+                    color = quranTextColor,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1542,7 +1424,7 @@ fun ExamMode(
 
             // زر تغيير النطاق
             TextButton(onClick = { showSetup = true }) {
-                Text("⚙ تغيير نطاق الصفحات", color = Color(0xFF8B7355), fontSize = 13.sp)
+                Text("⚙ تغيير نطاق الصفحات", color = subColor, fontSize = 13.sp)
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -1550,7 +1432,7 @@ fun ExamMode(
             Text(
                 text = "واصل القراءة من بعد هذه الآية...",
                 fontSize = 14.sp,
-                color = Color(0xFF8B7355),
+                color = subColor,
                 textAlign = TextAlign.Center
             )
 
