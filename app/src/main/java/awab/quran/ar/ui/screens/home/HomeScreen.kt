@@ -226,16 +226,29 @@ fun HomeScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                if (isDarkMode) Color(0xFF121212) else Color.Transparent
+            )
     ) {
-        // الخلفية الإسلامية الخاصة
-        Image(
-            painter = painterResource(id = R.drawable.home_background),
-            contentDescription = "خلفية الصفحة الرئيسية",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
+        // الخلفية - تظهر فقط في الوضع النهاري
+        if (!isDarkMode) {
+            Image(
+                painter = painterResource(id = R.drawable.home_background),
+                contentDescription = "خلفية الصفحة الرئيسية",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // ألوان تتغير حسب الوضع
+        val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
+        val subTextColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
+        val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFE8DDD0).copy(alpha = 0.65f)
+        val tabBorderColor = if (isDarkMode) Color(0xFFD4AF37).copy(alpha = 0.5f) else Color(0xFFD4AF37).copy(alpha = 0.3f)
+        val searchBg = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE8DDD0).copy(alpha = 0.5f)
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -243,6 +256,7 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(if (isDarkMode) Color(0xFF1E1E1E) else Color.Transparent)
                         .height(80.dp)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -273,7 +287,7 @@ fun HomeScreen(
                             tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744)
                         )
                     }
-                    
+
                     // نديم وخير جليس في المنتصف
                     Column(
                         modifier = Modifier.align(Alignment.Center),
@@ -283,13 +297,13 @@ fun HomeScreen(
                             text = "نديم",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4A3F35)
+                            color = textColor
                         )
                         Text(
                             text = "خير جليس لحفظ كتاب اللَّهِ",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
-                            color = Color(0xFF6B5744)
+                            color = subTextColor
                         )
                     }
                 }
@@ -303,15 +317,19 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // التبويبات الشفافة
+                // التبويبات
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.3f),
+                                color = tabBorderColor,
                                 shape = RoundedCornerShape(25.dp)
+                            )
+                            .background(
+                                if (isDarkMode) Color(0xFF1E1E1E) else Color.Transparent,
+                                RoundedCornerShape(25.dp)
                             )
                             .padding(4.dp)
                     ) {
@@ -323,32 +341,33 @@ fun HomeScreen(
                                 text = "الكل",
                                 isSelected = selectedTab == "الكل",
                                 onClick = { selectedTab = "الكل" },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isDarkMode = isDarkMode
                             )
                             TransparentTabButton(
                                 text = "المفضلة",
                                 isSelected = selectedTab == "المفضلة",
                                 onClick = { selectedTab = "المفضلة" },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isDarkMode = isDarkMode
                             )
                             TransparentTabButton(
                                 text = "اخر قراءة",
                                 isSelected = selectedTab == "اخر قراءة",
                                 onClick = { selectedTab = "اخر قراءة" },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isDarkMode = isDarkMode
                             )
                         }
                     }
                 }
 
-                // شريط البحث الفعال
+                // شريط البحث
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(25.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.5f)
-                        )
+                        colors = CardDefaults.cardColors(containerColor = searchBg)
                     ) {
                         Row(
                             modifier = Modifier
@@ -359,11 +378,10 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "بحث",
-                                tint = Color(0xFF9B8B7A).copy(alpha = 0.6f),
+                                tint = subTextColor.copy(alpha = 0.6f),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            
                             TextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
@@ -372,7 +390,7 @@ fun HomeScreen(
                                     Text(
                                         text = "ابحث عن سورة",
                                         fontSize = 14.sp,
-                                        color = Color(0xFF9B8B7A).copy(alpha = 0.5f)
+                                        color = subTextColor.copy(alpha = 0.5f)
                                     )
                                 },
                                 colors = TextFieldDefaults.colors(
@@ -382,8 +400,8 @@ fun HomeScreen(
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent,
                                     disabledIndicatorColor = Color.Transparent,
-                                    focusedTextColor = Color(0xFF4A3F35),
-                                    unfocusedTextColor = Color(0xFF4A3F35),
+                                    focusedTextColor = textColor,
+                                    unfocusedTextColor = textColor,
                                     cursorColor = Color(0xFFD4AF37)
                                 ),
                                 singleLine = true,
@@ -402,7 +420,8 @@ fun HomeScreen(
                         surah = surah,
                         isFavorite = surah.number in favoriteSurahs,
                         onFavoriteClick = { toggleFavorite(surah.number) },
-                        onClick = { onSurahClick(surah) }
+                        onClick = { onSurahClick(surah) },
+                        isDarkMode = isDarkMode
                     )
                 }
                 
@@ -419,8 +438,10 @@ fun TransparentTabButton(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
 ) {
+    val unselectedTextColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF9B8B7A)
     Box(
         modifier = modifier
             .height(40.dp)
@@ -459,7 +480,7 @@ fun TransparentTabButton(
             text = text,
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else Color(0xFF9B8B7A)
+            color = if (isSelected) Color.White else unselectedTextColor
         )
     }
 }
@@ -469,17 +490,20 @@ fun GoldenSurahCard(
     surah: Surah,
     isFavorite: Boolean = false,
     onFavoriteClick: () -> Unit = {},
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
+    val cardBg = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFE8DDD0).copy(alpha = 0.65f)
+    val nameColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF7A6B5A)
+    val arrowColor = if (isDarkMode) Color(0xFF888888) else Color(0xFF9B8B7A)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8DDD0).copy(alpha = 0.65f)
-        ),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Box(
@@ -512,13 +536,13 @@ fun GoldenSurahCard(
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "فتح",
-                    tint = Color(0xFF9B8B7A),
+                    tint = arrowColor,
                     modifier = Modifier.size(24.dp)
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // اسم السورة ومعلوماتها (وسط - يمين)
+                // اسم السورة ومعلوماتها
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.Start
@@ -527,27 +551,13 @@ fun GoldenSurahCard(
                         text = surah.name,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4A3F35)
+                        color = nameColor
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${surah.verses} آية",
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
-                        Text(
-                            text = " • ",
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
-                        Text(
-                            text = surah.revelationType,
-                            fontSize = 13.sp,
-                            color = Color(0xFF7A6B5A)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "${surah.verses} آية", fontSize = 13.sp, color = subColor)
+                        Text(text = " • ", fontSize = 13.sp, color = subColor)
+                        Text(text = surah.revelationType, fontSize = 13.sp, color = subColor)
                     }
                 }
 
