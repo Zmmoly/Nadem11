@@ -16,13 +16,15 @@ private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF66BB6A),
     secondary = Color(0xFF81C784),
     tertiary = Color(0xFFD4AF37),
-    background = Color(0xFF1B1B1B),
-    surface = Color(0xFF2C2C2C),
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
+    surfaceVariant = Color(0xFF2C2C2C),
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
     onBackground = Color(0xFFE0E0E0),
-    onSurface = Color(0xFFE0E0E0)
+    onSurface = Color(0xFFE0E0E0),
+    outline = Color(0xFF4A4A4A)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -31,11 +33,13 @@ private val LightColorScheme = lightColorScheme(
     tertiary = Color(0xFFD4AF37),
     background = Color(0xFFF5F5F5),
     surface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFFF5F3ED),
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
     onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F)
+    onSurface = Color(0xFF1C1B1F),
+    outline = Color(0xFFD4C5A9)
 )
 
 @Composable
@@ -47,12 +51,16 @@ fun NadeemTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-    
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            window.statusBarColor = if (darkTheme) {
+                Color(0xFF1E1E1E).toArgb()
+            } else {
+                colorScheme.primary.toArgb()
+            }
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
