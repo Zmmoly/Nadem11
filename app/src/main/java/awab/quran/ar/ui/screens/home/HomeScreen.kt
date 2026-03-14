@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
+import awab.quran.ar.data.ThemeRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -43,10 +44,15 @@ data class Surah(
 fun HomeScreen(
     onNavigateToRecitation: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onSurahClick: (Surah) -> Unit = {}
+    onSurahClick: (Surah) -> Unit = {},
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: (Boolean) -> Unit = {}
 ) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val themeRepo = remember { ThemeRepository(context) }
+    val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf("الكل") }
     var searchQuery by remember { mutableStateOf("") }
@@ -247,7 +253,23 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "الملف الشخصي",
-                            tint = Color(0xFF6B5744)
+                            tint = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
+                        )
+                    }
+
+                    // زر الوضع الليلي على اليمين
+                    IconButton(
+                        onClick = {
+                            val newValue = !isDarkMode
+                            onToggleDarkMode(newValue)
+                            scope.launch { themeRepo.setDarkMode(newValue) }
+                        },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(
+                            imageVector = if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightlightRound,
+                            contentDescription = if (isDarkMode) "الوضع النهاري" else "الوضع الليلي",
+                            tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744)
                         )
                     }
                     
