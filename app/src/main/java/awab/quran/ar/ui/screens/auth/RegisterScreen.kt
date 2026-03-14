@@ -36,7 +36,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 @Composable
 fun RegisterScreen(
     onNavigateBack: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -45,18 +46,26 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
-    
     var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
-    
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
+
+    // ألوان
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val borderFocused = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF8B7355)
+    val borderUnfocused = if (isDarkMode) Color(0xFF444444) else Color(0xFFD4C5A9)
+    val fieldBg = if (isDarkMode) Color(0xFF2C2C2C) else Color.Unspecified
+    val fieldText = if (isDarkMode) Color(0xFFE0E0E0) else Color.Unspecified
 
     fun performRegister() {
         // التحقق من المدخلات
@@ -143,338 +152,72 @@ fun RegisterScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(bgColor)
     ) {
-        // صورة الخلفية
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = "خلفية التسجيل",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
+        if (!isDarkMode) {
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = "خلفية التسجيل",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
+            Text(text = "إنشاء حساب جديد", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+            Text(text = "انضم إلينا في رحلة حفظ القرآن الكريم", fontSize = 16.sp, color = subColor, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 32.dp))
 
-            // العنوان
-            Text(
-                text = "إنشاء حساب جديد",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF6B5744),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Text(
-                text = "انضم إلينا في رحلة حفظ القرآن الكريم",
-                fontSize = 16.sp,
-                color = Color(0xFF8B7355),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            // بطاقة التسجيل
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
+                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)
-                ),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // حقل الاسم الكامل
-                    OutlinedTextField(
-                        value = fullName,
-                        onValueChange = {
-                            fullName = it
-                            nameError = null
-                        },
-                        label = { Text("الاسم الكامل") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Person Icon"
-                            )
-                        },
-                        isError = nameError != null,
-                        supportingText = {
-                            nameError?.let { Text(it) }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 0.dp, bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF8B7355),
-                            unfocusedBorderColor = Color(0xFFD4C5A9),
-                            focusedLabelColor = Color(0xFF8B7355),
-                            cursorColor = Color(0xFF8B7355)
-                        )
+                Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    val fieldColors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = borderFocused, unfocusedBorderColor = borderUnfocused,
+                        focusedLabelColor = borderFocused, cursorColor = borderFocused,
+                        focusedContainerColor = fieldBg, unfocusedContainerColor = fieldBg,
+                        focusedTextColor = fieldText, unfocusedTextColor = fieldText
                     )
 
-                    // حقل البريد الإلكتروني
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            emailError = null
-                        },
-                        label = { Text("البريد الإلكتروني") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Email Icon"
-                            )
-                        },
-                        isError = emailError != null,
-                        supportingText = {
-                            emailError?.let { Text(it) }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 0.dp, bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF8B7355),
-                            unfocusedBorderColor = Color(0xFFD4C5A9),
-                            focusedLabelColor = Color(0xFF8B7355),
-                            cursorColor = Color(0xFF8B7355)
-                        )
-                    )
+                    OutlinedTextField(value = fullName, onValueChange = { fullName = it; nameError = null }, label = { Text("الاسم الكامل") }, leadingIcon = { Icon(Icons.Default.Person, null) }, isError = nameError != null, supportingText = { nameError?.let { Text(it) } }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), colors = fieldColors)
 
-                    // حقل كلمة المرور
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = {
-                            password = it
-                            passwordError = null
-                        },
-                        label = { Text("كلمة المرور") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Password Icon"
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = if (passwordVisible) 
-                                        Icons.Default.Visibility 
-                                    else 
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible) 
-                                        "إخفاء كلمة المرور" 
-                                    else 
-                                        "إظهار كلمة المرور"
-                                )
-                            }
-                        },
-                        visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-                        isError = passwordError != null,
-                        supportingText = {
-                            passwordError?.let { Text(it) }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 0.dp, bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF8B7355),
-                            unfocusedBorderColor = Color(0xFFD4C5A9),
-                            focusedLabelColor = Color(0xFF8B7355),
-                            cursorColor = Color(0xFF8B7355)
-                        )
-                    )
+                    OutlinedTextField(value = email, onValueChange = { email = it; emailError = null }, label = { Text("البريد الإلكتروني") }, leadingIcon = { Icon(Icons.Default.Email, null) }, isError = emailError != null, supportingText = { emailError?.let { Text(it) } }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), colors = fieldColors)
 
-                    // حقل تأكيد كلمة المرور
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = {
-                            confirmPassword = it
-                            confirmPasswordError = null
-                        },
-                        label = { Text("تأكيد كلمة المرور") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Lock Icon"
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                Icon(
-                                    imageVector = if (confirmPasswordVisible) 
-                                        Icons.Default.Visibility 
-                                    else 
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (confirmPasswordVisible) 
-                                        "إخفاء كلمة المرور" 
-                                    else 
-                                        "إظهار كلمة المرور"
-                                )
-                            }
-                        },
-                        visualTransformation = if (confirmPasswordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-                        isError = confirmPasswordError != null,
-                        supportingText = {
-                            confirmPasswordError?.let { Text(it) }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                performRegister()
-                            }
-                        ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 0.dp, bottom = 24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF8B7355),
-                            unfocusedBorderColor = Color(0xFFD4C5A9),
-                            focusedLabelColor = Color(0xFF8B7355),
-                            cursorColor = Color(0xFF8B7355)
-                        )
-                    )
+                    OutlinedTextField(value = password, onValueChange = { password = it; passwordError = null }, label = { Text("كلمة المرور") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, trailingIcon = { IconButton(onClick = { passwordVisible = !passwordVisible }) { Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } }, visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), isError = passwordError != null, supportingText = { passwordError?.let { Text(it) } }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), colors = fieldColors)
 
-                    // زر إنشاء الحساب
-                    Button(
-                        onClick = { performRegister() },
-                        enabled = !isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B7355)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "إنشاء الحساب",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    OutlinedTextField(value = confirmPassword, onValueChange = { confirmPassword = it; confirmPasswordError = null }, label = { Text("تأكيد كلمة المرور") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, trailingIcon = { IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) { Icon(if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null) } }, visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(), isError = confirmPasswordError != null, supportingText = { confirmPasswordError?.let { Text(it) } }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); performRegister() }), singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp), colors = fieldColors)
+
+                    Button(onClick = { performRegister() }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isDarkMode) Color(0xFF4A7C59) else Color(0xFF8B7355)), shape = RoundedCornerShape(12.dp)) {
+                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                        else Text(text = "إنشاء الحساب", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = "أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = subColor, modifier = Modifier.padding(vertical = 8.dp))
 
-                    // أزرار تسجيل الدخول الاجتماعي
-                    Text(
-                        text = "أو تابع التسجيل بإستخدام",
-                        fontSize = 13.sp,
-                        color = Color(0xFF9B8B7A),
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // زر Google - مفعّل
-                        SocialButton(R.drawable.ic_google, "Google") {
-                            signInWithGoogle(
-                                context = context,
-                                coroutineScope = coroutineScope,
-                                onSuccess = { onRegisterSuccess() },
-                                onError = { msg -> android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show() }
-                            )
-                        }
+                    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                        SocialButton(R.drawable.ic_google, "Google", isDarkMode) { signInWithGoogle(context = context, coroutineScope = coroutineScope, onSuccess = { onRegisterSuccess() }, onError = { msg -> android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show() }) }
                         Spacer(modifier = Modifier.width(12.dp))
-                        // زر Apple - غير مفعّل
-                        SocialButton(R.drawable.ic_apple, "Apple") {
-                            android.widget.Toast.makeText(context, "تسجيل الدخول بـ Apple غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        SocialButton(R.drawable.ic_apple, "Apple", isDarkMode) { android.widget.Toast.makeText(context, "تسجيل الدخول بـ Apple غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show() }
                         Spacer(modifier = Modifier.width(12.dp))
-                        // زر Facebook - غير مفعّل
-                        SocialButton(R.drawable.ic_facebook, "Facebook") {
-                            android.widget.Toast.makeText(context, "تسجيل الدخول بـ Facebook غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        SocialButton(R.drawable.ic_facebook, "Facebook", isDarkMode) { android.widget.Toast.makeText(context, "تسجيل الدخول بـ Facebook غير متاح حالياً", android.widget.Toast.LENGTH_SHORT).show() }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // زر العودة
-                    TextButton(
-                        onClick = onNavigateBack
-                    ) {
-                        Text(
-                            text = "لديك حساب بالفعل؟ سجل الدخول",
-                            color = Color(0xFF8B7355),
-                            fontSize = 16.sp
-                        )
-                    }
+                    TextButton(onClick = onNavigateBack) { Text(text = "لديك حساب بالفعل؟ سجل الدخول", color = subColor, fontSize = 16.sp) }
                 }
             }
-
             Spacer(modifier = Modifier.height(32.dp))
         }
 
-        // زر الرجوع
-        IconButton(
-            onClick = onNavigateBack,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White
-            )
+        IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) {
+            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = if (isDarkMode) Color(0xFFE0E0E0) else Color.White)
         }
     }
 }
