@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -196,6 +197,7 @@ fun ProfileScreen(
                         )
                         
                         StatRow(
+                            isDarkMode = isDarkMode,
                             icon = Icons.Default.Mic,
                             label = "عدد التسميعات",
                             value = totalRecitations.toString()
@@ -204,6 +206,7 @@ fun ProfileScreen(
                         Divider(color = dividerColor)
                         
                         StatRow(
+                            isDarkMode = isDarkMode,
                             icon = Icons.Default.CheckCircle,
                             label = "السور المكتملة",
                             value = completedSurahs.toString()
@@ -273,6 +276,7 @@ fun ProfileScreen(
                         Divider(color = dividerColor)
 
                         ProfileOption(
+                            isDarkMode = isDarkMode,
                             icon = Icons.Default.Settings,
                             title = "الإعدادات",
                             onClick = { showSettingsDialog = true }
@@ -281,6 +285,7 @@ fun ProfileScreen(
                         Divider(color = dividerColor)
                         
                         ProfileOption(
+                            isDarkMode = isDarkMode,
                             icon = Icons.Default.Notifications,
                             title = "الإشعارات",
                             onClick = {
@@ -291,6 +296,7 @@ fun ProfileScreen(
                         Divider(color = dividerColor)
                         
                         ProfileOption(
+                            isDarkMode = isDarkMode,
                             icon = Icons.Default.Info,
                             title = "عن التطبيق",
                             onClick = {
@@ -471,8 +477,10 @@ fun ProfileScreen(
 fun StatRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    value: String
+    value: String,
+    isDarkMode: Boolean = false
 ) {
+    val color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -484,14 +492,14 @@ fun StatRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = titleColor,
+                tint = color,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = label,
                 fontSize = 16.sp,
-                color = titleColor
+                color = color
             )
         }
         
@@ -499,7 +507,7 @@ fun StatRow(
             text = value,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = titleColor
+            color = color
         )
     }
 }
@@ -508,8 +516,11 @@ fun StatRow(
 fun ProfileOption(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
+    val tColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val sColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -523,14 +534,14 @@ fun ProfileOption(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = titleColor,
+                tint = tColor,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = title,
                 fontSize = 16.sp,
-                color = titleColor
+                color = tColor
             )
         }
         
@@ -538,7 +549,7 @@ fun ProfileOption(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "فتح",
-                tint = subColor
+                tint = sColor
             )
         }
     }
