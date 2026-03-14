@@ -139,7 +139,8 @@ fun NadeemNavigation(
                     surah = surah,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    isDarkMode = isDarkMode
                 )
             }
         }
