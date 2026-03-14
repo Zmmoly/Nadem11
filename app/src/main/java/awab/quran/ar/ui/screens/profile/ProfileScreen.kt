@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
 import awab.quran.ar.data.RecitationSettings
 import awab.quran.ar.data.RecitationSettingsRepository
+import awab.quran.ar.data.ThemeRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -30,7 +31,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfileScreen(
     onNavigateBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -45,6 +48,7 @@ fun ProfileScreen(
     var showSettingsDialog by remember { mutableStateOf(false) }
 
     val settingsRepo = remember { RecitationSettingsRepository(context) }
+    val themeRepo = remember { ThemeRepository(context) }
     val scope = rememberCoroutineScope()
     var settings by remember { mutableStateOf(RecitationSettings()) }
 
@@ -232,8 +236,45 @@ fun ProfileScreen(
                             color = Color(0xFF6B5744),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        
-                        ProfileOption(
+
+                        // زر الوضع الليلي
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = if (isDarkMode) Icons.Default.NightlightRound else Icons.Default.WbSunny,
+                                    contentDescription = null,
+                                    tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (isDarkMode) "الوضع الليلي" else "الوضع النهاري",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF6B5744)
+                                )
+                            }
+                            Switch(
+                                checked = isDarkMode,
+                                onCheckedChange = { enabled ->
+                                    onToggleDarkMode(enabled)
+                                    scope.launch { themeRepo.setDarkMode(enabled) }
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color(0xFFFFD700),
+                                    checkedTrackColor = Color(0xFF3A3A3A),
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color(0xFFD4C5A9)
+                                )
+                            )
+                        }
+
+                        Divider(color = Color(0xFFD4C5A9))
                             icon = Icons.Default.Settings,
                             title = "الإعدادات",
                             onClick = { showSettingsDialog = true }
