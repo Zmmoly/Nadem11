@@ -40,6 +40,8 @@ class DeepgramService(private val context: Context) {
         .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
         .build()
+
+    var onTranscriptionReceived: ((String) -> Unit)? = null
     var onInterimTranscription: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
