@@ -524,12 +524,14 @@ fun RecitationMode(
     // نص الصفحة كمرجع - قائمة كلمات
     val referenceWords = remember(page) {
         page.ayahs
-            .joinToString(" ") { it.text }
-            .replace(Regex("\\(\\d+\\)"), "")   // إزالة أرقام الآيات (1) (2)
-            .replace("ٱ", "ا")             // توحيد همزة الوصل ٱ -> ا
-            .replace("ٰ", "")                    // إزالة الألف الخنجرية ٰ
-            .replace("ـ", "")                    // إزالة تطويل الكلمة ـ
-            .replace(Regex("\\s+"), " ")             // إزالة المسافات الزائدة
+            .joinToString(" ") { cleanQuranText(it.text) }
+            .replace(Regex("[﴿﴾]"), "")          // إزالة أقواس الآيات
+            .replace(Regex("\\(\\d+\\)"), "")    // إزالة أرقام الآيات (1) (2)
+            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "") // إزالة أرقام عربية وإنجليزية
+            .replace("ٱ", "ا")
+            .replace("ٰ", "")
+            .replace("ـ", "")
+            .replace(Regex("\\s+"), " ")
             .trim()
             .split(" ")
             .filter { it.isNotEmpty() }
@@ -561,8 +563,12 @@ fun RecitationMode(
         launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
 
         // عند وصول نتيجة نهائية - قارن بناءً على الإعدادات
-        deepgramService.onTranscriptionReceived = { text ->
-            val newWords = text.trim().split(" ").filter { it.isNotEmpty() }
+        deepgramService.onTranscriptionReceived = { rawText ->
+            val text = rawText
+                .replace(Regex("[\\[\\]\"'،؟!]"), "") // إزالة الأقواس والرموز
+                .replace(Regex("\\s+"), " ")
+                .trim()
+            val newWords = text.split(" ").filter { it.isNotEmpty() }
             var hasError = false
 
             val newSegment = buildAnnotatedString {
