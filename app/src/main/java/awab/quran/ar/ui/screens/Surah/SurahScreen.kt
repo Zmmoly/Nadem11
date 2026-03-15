@@ -288,23 +288,22 @@ fun ReadingMode(
         var currentSura = -1
 
         for (ayah in page.ayahs) {
-            if (ayah.isFirstInSura && ayah.isFirstInPage || 
+            if (ayah.isFirstInSura && ayah.isFirstInPage ||
                 (ayah.isFirstInSura && ayah.suraNumber != currentSura)) {
                 // حفظ المجموعة السابقة
                 if (currentGroup.isNotEmpty()) {
                     result.add(AyahGroup(ayahs = currentGroup.toList()))
                     currentGroup = mutableListOf()
                 }
-                // بدء مجموعة جديدة برأس سورة
+                // بدء مجموعة جديدة برأس سورة - الآية الأولى تنضم لباقي الآيات
                 currentSura = ayah.suraNumber
                 currentGroup.add(ayah)
                 result.add(AyahGroup(
                     surahHeader = ayah.suraName,
                     surahNumber = ayah.suraNumber,
                     showBasmala = ayah.suraNumber != 1 && ayah.suraNumber != 9,
-                    ayahs = currentGroup.toList()
+                    ayahs = emptyList() // الآيات ستُضاف لاحقاً
                 ))
-                currentGroup = mutableListOf()
             } else {
                 currentSura = ayah.suraNumber
                 currentGroup.add(ayah)
