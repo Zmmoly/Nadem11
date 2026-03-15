@@ -133,10 +133,21 @@ fun rememberUthmanicFontFromAssets(): FontFamily? {
     val context = LocalContext.current
     return remember {
         try {
+            // الطريقة الأولى: من assets
             val typeface = Typeface.createFromAsset(context.assets, "fonts/kfgqpc_uthman_taha.ttf")
             FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
-        } catch (e: Exception) {
-            null
+        } catch (e1: Exception) {
+            try {
+                // الطريقة الثانية: من res/font مباشرة
+                val typeface = androidx.core.content.res.ResourcesCompat.getFont(
+                    context, awab.quran.ar.R.font.kfgqpc_uthman_taha
+                )
+                if (typeface != null)
+                    FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
+                else null
+            } catch (e2: Exception) {
+                null
+            }
         }
     }
 }
@@ -246,7 +257,7 @@ fun QuranPageContent(
 ) {
     val context = LocalContext.current
     when (mode) {
-        "تسميع" -> RecitationMode(page = page, context = context, isDarkMode = isDarkMode)
+        "تسميع" -> RecitationMode(page = page, context = context, isDarkMode = isDarkMode, uthmanicFont = uthmanicFont)
         "اختبار" -> ExamMode(page = page, context = context, uthmanicFont = uthmanicFont, isDarkMode = isDarkMode)
         else -> ReadingMode(page = page, uthmanicFont = uthmanicFont, isDarkMode = isDarkMode)
     }
@@ -330,7 +341,7 @@ fun ReadingMode(
                             group.ayahs.forEach { ayah ->
                                 append(ayah.text)
                                 append(" ")
-                                withStyle(SpanStyle(fontSize = 24.sp, color = ayahNumColor)) {
+                                withStyle(SpanStyle(fontSize = 18.sp, color = ayahNumColor)) {
                                     append("﴿")
                                     append(convertToArabicNumerals(ayah.ayaNumber))
                                     append("﴾")
@@ -341,9 +352,12 @@ fun ReadingMode(
                         fontSize = 22.sp,
                         fontFamily = uthmanicFont,
                         color = quranTextColor,
-                        textAlign = TextAlign.Right,
-                        lineHeight = 48.sp,
-                        modifier = Modifier.fillMaxWidth()
+                        textAlign = TextAlign.Center,
+                        lineHeight = 58.sp,
+                        softWrap = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                     )
                 }
             }
@@ -469,7 +483,8 @@ fun buildColoredText(
 fun RecitationMode(
     page: QuranPage,
     context: Context,
-    isDarkMode: Boolean = false
+    isDarkMode: Boolean = false,
+    uthmanicFont: FontFamily? = null
 ) {
     val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
@@ -689,8 +704,9 @@ fun RecitationMode(
                         Text(
                             text = coloredText,
                             fontSize = 20.sp,
+                            fontFamily = uthmanicFont,
                             textAlign = TextAlign.Right,
-                            lineHeight = 40.sp,
+                            lineHeight = 44.sp,
                             modifier = Modifier.fillMaxWidth()
                         )
                         // النص المؤقت أثناء الكلام (رمادي)
@@ -698,9 +714,10 @@ fun RecitationMode(
                             Text(
                                 text = interimText,
                                 fontSize = 20.sp,
+                                fontFamily = uthmanicFont,
                                 color = Color(0xFF9E7B5A),
                                 textAlign = TextAlign.Right,
-                                lineHeight = 40.sp,
+                                lineHeight = 44.sp,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
