@@ -377,12 +377,14 @@ fun ReadingMode(
 fun cleanQuranText(text: String): String {
     return text
         .replace(Regex("[\u06D6-\u06DC\u06DE-\u06ED]"), "") // علامات التجويد والوقف
-        .replace("\u0654", "ء")   // همزة superscript → همزة عادية
-        .replace("\u0655", "")    // همزة subscript → تُحذف
-        .replace("\u0640\u0654", "ء") // كشيدة + همزة superscript → همزة (الآخرة)
-        .replace("\u0640", "")    // كشيدة منفردة → تُحذف
-        .replace("\u200F", "")    // علامة RTL
-        .replace("\u200E", "")    // علامة LTR
+        .replace("\u0640\u0654", "ء") // كشيدة + همزة superscript أولاً (الآخرة)
+        .replace("\u0640\u0655", "")  // كشيدة + همزة subscript
+        .replace("\u0654", "ء")       // همزة superscript منفردة → همزة
+        .replace("\u0655", "")        // همزة subscript منفردة → تُحذف
+        .replace("\u0640", "")        // كشيدة منفردة → تُحذف
+        .replace("\u0671", "ا")       // همزة الوصل ٱ → ألف عادية
+        .replace("\u200F", "")        // علامة RTL
+        .replace("\u200E", "")        // علامة LTR
         .trim()
 }
 
