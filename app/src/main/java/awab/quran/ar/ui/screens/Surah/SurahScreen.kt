@@ -339,7 +339,7 @@ fun ReadingMode(
                     Text(
                         text = buildAnnotatedString {
                             group.ayahs.forEach { ayah ->
-                                append(ayah.text)
+                                append(cleanQuranText(ayah.text))
                                 append(" ")
                                 withStyle(SpanStyle(fontSize = 18.sp, color = ayahNumColor)) {
                                     append("﴿")
@@ -369,6 +369,21 @@ fun ReadingMode(
             PageNumberFooter(pageNumber = page.pageNumber)
         }
     }
+}
+
+/**
+ * تنظيف نص القرآن من رموز التجويد غير المدعومة في الخط
+ */
+fun cleanQuranText(text: String): String {
+    return text
+        .replace(Regex("[\u06D6-\u06DC\u06DE-\u06ED]"), "") // علامات التجويد والوقف
+        .replace("\u0654", "ء")   // همزة superscript → همزة عادية
+        .replace("\u0655", "")    // همزة subscript → تُحذف
+        .replace("\u0640\u0654", "ء") // كشيدة + همزة superscript → همزة (الآخرة)
+        .replace("\u0640", "")    // كشيدة منفردة → تُحذف
+        .replace("\u200F", "")    // علامة RTL
+        .replace("\u200E", "")    // علامة LTR
+        .trim()
 }
 
 /**
