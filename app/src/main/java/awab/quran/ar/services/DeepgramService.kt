@@ -20,7 +20,7 @@ class DeepgramService(private val context: Context) {
     private val API_URL = "https://zmmoly--quran-transcribe-fastapi-app.modal.run/transcribe"
 
     private val SILENCE_THRESHOLD = 1500
-    private val SILENCE_DURATION_MS = 800L
+    private val SILENCE_DURATION_MS = 500L  // تقليل من 800 إلى 500
 
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
@@ -34,7 +34,12 @@ class DeepgramService(private val context: Context) {
         sampleRate, channelConfig, audioFormat
     )
 
-    var onTranscriptionReceived: ((String) -> Unit)? = null
+    // HTTP client مشترك لتجنب إنشاء اتصال جديد في كل طلب
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
     var onInterimTranscription: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
@@ -135,10 +140,7 @@ class DeepgramService(private val context: Context) {
 
             val wavBytes = pcmToWav(pcmData, sampleRate)
 
-            val client = OkHttpClient.Builder()
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
+            val client = httpClient
 
             val requestBody = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
