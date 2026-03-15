@@ -4151,6 +4151,13 @@ object QuranPages {
             endAya = 36
         ),
         PageInfo(
+            pageNumber = 589,
+            startSura = 84,
+            startAya = 1,
+            endSura = 84,
+            endAya = 25
+        ),
+        PageInfo(
             pageNumber = 590,
             startSura = 85,
             startAya = 1,
@@ -4165,11 +4172,25 @@ object QuranPages {
             endAya = 17
         ),
         PageInfo(
+            pageNumber = 591,
+            startSura = 87,
+            startAya = 1,
+            endSura = 87,
+            endAya = 15
+        ),
+        PageInfo(
             pageNumber = 592,
             startSura = 87,
             startAya = 16,
             endSura = 87,
             endAya = 19
+        ),
+        PageInfo(
+            pageNumber = 592,
+            startSura = 88,
+            startAya = 1,
+            endSura = 88,
+            endAya = 26
         ),
         PageInfo(
             pageNumber = 593,
@@ -4186,11 +4207,25 @@ object QuranPages {
             endAya = 30
         ),
         PageInfo(
+            pageNumber = 594,
+            startSura = 90,
+            startAya = 1,
+            endSura = 90,
+            endAya = 20
+        ),
+        PageInfo(
             pageNumber = 595,
             startSura = 91,
             startAya = 1,
             endSura = 91,
             endAya = 15
+        ),
+        PageInfo(
+            pageNumber = 595,
+            startSura = 92,
+            startAya = 1,
+            endSura = 92,
+            endAya = 14
         ),
         PageInfo(
             pageNumber = 596,
@@ -4200,11 +4235,32 @@ object QuranPages {
             endAya = 21
         ),
         PageInfo(
+            pageNumber = 596,
+            startSura = 93,
+            startAya = 1,
+            endSura = 93,
+            endAya = 11
+        ),
+        PageInfo(
+            pageNumber = 596,
+            startSura = 94,
+            startAya = 1,
+            endSura = 94,
+            endAya = 8
+        ),
+        PageInfo(
             pageNumber = 597,
             startSura = 95,
             startAya = 1,
             endSura = 95,
             endAya = 8
+        ),
+        PageInfo(
+            pageNumber = 597,
+            startSura = 96,
+            startAya = 1,
+            endSura = 96,
+            endAya = 19
         ),
         PageInfo(
             pageNumber = 598,
@@ -4214,11 +4270,32 @@ object QuranPages {
             endAya = 5
         ),
         PageInfo(
+            pageNumber = 598,
+            startSura = 98,
+            startAya = 1,
+            endSura = 98,
+            endAya = 7
+        ),
+        PageInfo(
             pageNumber = 599,
             startSura = 98,
             startAya = 8,
             endSura = 98,
             endAya = 8
+        ),
+        PageInfo(
+            pageNumber = 599,
+            startSura = 99,
+            startAya = 1,
+            endSura = 99,
+            endAya = 8
+        ),
+        PageInfo(
+            pageNumber = 599,
+            startSura = 100,
+            startAya = 1,
+            endSura = 100,
+            endAya = 9
         ),
         PageInfo(
             pageNumber = 600,
@@ -4228,11 +4305,39 @@ object QuranPages {
             endAya = 11
         ),
         PageInfo(
+            pageNumber = 600,
+            startSura = 101,
+            startAya = 1,
+            endSura = 101,
+            endAya = 11
+        ),
+        PageInfo(
+            pageNumber = 600,
+            startSura = 102,
+            startAya = 1,
+            endSura = 102,
+            endAya = 8
+        ),
+        PageInfo(
             pageNumber = 601,
             startSura = 103,
             startAya = 1,
             endSura = 103,
             endAya = 3
+        ),
+        PageInfo(
+            pageNumber = 601,
+            startSura = 104,
+            startAya = 1,
+            endSura = 104,
+            endAya = 9
+        ),
+        PageInfo(
+            pageNumber = 601,
+            startSura = 105,
+            startAya = 1,
+            endSura = 105,
+            endAya = 5
         ),
         PageInfo(
             pageNumber = 602,
@@ -4242,11 +4347,39 @@ object QuranPages {
             endAya = 4
         ),
         PageInfo(
+            pageNumber = 602,
+            startSura = 107,
+            startAya = 1,
+            endSura = 107,
+            endAya = 7
+        ),
+        PageInfo(
+            pageNumber = 602,
+            startSura = 108,
+            startAya = 1,
+            endSura = 108,
+            endAya = 3
+        ),
+        PageInfo(
             pageNumber = 603,
             startSura = 109,
             startAya = 1,
             endSura = 109,
             endAya = 6
+        ),
+        PageInfo(
+            pageNumber = 603,
+            startSura = 110,
+            startAya = 1,
+            endSura = 110,
+            endAya = 3
+        ),
+        PageInfo(
+            pageNumber = 603,
+            startSura = 111,
+            startAya = 1,
+            endSura = 111,
+            endAya = 5
         ),
         PageInfo(
             pageNumber = 604,
@@ -4294,7 +4427,20 @@ object QuranPages {
      * الحصول على معلومات صفحة معينة
      */
     fun getPageInfo(pageNumber: Int): PageInfo? {
-        return allPages.find { it.pageNumber == pageNumber }
+        val pageRecords = allPages.filter { it.pageNumber == pageNumber }
+        if (pageRecords.isEmpty()) return null
+        // أول سورة في الصفحة
+        val first = pageRecords.minByOrNull { it.startSura * 1000 + it.startAya } ?: return null
+        // آخر سورة في الصفحة
+        val last = pageRecords.maxByOrNull { it.endSura * 1000 + it.endAya } ?: return null
+        // نُرجع سجلاً يمثل الصفحة كاملة من أولها لآخرها
+        return PageInfo(
+            pageNumber = pageNumber,
+            startSura = first.startSura,
+            startAya = first.startAya,
+            endSura = last.endSura,
+            endAya = last.endAya
+        )
     }
     
     /**
