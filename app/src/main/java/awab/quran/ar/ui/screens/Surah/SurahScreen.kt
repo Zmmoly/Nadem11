@@ -562,37 +562,98 @@ fun RecitationMode(
         // تحميل الإعدادات
         launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
 
-        // عند وصول نتيجة نهائية - قارن بناءً على الإعدادات
+        // عند وصول نتيجة نهائية - مقارنة ذكية تكتشف الكلمات المنسية
         deepgramService.onTranscriptionReceived = { rawText ->
             val text = rawText
-                .replace(Regex("[\\[\\]\"'،؟!]"), "") // إزالة الأقواس والرموز
+                .replace(Regex("[\\[\\]\"'،؟!]"), "")
                 .replace(Regex("\\s+"), " ")
                 .trim()
             val newWords = text.split(" ").filter { it.isNotEmpty() }
             var hasError = false
+            var currentPos = wordCount
 
             val newSegment = buildAnnotatedString {
-                newWords.forEachIndexed { i, word ->
-                    val refWord = referenceWords.getOrNull(wordCount + i) ?: ""
-                    val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
-                    if (!isCorrect) hasError = true
-                    withStyle(
-                        SpanStyle(
-                            color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
-                            background = if (isCorrect) Color.Transparent else Color(0x22FF0000)
-                        )
-                    ) {
-                        append("$word ")
+                newWords.forEach { word ->
+                    val normalizedWord = normalizeArabic(word, settings)
+
+                    // هل الكلمة تطابق الكلمة الحالية في المرجع؟
+                    val currentRef = referenceWords.getOrNull(currentPos) ?: ""
+                    if (normalizeArabic(currentRef, settings) == normalizedWord) {
+                        // تطابق مباشر ✅
+                        withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
+                            append("$word ")
+                        }
+                        currentPos++
+                    } else {
+                        // لا تطابق — ابحث للأمام أولاً (كلمة منسية)
+                        val lookAhead = 4
+                        var foundAt = -1
+                        for (j in 1..lookAhead) {
+                            val ahead = referenceWords.getOrNull(currentPos + j) ?: break
+                            if (normalizeArabic(ahead, settings) == normalizedWord) {
+                                foundAt = j
+                                break
+                            }
+                        }
+
+                        if (foundAt > 0) {
+                            // وجدنا الكلمة للأمام — أضف الكلمات المنسية باللون الأحمر
+                            for (skip in 0 until foundAt) {
+                                val skipped = referenceWords.getOrNull(currentPos + skip) ?: ""
+                                withStyle(SpanStyle(
+                                    color = Color(0xFFD32F2F),
+                                    background = Color(0x22FF0000)
+                                )) {
+                                    append("[$skipped] ")
+                                }
+                            }
+                            withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
+                                append("$word ")
+                            }
+                            currentPos += foundAt + 1
+                            hasError = true
+                        } else {
+                            // ابحث للخلف (المستخدم أعاد من نقطة سابقة)
+                            val lookBack = 10
+                            var foundBefore = -1
+                            for (j in 1..lookBack) {
+                                val before = referenceWords.getOrNull(currentPos - j) ?: break
+                                if (normalizeArabic(before, settings) == normalizedWord) {
+                                    foundBefore = j
+                                    break
+                                }
+                            }
+
+                            if (foundBefore > 0) {
+                                // وجدنا الكلمة للخلف — رجّع الموضع وأكمل
+                                currentPos -= (foundBefore - 1)
+                                withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
+                                    append("$word ")
+                                }
+                                currentPos++
+                            } else {
+                                // كلمة خاطئة ❌
+                                withStyle(SpanStyle(
+                                    color = Color(0xFFD32F2F),
+                                    background = Color(0x22FF0000)
+                                )) {
+                                    append("$word ")
+                                }
+                                currentPos++
+                                hasError = true
+                            }
+                        }
                     }
                 }
             }
 
+            val finalPos = currentPos
             CoroutineScope(Dispatchers.Main).launch {
                 coloredText = buildAnnotatedString {
                     append(coloredText)
                     append(newSegment)
                 }
-                wordCount += newWords.size
+                wordCount = finalPos
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
             }
