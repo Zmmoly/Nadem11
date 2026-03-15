@@ -574,21 +574,21 @@ fun GoldenSurahCard(
                             .size(75.dp)
                             .border(
                                 width = 0.5.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.2f),
+                                color = Color(0xFFD4AF37).copy(alpha = if (isDarkMode) 0.4f else 0.2f),
                                 shape = CircleShape
                             )
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .size(68.dp)
                             .border(
                                 width = 0.5.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.15f),
+                                color = Color(0xFFD4AF37).copy(alpha = if (isDarkMode) 0.3f else 0.15f),
                                 shape = CircleShape
                             )
                     )
-                    
+
                     // الدائرة الرئيسية
                     Box(
                         modifier = Modifier.size(56.dp),
@@ -625,7 +625,7 @@ fun GoldenSurahCard(
                                     )
                                 )
                         )
-                        
+
                         Text(
                             text = surah.number.toString(),
                             fontSize = 20.sp,
