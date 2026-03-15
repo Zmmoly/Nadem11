@@ -59,6 +59,21 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var favoriteSurahs by remember { mutableStateOf<Set<Int>>(emptySet()) }
 
+    // آخر 10 سور تم فتحها
+    val prefs = remember { context.getSharedPreferences("recent_surahs", android.content.Context.MODE_PRIVATE) }
+    var recentSurahs by remember {
+        val saved = prefs.getString("recent", "") ?: ""
+        val list = if (saved.isEmpty()) emptyList()
+                   else saved.split(",").mapNotNull { it.trim().toIntOrNull() }
+        mutableStateOf(list)
+    }
+
+    fun addToRecent(surahNumber: Int) {
+        val updated = (listOf(surahNumber) + recentSurahs.filter { it != surahNumber }).take(10)
+        recentSurahs = updated
+        prefs.edit().putString("recent", updated.joinToString(",")).apply()
+    }
+
     // جلب بيانات المستخدم والمفضلة
     LaunchedEffect(Unit) {
         auth.currentUser?.uid?.let { userId ->
@@ -212,17 +227,22 @@ fun HomeScreen(
 
     // تصفية السور حسب البحث والتبويب
     val filteredSurahs = surahs.filter { surah ->
-        val matchesSearch = searchQuery.isEmpty() || 
-            surah.name.contains(searchQuery) || 
+        val matchesSearch = searchQuery.isEmpty() ||
+            surah.name.contains(searchQuery) ||
             surah.translatedName.contains(searchQuery, ignoreCase = true)
-        
+
         val matchesTab = when (selectedTab) {
             "المفضلة" -> surah.number in favoriteSurahs
-            "اخر قراءة" -> true
+            "اخر قراءة" -> surah.number in recentSurahs
             else -> true
         }
-        
+
         matchesSearch && matchesTab
+    }.let { list ->
+        // ترتيب "اخر قراءة" حسب آخر فتح
+        if (selectedTab == "اخر قراءة") {
+            list.sortedBy { recentSurahs.indexOf(it.number) }
+        } else list
     }
 
     Box(
@@ -420,7 +440,10 @@ fun HomeScreen(
                         surah = surah,
                         isFavorite = surah.number in favoriteSurahs,
                         onFavoriteClick = { toggleFavorite(surah.number) },
-                        onClick = { onSurahClick(surah) },
+                        onClick = {
+                            addToRecent(surah.number)
+                            onSurahClick(surah)
+                        },
                         isDarkMode = isDarkMode
                     )
                 }
