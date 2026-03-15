@@ -51,10 +51,17 @@ class QuranPageRepository(private val context: Context) {
                 
                 // حذف البسملة من نص الآية الأولى لأنها تُعرض منفصلة كـ BasmalaHeader
                 // (ما عدا الفاتحة التي بسملتها هي الآية 1، والتوبة التي لا بسملة لها)
-                val basmalaPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ"
-                val ayahText = if (isFirstInSura && currentSura != 1 && currentSura != 9 &&
-                    ayah.text.startsWith(basmalaPrefix)) {
-                    ayah.text.removePrefix(basmalaPrefix).trim()
+                val ayahText = if (isFirstInSura && currentSura != 1 && currentSura != 9) {
+                    val normalized = ayah.text
+                        .replace(Regex("[\u064B-\u065F\u0670]"), "")
+                        .replace("\u0671", "\u0627")
+                        .replace("\u0640", "")
+                    val basmalaPattern = "\u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062D\u0645\u0646 \u0627\u0644\u0631\u062D\u064A\u0645"
+                    if (normalized.startsWith(basmalaPattern)) {
+                        ayah.text.split(" ").drop(4).joinToString(" ").trim()
+                    } else {
+                        ayah.text
+                    }
                 } else {
                     ayah.text
                 }
