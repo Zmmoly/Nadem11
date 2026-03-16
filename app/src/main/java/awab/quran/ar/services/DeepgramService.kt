@@ -24,6 +24,7 @@ class DeepgramService(private val context: Context) {
 
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
+    private var isProcessing = false  // منع إرسال طلبين في نفس الوقت
     private var recordingJob: Job? = null
     private val audioBuffer = ByteArrayOutputStream()
 
@@ -126,8 +127,12 @@ class DeepgramService(private val context: Context) {
                             isSilent = false
                             silenceStart = 0L
 
-                            launch {
-                                sendAudioToAPI(audioData)
+                            if (!isProcessing) {
+                                isProcessing = true  // فوراً قبل أي تأخير
+                                launch {
+                                    sendAudioToAPI(audioData)
+                                    isProcessing = false
+                                }
                             }
                         }
                     }
