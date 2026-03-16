@@ -31,9 +31,9 @@ class DeepgramService(private val context: Context) {
     private val sampleRate = 16000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    private val bufferSize = AudioRecord.getMinBufferSize(
-        sampleRate, channelConfig, audioFormat
-    )
+    private val bufferSize by lazy {
+        AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+    }
 
     // HTTP client مشترك لتجنب إنشاء اتصال جديد في كل طلب
     private val httpClient = OkHttpClient.Builder()
