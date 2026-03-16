@@ -169,7 +169,13 @@ class DeepgramService(private val context: Context) {
 
             if (response.isSuccessful && body != null) {
                 android.util.Log.d("API_RESPONSE", "ناجح: $body")
-                val text = JSONObject(body).getString("text")
+                val rawText = JSONObject(body).getString("text")
+                // حذف الأقواس المربعة وما بينها مثل [لم] [لا]
+                val text = rawText
+                    .replace(Regex("\\[[^\\]]*\\]"), "")  // حذف [كلمة]
+                    .replace(Regex("^['\"]|['\"]$"), "")  // حذف علامات الاقتباس
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
                 android.util.Log.d("API_RESPONSE", "النص: $text")
                 if (text.isNotEmpty()) {
                     CoroutineScope(Dispatchers.Main).launch {
