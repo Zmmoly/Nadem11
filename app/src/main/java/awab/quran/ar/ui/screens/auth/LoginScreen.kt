@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -74,7 +75,6 @@ fun LoginScreen(
                     Toast.makeText(context, "تم تسجيل الدخول بنجاح", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 } else {
-                    // ✅ ترجمة أخطاء Firebase إلى رسائل عربية واضحة
                     val errorMsg = task.exception?.message ?: ""
                     val arabicError = when {
                         errorMsg.contains("credential is incorrect") ||
@@ -100,7 +100,6 @@ fun LoginScreen(
                         else ->
                             "حدث خطأ، حاول مرة أخرى"
                     }
-                    // ✅ عرض الخطأ تحت حقل كلمة المرور مباشرة
                     passwordError = arabicError
                 }
             }
@@ -122,11 +121,36 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.height(40.dp))
-            QuranBookIcon()
 
-            Text("تسميع القرآن", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 12.dp))
-            Text("تحفّظوا من حفظك القرآن الكريم الذكّاء الكريم.", fontSize = 14.sp, color = Color(0xFF8B7355), textAlign = TextAlign.Center, lineHeight = 20.sp, modifier = Modifier.padding(bottom = 4.dp))
-            Text("الذكاء الصّطناعي.", fontSize = 14.sp, color = Color(0xFF8B7355), textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 40.dp))
+            // ✅ لوغو التطبيق
+            Image(
+                painter = painterResource(id = R.mipmap.ic_launcher),
+                contentDescription = "لوغو نديم",
+                modifier = Modifier
+                    .size(90.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ✅ اسم التطبيق
+            Text(
+                text = "نديم",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF6B5744),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // ✅ النص المصحح
+            Text(
+                text = "تحقق من حفظك للقرآن الكريم",
+                fontSize = 14.sp,
+                color = Color(0xFF8B7355),
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(bottom = 40.dp)
+            )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -192,7 +216,6 @@ fun LoginScreen(
             Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF9B8B7A), modifier = Modifier.padding(vertical = 16.dp))
 
             Row(horizontalArrangement = Arrangement.Center) {
-                // زر Google - مفعّل
                 SocialButton(R.drawable.ic_google, "Google") {
                     signInWithGoogle(
                         context = context,
@@ -202,12 +225,10 @@ fun LoginScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                // زر Apple - غير مفعّل
                 SocialButton(R.drawable.ic_apple, "Apple") {
                     Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                // زر Facebook - غير مفعّل
                 SocialButton(R.drawable.ic_facebook, "Facebook") {
                     Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
                 }
@@ -245,26 +266,6 @@ fun MicButton() {
         Box(contentAlignment = Alignment.Center) {
             Icon(Icons.Default.Mic, "الميكروفون", tint = Color(0xFFF5E6D3), modifier = Modifier.size(36.dp))
         }
-    }
-}
-
-@Composable
-fun QuranBookIcon() {
-    Canvas(modifier = Modifier.size(90.dp).padding(bottom = 16.dp)) {
-        val color = Color(0xFF8B7355)
-        val path = Path().apply {
-            moveTo(size.width * 0.25f, size.height * 0.25f)
-            lineTo(size.width * 0.5f, size.height * 0.2f)
-            lineTo(size.width * 0.5f, size.height * 0.8f)
-            lineTo(size.width * 0.25f, size.height * 0.75f)
-            close()
-            moveTo(size.width * 0.5f, size.height * 0.2f)
-            lineTo(size.width * 0.75f, size.height * 0.25f)
-            lineTo(size.width * 0.75f, size.height * 0.75f)
-            lineTo(size.width * 0.5f, size.height * 0.8f)
-            close()
-        }
-        drawPath(path, color, style = Stroke(width = 2.5f))
     }
 }
 
