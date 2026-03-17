@@ -555,7 +555,18 @@ fun RecitationMode(
     }
 
     DisposableEffect(Unit) {
-        onDispose { if (isRecording) deepgramService.stopRecitation() }
+        onDispose {
+            if (isRecording) {
+                deepgramService.stopRecitation()
+                // زيادة العداد عند الخروج من الصفحة أثناء التسميع
+                val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                user?.let {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("users").document(it.uid)
+                        .update("totalRecitations", com.google.firebase.firestore.FieldValue.increment(1))
+                }
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -727,6 +738,15 @@ fun RecitationMode(
                 if (isRecording) {
                     deepgramService.stopRecitation()
                     isRecording = false
+                    // زيادة العداد فقط إذا قرأ المستخدم شيئاً فعلاً
+                    if (wordCount > 0) {
+                        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                        user?.let {
+                            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            val userDoc = firestore.collection("users").document(it.uid)
+                            userDoc.update("totalRecitations", com.google.firebase.firestore.FieldValue.increment(1))
+                        }
+                    }
                 } else {
                     if (ActivityCompat.checkSelfPermission(
                             context, Manifest.permission.RECORD_AUDIO
