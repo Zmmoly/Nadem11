@@ -92,12 +92,48 @@ fun RegisterScreen(
                     )
                     userId?.let {
                         firestore.collection("users").document(it).set(userData)
-                            .addOnSuccessListener { isLoading = false; Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show(); onRegisterSuccess() }
-                            .addOnFailureListener { exception -> isLoading = false; Toast.makeText(context, "فشل حفظ البيانات: ${exception.localizedMessage}", Toast.LENGTH_LONG).show() }
+                            .addOnSuccessListener {
+                                isLoading = false
+                                Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
+                                onRegisterSuccess()
+                            }
+                            .addOnFailureListener { exception ->
+                                isLoading = false
+                                val errorMsg = exception.message ?: ""
+                                val arabicError = when {
+                                    errorMsg.contains("network") ||
+                                    errorMsg.contains("NETWORK") ->
+                                        "تحقق من اتصالك بالإنترنت"
+                                    else ->
+                                        "حدث خطأ في حفظ البيانات، حاول مرة أخرى"
+                                }
+                                Toast.makeText(context, arabicError, Toast.LENGTH_LONG).show()
+                            }
                     }
                 } else {
                     isLoading = false
-                    Toast.makeText(context, "فشل إنشاء الحساب: ${task.exception?.localizedMessage}", Toast.LENGTH_LONG).show()
+                    val errorMsg = task.exception?.message ?: ""
+                    val arabicError = when {
+                        errorMsg.contains("email address is already in use") ||
+                        errorMsg.contains("EMAIL_EXISTS") ->
+                            "البريد الإلكتروني مسجل مسبقاً"
+
+                        errorMsg.contains("badly formatted") ||
+                        errorMsg.contains("INVALID_EMAIL") ->
+                            "البريد الإلكتروني غير صحيح"
+
+                        errorMsg.contains("password is invalid") ||
+                        errorMsg.contains("WEAK_PASSWORD") ->
+                            "كلمة المرور ضعيفة جداً، استخدم 6 أحرف على الأقل"
+
+                        errorMsg.contains("network") ||
+                        errorMsg.contains("NETWORK") ->
+                            "تحقق من اتصالك بالإنترنت"
+
+                        else ->
+                            "حدث خطأ، حاول مرة أخرى"
+                    }
+                    Toast.makeText(context, arabicError, Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -182,6 +218,8 @@ fun RegisterScreen(
 3. الملكية الفكرية
 
 جميع حقوق التطبيق ملك للمطور. نموذج الذكاء الاصطناعي ملك لشركة NVIDIA. نصوص القرآن الكريم مصدرها مجمع الملك فهد. خط KFGQPC Uthman Taha Naskh ملك لمجمع الملك فهد © 2008–2010.
+
+التسجيلات الصوتية للتلاوة القرآنية المستخدمة في وضع الاختبار مصدرها موقع EveryAyah.com وهي ليست ملكاً للتطبيق. جميع حقوق هذه التسجيلات محفوظة لأصحابها الأصليين.
 
 4. استخدام الذكاء الاصطناعي
 
