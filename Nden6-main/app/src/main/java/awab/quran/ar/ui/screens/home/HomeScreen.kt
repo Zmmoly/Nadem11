@@ -40,7 +40,7 @@ data class Surah(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigateToRecitation: () -> Unit,
+    onNavigateToRecitation: (surahName: String, totalVerses: Int) -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     val auth = FirebaseAuth.getInstance()
@@ -233,7 +233,7 @@ fun HomeScreen(
                 items(filteredSurahs) { surah ->
                     GoldenSurahCard(
                         surah = surah,
-                        onClick = onNavigateToRecitation
+                        onClick = { onNavigateToRecitation(surah.name, surah.verses) }
                     )
                 }
                 
