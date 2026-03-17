@@ -46,8 +46,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onLoginSuccess: () -> Unit,
-    isDarkMode: Boolean = false
+    onLoginSuccess: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -61,20 +60,12 @@ fun LoginScreen(
     val auth = FirebaseAuth.getInstance()
     val coroutineScope = rememberCoroutineScope()
 
-    // ألوان تتغير حسب الوضع
-    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
-    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFEBE6DC).copy(alpha = 0.75f)
-    val fieldBg = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F2EA)
-    val fieldText = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-    val hintColor = if (isDarkMode) Color(0xFF888888) else Color(0xFFB5A590)
-    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
-    val subTitleColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
-
     fun performLogin() {
         if (!validateInputs(email, password,
                 onEmailError = { emailError = it },
                 onPasswordError = { passwordError = it }
             )) return
+
         isLoading = true
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -88,15 +79,13 @@ fun LoginScreen(
             }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
-        if (!isDarkMode) {
-            Image(
-                painter = painterResource(id = R.drawable.login_background),
-                contentDescription = "خلفية تسجيل الدخول",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.login_background),
+            contentDescription = "خلفية تسجيل الدخول",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
         TwinklingStars()
 
@@ -108,25 +97,25 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(40.dp))
             QuranBookIcon()
 
-            Text("تسميع القرآن", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
-            Text("تحفّظوا من حفظك القرآن الكريم الذكّاء الكريم.", fontSize = 14.sp, color = subTitleColor, textAlign = TextAlign.Center, lineHeight = 20.sp, modifier = Modifier.padding(bottom = 4.dp))
-            Text("الذكاء الصّطناعي.", fontSize = 14.sp, color = subTitleColor, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 40.dp))
+            Text("تسميع القرآن", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 12.dp))
+            Text("تحفّظوا من حفظك القرآن الكريم الذكّاء الكريم.", fontSize = 14.sp, color = Color(0xFF8B7355), textAlign = TextAlign.Center, lineHeight = 20.sp, modifier = Modifier.padding(bottom = 4.dp))
+            Text("الذكاء الصّطناعي.", fontSize = 14.sp, color = Color(0xFF8B7355), textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 40.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(containerColor = cardColor),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEBE6DC).copy(alpha = 0.75f)),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
                 Column(modifier = Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     OutlinedTextField(
                         value = email, onValueChange = { email = it; emailError = null },
-                        placeholder = { Text("البريد الإلكتروني", color = hintColor, fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Email, "أيقونة البريد", tint = hintColor, modifier = Modifier.size(20.dp)) },
+                        placeholder = { Text("البريد الإلكتروني", color = Color(0xFFB5A590), fontSize = 14.sp) },
+                        leadingIcon = { Icon(Icons.Default.Email, "أيقونة البريد", tint = Color(0xFFB5A590), modifier = Modifier.size(20.dp)) },
                         modifier = Modifier.fillMaxWidth().height(56.dp), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = fieldBg, unfocusedContainerColor = fieldBg, focusedTextColor = fieldText, unfocusedTextColor = fieldText),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA), focusedTextColor = Color(0xFF2C2C2C), unfocusedTextColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(28.dp)
                     )
                     if (emailError != null) Text(text = emailError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
@@ -135,24 +124,24 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = password, onValueChange = { password = it; passwordError = null },
-                        placeholder = { Text("••••••••", color = hintColor, fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Lock, "أيقونة القفل", tint = hintColor, modifier = Modifier.size(20.dp)) },
+                        placeholder = { Text("••••••••", color = Color(0xFFB5A590), fontSize = 14.sp) },
+                        leadingIcon = { Icon(Icons.Default.Lock, "أيقونة القفل", tint = Color(0xFFB5A590), modifier = Modifier.size(20.dp)) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "إظهار كلمة المرور", tint = hintColor, modifier = Modifier.size(22.dp))
+                                Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "إظهار كلمة المرور", tint = Color(0xFFB5A590), modifier = Modifier.size(22.dp))
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth().height(56.dp), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); performLogin() }),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = fieldBg, unfocusedContainerColor = fieldBg, focusedTextColor = fieldText, unfocusedTextColor = fieldText),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color(0xFFF5F2EA), unfocusedContainerColor = Color(0xFFF5F2EA), focusedTextColor = Color(0xFF2C2C2C), unfocusedTextColor = Color(0xFF2C2C2C)),
                         shape = RoundedCornerShape(28.dp)
                     )
                     if (passwordError != null) Text(text = passwordError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
 
                     TextButton(onClick = onNavigateToForgotPassword, modifier = Modifier.align(Alignment.End)) {
-                        Text("• نسيت كلمة المرور؟", color = subTitleColor, fontSize = 13.sp)
+                        Text("• نسيت كلمة المرور؟", color = Color(0xFF9B8B7A), fontSize = 13.sp)
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -173,22 +162,34 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = subTitleColor, modifier = Modifier.padding(vertical = 16.dp))
+            Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF9B8B7A), modifier = Modifier.padding(vertical = 16.dp))
 
             Row(horizontalArrangement = Arrangement.Center) {
-                SocialButton(R.drawable.ic_google, "Google", isDarkMode) {
-                    signInWithGoogle(context = context, coroutineScope = coroutineScope, onSuccess = { onLoginSuccess() }, onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() })
+                // زر Google - مفعّل
+                SocialButton(R.drawable.ic_google, "Google") {
+                    signInWithGoogle(
+                        context = context,
+                        coroutineScope = coroutineScope,
+                        onSuccess = { onLoginSuccess() },
+                        onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
+                    )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_apple, "Apple", isDarkMode) { Toast.makeText(context, "تسجيل الدخول بـ Apple غير متاح حالياً", Toast.LENGTH_SHORT).show() }
+                // زر Apple - غير مفعّل
+                SocialButton(R.drawable.ic_apple, "Apple") {
+                    Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_facebook, "Facebook", isDarkMode) { Toast.makeText(context, "تسجيل الدخول بـ Facebook غير متاح حالياً", Toast.LENGTH_SHORT).show() }
+                // زر Facebook - غير مفعّل
+                SocialButton(R.drawable.ic_facebook, "Facebook") {
+                    Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
+                }
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Text("ليس لديك حساب؟ ", fontSize = 14.sp, color = subTitleColor)
+                Text("ليس لديك حساب؟ ", fontSize = 14.sp, color = Color(0xFF8B7355))
                 Text("إنشاء حساب", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A7C59), modifier = Modifier.clickable { onNavigateToRegister() })
             }
 
@@ -198,11 +199,11 @@ fun LoginScreen(
 }
 
 @Composable
-fun SocialButton(iconRes: Int, name: String, isDarkMode: Boolean = false, onClick: () -> Unit) {
+fun SocialButton(iconRes: Int, name: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.size(52.dp).clickable { onClick() },
         shape = CircleShape,
-        color = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F2EA),
+        color = Color(0xFFF5F2EA),
         shadowElevation = 4.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -263,3 +264,4 @@ private fun validateInputs(email: String, password: String, onEmailError: (Strin
     } else onPasswordError(null)
     return isValid
 }
+
