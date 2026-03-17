@@ -14,12 +14,9 @@ import awab.quran.ar.ui.screens.splash.SplashScreen
 import awab.quran.ar.ui.screens.recitation.RecitationScreen
 import awab.quran.ar.ui.screens.profile.ProfileScreen
 import awab.quran.ar.ui.screens.surah.SurahScreen
-import awab.quran.ar.ui.screens.terms.TermsScreen
-import awab.quran.ar.ui.screens.terms.isTermsAccepted
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
-    object Terms : Screen("terms")
     object Login : Screen("login")
     object Register : Screen("register")
     object ForgotPassword : Screen("forgot_password")
@@ -35,7 +32,6 @@ fun NadeemNavigation(
     onToggleDarkMode: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
-    val context = LocalContext.current
     var selectedSurah by remember { mutableStateOf<Surah?>(null) }
 
     NavHost(
@@ -45,35 +41,13 @@ fun NadeemNavigation(
         composable(Screen.Splash.route) {
             SplashScreen(
                 onNavigateToLogin = {
-                    if (!isTermsAccepted(context)) {
-                        navController.navigate(Screen.Terms.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
                 onNavigateToHome = {
-                    if (!isTermsAccepted(context)) {
-                        navController.navigate(Screen.Terms.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Terms.route) {
-            TermsScreen(
-                onAccepted = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Terms.route) { inclusive = true }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
             )
