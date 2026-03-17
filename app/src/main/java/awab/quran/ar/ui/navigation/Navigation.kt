@@ -110,7 +110,8 @@ fun NadeemNavigation(
             RecitationScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                isDarkMode = isDarkMode
             )
         }
 
@@ -135,7 +136,8 @@ fun NadeemNavigation(
                     surah = surah,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    isDarkMode = isDarkMode
                 )
             }
         }
