@@ -458,6 +458,19 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
+
+                    Divider(color = Color(0xFFE0D5C5))
+
+                    SettingToggleRow(
+                        title = "المساهمة في تحسين الذكاء الاصطناعي",
+                        subtitle = "السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي",
+                        checked = settings.allowAudioStorage,
+                        onCheckedChange = {
+                            val updated = settings.copy(allowAudioStorage = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
                 }
             },
             confirmButton = {
