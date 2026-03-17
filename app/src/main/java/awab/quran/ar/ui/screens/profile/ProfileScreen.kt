@@ -286,17 +286,6 @@ fun ProfileScreen(
                         
                         ProfileOption(
                             isDarkMode = isDarkMode,
-                            icon = Icons.Default.Notifications,
-                            title = "الإشعارات",
-                            onClick = {
-                                Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                        
-                        Divider(color = dividerColor)
-                        
-                        ProfileOption(
-                            isDarkMode = isDarkMode,
                             icon = Icons.Default.Info,
                             title = "عن التطبيق",
                             onClick = {
