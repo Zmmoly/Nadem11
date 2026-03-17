@@ -520,6 +520,7 @@ fun RecitationMode(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var wordCount by remember { mutableStateOf(0) }
 
+    // حساب عدد الكلمات لكل آية
     // نص الصفحة كمرجع - قائمة كلمات
     val referenceWords = remember(page) {
         page.ayahs
@@ -569,7 +570,28 @@ fun RecitationMode(
                 .trim()
             val newWords = text.split(" ").filter { it.isNotEmpty() }
             var hasError = false
-            var currentPos = wordCount
+
+            // إذا كانت أول مرة يتكلم المستخدم، ابحث عن أين بدأ في النص
+            var currentPos = if (wordCount == 0 && newWords.isNotEmpty()) {
+                val lookupWords = newWords.take(3).map { normalizeArabic(it, settings) }
+                var bestMatch = 0
+                var bestScore = 0
+                // ابحث عن أفضل تطابق لأول 3 كلمات
+                for (i in referenceWords.indices) {
+                    var score = 0
+                    lookupWords.forEachIndexed { j, word ->
+                        val ref = referenceWords.getOrNull(i + j) ?: ""
+                        if (normalizeArabic(ref, settings) == word) score++
+                    }
+                    if (score > bestScore) {
+                        bestScore = score
+                        bestMatch = i
+                    }
+                }
+                bestMatch
+            } else {
+                wordCount
+            }
 
             val newSegment = buildAnnotatedString {
                 newWords.forEach { word ->
