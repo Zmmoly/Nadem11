@@ -1,7 +1,6 @@
 package awab.quran.ar.ui.navigation
 
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -101,7 +100,9 @@ fun NadeemNavigation(
                 onSurahClick = { surah ->
                     selectedSurah = surah
                     navController.navigate(Screen.Surah.route)
-                }
+                },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = onToggleDarkMode
             )
         }
 
