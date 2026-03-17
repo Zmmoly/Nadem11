@@ -1,9 +1,11 @@
 package awab.quran.ar.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import awab.quran.ar.ui.screens.auth.LoginScreen
 import awab.quran.ar.ui.screens.auth.RegisterScreen
 import awab.quran.ar.ui.screens.auth.ForgotPasswordScreen
@@ -18,7 +20,9 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object ForgotPassword : Screen("forgot_password")
     object Home : Screen("home")
-    object Recitation : Screen("recitation")
+    object Recitation : Screen("recitation/{surahName}/{totalVerses}") {
+        fun createRoute(surahName: String, totalVerses: Int) = "recitation/$surahName/$totalVerses"
+    }
     object Profile : Screen("profile")
 }
 
@@ -84,8 +88,8 @@ fun NadeemNavigation() {
 
         composable(Screen.Home.route) {
             HomeScreen(
-                onNavigateToRecitation = {
-                    navController.navigate(Screen.Recitation.route)
+                onNavigateToRecitation = { surahName, totalVerses ->
+                    navController.navigate(Screen.Recitation.createRoute(surahName, totalVerses))
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
@@ -93,8 +97,18 @@ fun NadeemNavigation() {
             )
         }
 
-        composable(Screen.Recitation.route) {
+        composable(
+            route = Screen.Recitation.route,
+            arguments = listOf(
+                navArgument("surahName") { type = NavType.StringType },
+                navArgument("totalVerses") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val surahName = backStackEntry.arguments?.getString("surahName") ?: "الفاتحة"
+            val totalVerses = backStackEntry.arguments?.getInt("totalVerses") ?: 7
             RecitationScreen(
+                surahName = surahName,
+                totalVerses = totalVerses,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
