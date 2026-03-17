@@ -74,7 +74,34 @@ fun LoginScreen(
                     Toast.makeText(context, "تم تسجيل الدخول بنجاح", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 } else {
-                    Toast.makeText(context, "فشل تسجيل الدخول: ${task.exception?.localizedMessage}", Toast.LENGTH_LONG).show()
+                    // ✅ ترجمة أخطاء Firebase إلى رسائل عربية واضحة
+                    val errorMsg = task.exception?.message ?: ""
+                    val arabicError = when {
+                        errorMsg.contains("credential is incorrect") ||
+                        errorMsg.contains("INVALID_LOGIN_CREDENTIALS") ||
+                        errorMsg.contains("INVALID_PASSWORD") ||
+                        errorMsg.contains("wrong password") ->
+                            "كلمة المرور غير صحيحة"
+
+                        errorMsg.contains("no user record") ||
+                        errorMsg.contains("USER_NOT_FOUND") ->
+                            "لا يوجد حساب بهذا البريد الإلكتروني"
+
+                        errorMsg.contains("user has been disabled") ->
+                            "هذا الحساب موقوف، تواصل مع الدعم"
+
+                        errorMsg.contains("too many requests") ->
+                            "محاولات كثيرة جداً، حاول بعد قليل"
+
+                        errorMsg.contains("network") ||
+                        errorMsg.contains("NETWORK") ->
+                            "تحقق من اتصالك بالإنترنت"
+
+                        else ->
+                            "حدث خطأ، حاول مرة أخرى"
+                    }
+                    // ✅ عرض الخطأ تحت حقل كلمة المرور مباشرة
+                    passwordError = arabicError
                 }
             }
     }
@@ -264,4 +291,3 @@ private fun validateInputs(email: String, password: String, onEmailError: (Strin
     } else onPasswordError(null)
     return isValid
 }
-
