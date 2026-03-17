@@ -378,7 +378,7 @@ fun PolicyDialog(title: String, content: String, onDismiss: () -> Unit) {
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
                 Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5D4037), modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally))
-                HorizontalDivider(color = Color(0xFFD4C5A9))
+                Divider(color = Color(0xFFD4C5A9))
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(modifier = Modifier.weight(1f).verticalScroll(scrollState)) {
                     Text(content, fontSize = 14.sp, color = Color(0xFF4A4A4A), lineHeight = 22.sp, textAlign = TextAlign.Right)
