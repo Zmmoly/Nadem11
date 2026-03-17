@@ -30,7 +30,10 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun NadeemNavigation() {
+fun NadeemNavigation(
+    isDarkMode: Boolean,
+    onToggleDarkMode: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
     var selectedSurah by remember { mutableStateOf<Surah?>(null) }
@@ -145,7 +148,9 @@ fun NadeemNavigation() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                }
+                },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = onToggleDarkMode
             )
         }
 
