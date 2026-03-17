@@ -1,6 +1,7 @@
 package awab.quran.ar.ui.navigation
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,9 +14,12 @@ import awab.quran.ar.ui.screens.splash.SplashScreen
 import awab.quran.ar.ui.screens.recitation.RecitationScreen
 import awab.quran.ar.ui.screens.profile.ProfileScreen
 import awab.quran.ar.ui.screens.surah.SurahScreen
+import awab.quran.ar.ui.screens.terms.TermsScreen
+import awab.quran.ar.ui.screens.terms.isTermsAccepted
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
+    object Terms : Screen("terms")
     object Login : Screen("login")
     object Register : Screen("register")
     object ForgotPassword : Screen("forgot_password")
@@ -26,11 +30,9 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun NadeemNavigation(
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {}
-) {
+fun NadeemNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
     var selectedSurah by remember { mutableStateOf<Surah?>(null) }
 
     NavHost(
@@ -40,13 +42,35 @@ fun NadeemNavigation(
         composable(Screen.Splash.route) {
             SplashScreen(
                 onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    if (!isTermsAccepted(context)) {
+                        navController.navigate(Screen.Terms.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
                     }
                 },
                 onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    if (!isTermsAccepted(context)) {
+                        navController.navigate(Screen.Terms.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Terms.route) {
+            TermsScreen(
+                onAccepted = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Terms.route) { inclusive = true }
                     }
                 }
             )
@@ -64,8 +88,7 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                },
-                isDarkMode = isDarkMode
+                }
             )
         }
 
@@ -78,8 +101,7 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                },
-                isDarkMode = isDarkMode
+                }
             )
         }
 
@@ -87,8 +109,7 @@ fun NadeemNavigation(
             ForgotPasswordScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                isDarkMode = isDarkMode
+                }
             )
         }
 
@@ -103,9 +124,7 @@ fun NadeemNavigation(
                 onSurahClick = { surah ->
                     selectedSurah = surah
                     navController.navigate(Screen.Surah.route)
-                },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode
+                }
             )
         }
 
@@ -113,8 +132,7 @@ fun NadeemNavigation(
             RecitationScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                isDarkMode = isDarkMode
+                }
             )
         }
 
@@ -127,9 +145,7 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode
+                }
             )
         }
 
@@ -139,8 +155,7 @@ fun NadeemNavigation(
                     surah = surah,
                     onNavigateBack = {
                         navController.popBackStack()
-                    },
-                    isDarkMode = isDarkMode
+                    }
                 )
             }
         }
