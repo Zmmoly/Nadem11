@@ -224,14 +224,6 @@ fun LoginScreen(
                         onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_apple, "Apple") {
-                    Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                SocialButton(R.drawable.ic_facebook, "Facebook") {
-                    Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                }
             }
 
             Spacer(modifier = Modifier.height(28.dp))
