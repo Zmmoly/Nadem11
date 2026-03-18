@@ -18,7 +18,7 @@ class ThemeRepository(private val context: Context) {
     }
 
     val isDarkModeFlow: Flow<Boolean> = context.themeDataStore.data.map { prefs ->
-        prefs[KEY_DARK_MODE] ?: false
+        prefs[KEY_DARK_MODE] ?: true  // الوضع الليلي افتراضياً
     }
 
     suspend fun setDarkMode(enabled: Boolean) {
