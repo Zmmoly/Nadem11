@@ -269,8 +269,8 @@ fun RegisterScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("إنشاء حساب جديد", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B5744), modifier = Modifier.padding(bottom = 8.dp))
-            Text("انضم إلينا في رحلة حفظ القرآن الكريم", fontSize = 16.sp, color = Color(0xFF8B7355), textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 32.dp))
+            Text("إنشاء حساب جديد", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D2410), modifier = Modifier.padding(bottom = 8.dp))
+            Text("انضم إلينا في رحلة حفظ القرآن الكريم", fontSize = 16.sp, color = Color(0xFF4A3020), textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 32.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth().wrapContentHeight(),
@@ -348,7 +348,7 @@ fun RegisterScreen(
                         text = annotatedText,
                         style = androidx.compose.ui.text.TextStyle(
                             fontSize = 13.sp,
-                            color = Color(0xFF9B8B7A),
+                            color = Color(0xFF4A3020),
                             textAlign = TextAlign.Center
                         ),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -372,7 +372,7 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF9B8B7A), modifier = Modifier.padding(vertical = 8.dp))
+                    Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF4A3020), modifier = Modifier.padding(vertical = 8.dp))
 
                     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                         SocialButton(R.drawable.ic_google, "Google") {
@@ -383,7 +383,7 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     TextButton(onClick = onNavigateBack) {
-                        Text("لديك حساب بالفعل؟ سجل الدخول", color = Color(0xFF8B7355), fontSize = 16.sp)
+                        Text("لديك حساب بالفعل؟ سجل الدخول", color = Color(0xFF3D2410), fontSize = 16.sp)
                     }
                 }
             }
