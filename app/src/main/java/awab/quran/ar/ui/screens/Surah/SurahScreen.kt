@@ -519,6 +519,8 @@ fun RecitationMode(
     var isRecording by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var wordCount by remember { mutableStateOf(0) }
+    var showHint by remember { mutableStateOf(false) }
+    var hintWords by remember { mutableStateOf("") }
 
     // حساب عدد الكلمات لكل آية
     // نص الصفحة كمرجع - قائمة كلمات
@@ -777,6 +779,54 @@ fun RecitationMode(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // زر التلميح — يكشف 10 كلمات تالية
+        TextButton(
+            onClick = {
+                val nextWords = referenceWords
+                    .drop(wordCount)
+                    .take(10)
+                    .joinToString(" ")
+                hintWords = nextWords
+                showHint = !showHint
+            }
+        ) {
+            Text(
+                text = if (showHint) "🙈 إخفاء التلميح" else "💡 تلميح — اكشف 10 كلمات",
+                color = Color(0xFF8B7355),
+                fontSize = 14.sp
+            )
+        }
+
+        // بطاقة التلميح
+        if (showHint && hintWords.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "💡 التلميح:",
+                        fontSize = 12.sp,
+                        color = Color(0xFF8B6914),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = hintWords,
+                        fontSize = 20.sp,
+                        fontFamily = uthmanicFont,
+                        color = Color(0xFF5D4037),
+                        textAlign = TextAlign.Right,
+                        lineHeight = 36.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         // رسالة الخطأ
         errorMessage?.let { error ->
             Card(
@@ -1029,6 +1079,8 @@ fun ExamMode(
     var isRecording by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var wordCount by remember { mutableStateOf(0) }
+    var showHint by remember { mutableStateOf(false) }
+    var hintWords by remember { mutableStateOf("") }
     var referenceWords by remember { mutableStateOf<List<String>>(emptyList()) }
 
 
