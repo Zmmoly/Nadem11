@@ -48,6 +48,11 @@ fun NadeemNavigation(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
                 }
             )
         }
