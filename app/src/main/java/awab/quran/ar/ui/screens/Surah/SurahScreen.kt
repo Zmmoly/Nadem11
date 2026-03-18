@@ -521,6 +521,9 @@ fun RecitationMode(
     var wordCount by remember { mutableStateOf(0) }
     var showHint by remember { mutableStateOf(false) }
     var hintWords by remember { mutableStateOf("") }
+    var correctWords by remember { mutableStateOf(0) }
+    var errorWords by remember { mutableStateOf(0) }
+    var showScore by remember { mutableStateOf(false) }
 
     // حساب عدد الكلمات لكل آية
     // نص الصفحة كمرجع - قائمة كلمات
@@ -618,6 +621,7 @@ fun RecitationMode(
                             append("$word ")
                         }
                         currentPos++
+                        correctWords++
                     } else {
                         // لا تطابق — ابحث للأمام أولاً (كلمة منسية)
                         val lookAhead = 4
@@ -640,11 +644,13 @@ fun RecitationMode(
                                 )) {
                                     append("[$skipped] ")
                                 }
+                                errorWords++
                             }
                             withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
                                 append("$word ")
                             }
                             currentPos += foundAt + 1
+                            correctWords++
                             hasError = true
                         } else {
                             // ابحث للخلف (المستخدم أعاد من نقطة سابقة)
@@ -665,6 +671,7 @@ fun RecitationMode(
                                     append("$word ")
                                 }
                                 currentPos++
+                                correctWords++
                             } else {
                                 // كلمة خاطئة ❌
                                 withStyle(SpanStyle(
@@ -674,6 +681,7 @@ fun RecitationMode(
                                     append("$word ")
                                 }
                                 currentPos++
+                                errorWords++
                                 hasError = true
                             }
                         }
@@ -710,6 +718,67 @@ fun RecitationMode(
         }
     }
 
+    // Dialog نتيجة التسميع — درجة فقط
+    if (showScore) {
+        val score = if (correctWords + errorWords > 0)
+            (correctWords.toFloat() / (correctWords + errorWords) * 100).toInt()
+        else 0
+        val scoreColor = when {
+            score >= 90 -> Color(0xFF1B5E20)
+            score >= 70 -> Color(0xFFF57F17)
+            else -> Color(0xFFD32F2F)
+        }
+        val scoreEmoji = when {
+            score >= 90 -> "🌟 ممتاز!"
+            score >= 80 -> "👍 جيد جداً!"
+            score >= 70 -> "😊 جيد!"
+            score >= 50 -> "💪 تحتاج مراجعة"
+            else -> "📖 راجع هذا الجزء"
+        }
+        val scoreBg = when {
+            score >= 90 -> Color(0xFFE8F5E9)
+            score >= 70 -> Color(0xFFFFFDE7)
+            else -> Color(0xFFFFEBEE)
+        }
+
+        AlertDialog(
+            onDismissRequest = { showScore = false },
+            containerColor = scoreBg,
+            title = null,
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "$score%",
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scoreColor
+                    )
+                    Text(
+                        text = scoreEmoji,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scoreColor,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showScore = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = scoreColor),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("حسناً", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -740,8 +809,8 @@ fun RecitationMode(
                 if (isRecording) {
                     deepgramService.stopRecitation()
                     isRecording = false
-                    // زيادة العداد فقط إذا قرأ المستخدم شيئاً فعلاً
                     if (wordCount > 0) {
+                        showScore = true
                         val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                         user?.let {
                             val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
@@ -757,6 +826,9 @@ fun RecitationMode(
                         coloredText = buildAnnotatedString { }
                         interimText = ""
                         wordCount = 0
+                        correctWords = 0
+                        errorWords = 0
+                        showScore = false
                         errorMessage = null
                         deepgramService.startRecitation()
                     } else {
@@ -1081,6 +1153,9 @@ fun ExamMode(
     var wordCount by remember { mutableStateOf(0) }
     var showHint by remember { mutableStateOf(false) }
     var hintWords by remember { mutableStateOf("") }
+    var correctWords by remember { mutableStateOf(0) }
+    var errorWords by remember { mutableStateOf(0) }
+    var showScore by remember { mutableStateOf(false) }
     var referenceWords by remember { mutableStateOf<List<String>>(emptyList()) }
 
 
