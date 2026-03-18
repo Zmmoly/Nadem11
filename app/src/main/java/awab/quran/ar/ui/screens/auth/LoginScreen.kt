@@ -138,7 +138,7 @@ fun LoginScreen(
                 text = "نديم",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF6B5744),
+                color = Color(0xFF3D2410),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -146,7 +146,7 @@ fun LoginScreen(
             Text(
                 text = "تحقق من حفظك للقرآن الكريم",
                 fontSize = 14.sp,
-                color = Color(0xFF8B7355),
+                color = Color(0xFF4A3020),
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(bottom = 40.dp)
@@ -161,8 +161,8 @@ fun LoginScreen(
                 Column(modifier = Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     OutlinedTextField(
                         value = email, onValueChange = { email = it; emailError = null },
-                        placeholder = { Text("البريد الإلكتروني", color = Color(0xFFB5A590), fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Email, "أيقونة البريد", tint = Color(0xFFB5A590), modifier = Modifier.size(20.dp)) },
+                        placeholder = { Text("البريد الإلكتروني", color = Color(0xFF7A6555), fontSize = 14.sp) },
+                        leadingIcon = { Icon(Icons.Default.Email, "أيقونة البريد", tint = Color(0xFF7A6555), modifier = Modifier.size(20.dp)) },
                         modifier = Modifier.fillMaxWidth().height(56.dp), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -175,11 +175,11 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = password, onValueChange = { password = it; passwordError = null },
-                        placeholder = { Text("••••••••", color = Color(0xFFB5A590), fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Lock, "أيقونة القفل", tint = Color(0xFFB5A590), modifier = Modifier.size(20.dp)) },
+                        placeholder = { Text("••••••••", color = Color(0xFF7A6555), fontSize = 14.sp) },
+                        leadingIcon = { Icon(Icons.Default.Lock, "أيقونة القفل", tint = Color(0xFF7A6555), modifier = Modifier.size(20.dp)) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "إظهار كلمة المرور", tint = Color(0xFFB5A590), modifier = Modifier.size(22.dp))
+                                Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "إظهار كلمة المرور", tint = Color(0xFF7A6555), modifier = Modifier.size(22.dp))
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -192,7 +192,7 @@ fun LoginScreen(
                     if (passwordError != null) Text(text = passwordError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
 
                     TextButton(onClick = onNavigateToForgotPassword, modifier = Modifier.align(Alignment.End)) {
-                        Text("• نسيت كلمة المرور؟", color = Color(0xFF9B8B7A), fontSize = 13.sp)
+                        Text("• نسيت كلمة المرور؟", color = Color(0xFF5A3D28), fontSize = 13.sp)
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -213,7 +213,7 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF9B8B7A), modifier = Modifier.padding(vertical = 16.dp))
+            Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF4A3020), modifier = Modifier.padding(vertical = 16.dp))
 
             Row(horizontalArrangement = Arrangement.Center) {
                 SocialButton(R.drawable.ic_google, "Google") {
@@ -229,7 +229,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Text("ليس لديك حساب؟ ", fontSize = 14.sp, color = Color(0xFF8B7355))
+                Text("ليس لديك حساب؟ ", fontSize = 14.sp, color = Color(0xFF3D2410))
                 Text("إنشاء حساب", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A7C59), modifier = Modifier.clickable { onNavigateToRegister() })
             }
 
