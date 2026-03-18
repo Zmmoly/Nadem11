@@ -1412,7 +1412,7 @@ fun ExamMode(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Column(
@@ -1435,16 +1435,18 @@ fun ExamMode(
                                     textAlign = TextAlign.Center,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2C2C2C)
+                                    color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                                 ),
                                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                                 ),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color(0xFFD4AF37),
-                                    unfocusedBorderColor = Color(0xFFB5A590),
-                                    focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color.White
+                                    unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                                    focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                    unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                    focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                                    unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             )
@@ -1463,16 +1465,18 @@ fun ExamMode(
                                     textAlign = TextAlign.Center,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2C2C2C)
+                                    color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                                 ),
                                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                                 ),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color(0xFFD4AF37),
-                                    unfocusedBorderColor = Color(0xFFB5A590),
-                                    focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color.White
+                                    unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                                    focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                    unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                    focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                                    unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             )
@@ -1492,16 +1496,18 @@ fun ExamMode(
                             textAlign = TextAlign.Center,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2C2C2C)
+                            color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                         ),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFD4AF37),
-                            unfocusedBorderColor = Color(0xFFB5A590),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
+                            unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                            focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                            unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                            focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                            unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -1523,7 +1529,7 @@ fun ExamMode(
                             Surface(
                                 onClick = { questionLength = label },
                                 shape = RoundedCornerShape(14.dp),
-                                color = if (isSelected) color else Color(0xFFEDE8DF),
+                                color = if (isSelected) color else if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFEDE8DF),
                                 modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                             ) {
                                 Column(
@@ -1534,12 +1540,12 @@ fun ExamMode(
                                         text = label,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else Color(0xFF6B5744)
+                                        color = if (isSelected) Color.White else if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
                                     )
                                     Text(
                                         text = sub,
                                         fontSize = 12.sp,
-                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color(0xFF9B8B7A)
+                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else if (isDarkMode) Color(0xFF888888) else Color(0xFF9B8B7A)
                                     )
                                 }
                             }
@@ -1740,7 +1746,7 @@ fun ExamMode(
             errorMessage?.let { error ->
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF3A1A1A) else Color(0xFFFFEBEE)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(text = error, color = Color(0xFFD32F2F), modifier = Modifier.padding(12.dp), textAlign = TextAlign.Center)
@@ -1749,7 +1755,7 @@ fun ExamMode(
 
             Card(
                 modifier = Modifier.fillMaxWidth().weight(1f),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
+                colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5EFE6)),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
