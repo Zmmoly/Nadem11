@@ -22,7 +22,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onNavigateToRegister: () -> Unit
 ) {
     var startAnimation by remember { mutableStateOf(false) }
     val alphaAnim = animateFloatAsState(
@@ -43,7 +44,7 @@ fun SplashScreen(
         if (currentUser != null) {
             onNavigateToHome()
         } else {
-            onNavigateToLogin()
+            onNavigateToRegister()  // المستخدم الجديد يذهب لصفحة التسجيل
         }
     }
 
