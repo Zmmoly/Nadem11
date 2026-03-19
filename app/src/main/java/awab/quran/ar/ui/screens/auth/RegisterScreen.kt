@@ -41,6 +41,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 @Composable
 fun RegisterScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToLogin: () -> Unit = {},
     onRegisterSuccess: () -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
@@ -382,7 +383,7 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    TextButton(onClick = onNavigateBack) {
+                    TextButton(onClick = onNavigateToLogin) {
                         Text("لديك حساب بالفعل؟ سجل الدخول", color = Color(0xFF3D2410), fontSize = 16.sp)
                     }
                 }
