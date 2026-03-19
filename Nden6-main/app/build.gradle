@@ -1,7 +1,14 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'com.google.gms.google-services'
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
+}
+
+// ✅ قراءة local.properties
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
 }
 
 android {
@@ -14,35 +21,56 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
+        }
+
+        // ✅ API URL يُقرأ من local.properties أو environment variable
+        def transcribeUrl = localProperties.getProperty("TRANSCRIBE_API_URL")
+            ?: System.getenv("TRANSCRIBE_API_URL")
+            ?: ""
+        buildConfigField "String", "TRANSCRIBE_API_URL", "\"${transcribeUrl}\""
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("nadeem.jks")
+            storePassword System.getenv("SIGNING_STORE_PASSWORD") ?: ""
+            keyAlias System.getenv("SIGNING_KEY_ALIAS") ?: ""
+            keyPassword System.getenv("SIGNING_KEY_PASSWORD") ?: ""
         }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
     buildFeatures {
         compose true
+        buildConfig true  // ✅ تفعيل BuildConfig
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.4'
     }
+
     packaging {
         resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes.add('/META-INF/{AL2.0,LGPL2.1}')
         }
     }
 }
@@ -60,14 +88,25 @@ dependencies {
     implementation 'androidx.navigation:navigation-compose:2.7.5'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2'
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.2'
+
     implementation platform('com.google.firebase:firebase-bom:32.7.0')
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
     implementation 'com.google.firebase:firebase-storage-ktx'
+
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
     implementation 'io.coil-kt:coil-compose:2.5.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    
+
+    implementation "com.google.accompanist:accompanist-pager:0.32.0"
+    implementation "com.google.accompanist:accompanist-pager-indicators:0.32.0"
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation 'androidx.credentials:credentials:1.2.2'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.2.2'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.0'
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
