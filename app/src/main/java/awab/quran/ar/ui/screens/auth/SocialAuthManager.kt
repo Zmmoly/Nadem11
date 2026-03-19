@@ -28,6 +28,7 @@ fun signInWithGoogle(
     val googleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(webClientId)
+        .setAutoSelectEnabled(true)
         .build()
 
     val request = GetCredentialRequest.Builder()
@@ -36,7 +37,8 @@ fun signInWithGoogle(
 
     coroutineScope.launch {
         try {
-            val result = credentialManager.getCredential(context, request)
+            val activity = context as android.app.Activity
+            val result = credentialManager.getCredential(activity, request)
             val credential = result.credential
 
             if (credential is CustomCredential &&
