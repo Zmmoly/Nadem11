@@ -15,6 +15,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "TRANSCRIBE_API_URL", "\"${System.getenv('TRANSCRIBE_API_URL') ?: ''}\""
         vectorDrawables {
             useSupportLibrary true
         }
@@ -48,6 +49,7 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     composeOptions {
