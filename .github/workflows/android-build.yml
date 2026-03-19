@@ -25,25 +25,32 @@ jobs:
       run: |
         curl -L -o gradle/wrapper/gradle-wrapper.jar \
           https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar
-        ls -lh gradle/wrapper/gradle-wrapper.jar
-        
+
     - name: Make gradlew executable
       run: chmod +x gradlew
-      
-    - name: Verify google-services.json exists
+
+    - name: Create google-services.json from secret
+      run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+
+    - name: Inject google_web_client_id into strings.xml
       run: |
-        if [ ! -f "app/google-services.json" ]; then
-          echo "❌ Error: app/google-services.json not found"
-          exit 1
-        else
-          echo "✅ google-services.json found"
-        fi
+        CLIENT_ID=$(cat app/google-services.json | python3 -c "
+        import json, sys
+        data = json.load(sys.stdin)
+        clients = data['client'][0]['oauth_client']
+        web = next(c for c in clients if c['client_type'] == 3)
+        print(web['client_id'])
+        ")
+        sed -i "s|YOUR_GOOGLE_WEB_CLIENT_ID|${CLIENT_ID}|g" \
+          app/src/main/res/values/strings.xml
+
+    - name: Inject API URL into local.properties
+      run: echo 'TRANSCRIBE_API_URL=${{ secrets.TRANSCRIBE_API_URL }}' >> local.properties
 
     - name: Decode Keystore
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/nadeem.jks
-        echo "✅ Keystore decoded successfully"
-      
+
     - name: Cache Gradle packages
       uses: actions/cache@v3
       with:
@@ -53,13 +60,10 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
-    
-    - name: Gradle version
-      run: ./gradlew --version
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
-      
+
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
@@ -73,7 +77,7 @@ jobs:
         SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        
+
     - name: Upload Signed Release APK
       uses: actions/upload-artifact@v4
       with:
@@ -84,7 +88,7 @@ jobs:
     - name: Run Unit Tests
       run: ./gradlew test --stacktrace
       continue-on-error: true
-      
+
     - name: Upload Test Reports
       if: always()
       uses: actions/upload-artifact@v4
@@ -92,7 +96,7 @@ jobs:
         name: test-reports
         path: app/build/reports/tests/
         retention-days: 30
-        
+
     - name: Build Summary
       if: always()
       run: |
@@ -100,12 +104,10 @@ jobs:
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        
         if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
           SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
           echo "✅ Debug APK: **$SIZE**" >> $GITHUB_STEP_SUMMARY
         fi
-        
         if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
           SIZE=$(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)
           echo "✅ Release APK (Signed): **$SIZE**" >> $GITHUB_STEP_SUMMARY
