@@ -7,6 +7,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.core.app.ActivityCompat
+import awab.quran.ar.BuildConfig  // ✅ استيراد BuildConfig
 import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,14 +18,15 @@ import java.io.DataOutputStream
 
 class DeepgramService(private val context: Context) {
 
-    private val API_URL = "https://zmmoly--quran-transcribe-fastapi-app.modal.run/transcribe"
+    // ✅ الحل: URL يأتي من BuildConfig وليس hardcoded
+    private val API_URL = BuildConfig.TRANSCRIBE_API_URL
 
     private val SILENCE_THRESHOLD = 1500
-    private val SILENCE_DURATION_MS = 500L  // تقليل من 800 إلى 500
+    private val SILENCE_DURATION_MS = 500L
 
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
-    private var isProcessing = false  // منع إرسال طلبين في نفس الوقت
+    private var isProcessing = false
     private var recordingJob: Job? = null
     private val audioBuffer = ByteArrayOutputStream()
 
@@ -35,7 +37,6 @@ class DeepgramService(private val context: Context) {
         AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
     }
 
-    // HTTP client مشترك لتجنب إنشاء اتصال جديد في كل طلب
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -128,7 +129,7 @@ class DeepgramService(private val context: Context) {
                             silenceStart = 0L
 
                             if (!isProcessing) {
-                                isProcessing = true  // فوراً قبل أي تأخير
+                                isProcessing = true
                                 launch {
                                     sendAudioToAPI(audioData)
                                     isProcessing = false
@@ -147,8 +148,6 @@ class DeepgramService(private val context: Context) {
 
             val wavBytes = pcmToWav(pcmData, sampleRate)
 
-            val client = httpClient
-
             val requestBody = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart(
@@ -162,33 +161,26 @@ class DeepgramService(private val context: Context) {
                 .post(requestBody)
                 .build()
 
-            val response = client.newCall(request).execute()
+            val response = httpClient.newCall(request).execute()
             val body = response.body?.string()
 
-            android.util.Log.d("API_RESPONSE", "الرد: $body")
-
             if (response.isSuccessful && body != null) {
-                android.util.Log.d("API_RESPONSE", "ناجح: $body")
                 val rawText = JSONObject(body).getString("text")
-                // حذف الأقواس المربعة وما بينها مثل [لم] [لا]
                 val text = rawText
-                    .replace(Regex("\\[[^\\]]*\\]"), "")  // حذف [كلمة]
-                    .replace(Regex("^['\"]|['\"]$"), "")  // حذف علامات الاقتباس
+                    .replace(Regex("\\[[^\\]]*\\]"), "")
+                    .replace(Regex("^['\"]|['\"]$"), "")
                     .replace(Regex("\\s+"), " ")
                     .trim()
-                android.util.Log.d("API_RESPONSE", "النص: $text")
                 if (text.isNotEmpty()) {
                     CoroutineScope(Dispatchers.Main).launch {
                         onTranscriptionReceived?.invoke(text)
                     }
                 }
             } else {
-                android.util.Log.d("API_RESPONSE", "فشل: ${response.code}")
                 onError?.invoke("خطأ: ${response.code}")
             }
 
         } catch (e: Exception) {
-            android.util.Log.d("API_RESPONSE", "استثناء: ${e.message}")
             CoroutineScope(Dispatchers.Main).launch {
                 onError?.invoke("خطأ: ${e.message}")
             }
