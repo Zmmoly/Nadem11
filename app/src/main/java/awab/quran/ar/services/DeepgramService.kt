@@ -19,7 +19,7 @@ import java.io.DataOutputStream
 class DeepgramService(private val context: Context) {
 
     // ✅ الحل: URL يأتي من BuildConfig وليس hardcoded
-    private val API_URL = BuildConfig.TRANSCRIBE_API_URL
+    private val API_URL: String = BuildConfig.TRANSCRIBE_API_URL
 
     private val SILENCE_THRESHOLD = 1500
     private val SILENCE_DURATION_MS = 500L
