@@ -288,7 +288,8 @@ fun LoginScreen(
 @Composable
 fun SocialButton(iconRes: Int, name: String, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.size(52.dp).clickable { onClick() },
+        onClick = onClick,
+        modifier = Modifier.size(52.dp),
         shape = CircleShape,
         color = Color(0xFFF5F2EA),
         shadowElevation = 4.dp
