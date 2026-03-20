@@ -91,30 +91,14 @@ fun RegisterScreen(
                         "createdAt" to System.currentTimeMillis(),
                         "totalRecitations" to 0, "completedSurahs" to 0
                     )
+                    // ✅ احفظ في Firestore في الخلفية بدون انتظار
                     if (userId != null) {
                         firestore.collection("users").document(userId).set(userData)
-                            .addOnSuccessListener {
-                                isLoading = false
-                                Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
-                                onRegisterSuccess()
-                            }
-                            .addOnFailureListener { exception ->
-                                isLoading = false
-                                val errorMsg = exception.message ?: ""
-                                val arabicError = when {
-                                    errorMsg.contains("network") ||
-                                    errorMsg.contains("NETWORK") ->
-                                        "تحقق من اتصالك بالإنترنت"
-                                    else ->
-                                        "حدث خطأ في حفظ البيانات، حاول مرة أخرى"
-                                }
-                                Toast.makeText(context, arabicError, Toast.LENGTH_LONG).show()
-                            }
-                    } else {
-                        isLoading = false
-                        Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
-                        onRegisterSuccess()
                     }
+                    // ✅ انتقل فوراً بعد نجاح Firebase Auth
+                    isLoading = false
+                    Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
+                    onRegisterSuccess()
                 } else {
                     isLoading = false
                     val errorMsg = task.exception?.message ?: ""
