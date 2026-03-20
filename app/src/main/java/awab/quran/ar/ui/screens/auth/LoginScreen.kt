@@ -55,6 +55,8 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var showResendButton by remember { mutableStateOf(false) }
+    var resendLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -72,8 +74,21 @@ fun LoginScreen(
             .addOnCompleteListener { task ->
                 isLoading = false
                 if (task.isSuccessful) {
-                    Toast.makeText(context, "تم تسجيل الدخول بنجاح", Toast.LENGTH_SHORT).show()
-                    onLoginSuccess()
+                    val user = auth.currentUser
+                    if (user != null && !user.isEmailVerified) {
+                        // ✅ الحساب غير مُفعَّل — أخرج المستخدم وأخبره
+                        auth.signOut()
+                        passwordError = "يرجى تفعيل حسابك عبر البريد الإلكتروني أولاً"
+                        showResendButton = true
+                        Toast.makeText(
+                            context,
+                            "لم يتم تفعيل حسابك بعد، تحقق من بريدك",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(context, "تم تسجيل الدخول بنجاح", Toast.LENGTH_SHORT).show()
+                        onLoginSuccess()
+                    }
                 } else {
                     val errorMsg = task.exception?.message ?: ""
                     val arabicError = when {
@@ -193,6 +208,38 @@ fun LoginScreen(
 
                     TextButton(onClick = onNavigateToForgotPassword, modifier = Modifier.align(Alignment.End)) {
                         Text("• نسيت كلمة المرور؟", color = Color(0xFF5A3D28), fontSize = 13.sp)
+                    }
+
+                    if (showResendButton) {
+                        TextButton(
+                            onClick = {
+                                resendLoading = true
+                                auth.signInWithEmailAndPassword(email, password)
+                                    .addOnSuccessListener {
+                                        auth.currentUser?.sendEmailVerification()
+                                            ?.addOnCompleteListener {
+                                                auth.signOut()
+                                                resendLoading = false
+                                                Toast.makeText(
+                                                    context,
+                                                    "تم إرسال رابط التفعيل إلى بريدك ✉️",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                    }
+                                    .addOnFailureListener {
+                                        resendLoading = false
+                                        Toast.makeText(context, "تأكد من صحة البيانات أولاً", Toast.LENGTH_SHORT).show()
+                                    }
+                            },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            if (resendLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFF4A7C59), strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text("• إعادة إرسال رابط التفعيل", color = Color(0xFF4A7C59), fontSize = 13.sp)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
