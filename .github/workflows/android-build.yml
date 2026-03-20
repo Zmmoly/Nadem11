@@ -44,8 +44,8 @@ jobs:
         sed -i "s|YOUR_GOOGLE_WEB_CLIENT_ID|${CLIENT_ID}|g" \
           app/src/main/res/values/strings.xml
 
-    - name: Inject API URL into local.properties
-      run: echo 'TRANSCRIBE_API_URL=${{ secrets.TRANSCRIBE_API_URL }}' >> local.properties
+    - name: Inject API URL as environment variable
+      run: echo "TRANSCRIBE_API_URL=${{ secrets.TRANSCRIBE_API_URL }}" >> $GITHUB_ENV
 
     - name: Decode Keystore
       run: |
@@ -63,6 +63,8 @@ jobs:
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
+      env:
+        TRANSCRIBE_API_URL: ${{ secrets.TRANSCRIBE_API_URL }}
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -74,6 +76,7 @@ jobs:
     - name: Build Signed Release APK
       run: ./gradlew assembleRelease --stacktrace
       env:
+        TRANSCRIBE_API_URL: ${{ secrets.TRANSCRIBE_API_URL }}
         SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
