@@ -91,8 +91,8 @@ fun RegisterScreen(
                         "createdAt" to System.currentTimeMillis(),
                         "totalRecitations" to 0, "completedSurahs" to 0
                     )
-                    userId?.let {
-                        firestore.collection("users").document(it).set(userData)
+                    if (userId != null) {
+                        firestore.collection("users").document(userId).set(userData)
                             .addOnSuccessListener {
                                 isLoading = false
                                 Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
@@ -110,6 +110,10 @@ fun RegisterScreen(
                                 }
                                 Toast.makeText(context, arabicError, Toast.LENGTH_LONG).show()
                             }
+                    } else {
+                        isLoading = false
+                        Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
+                        onRegisterSuccess()
                     }
                 } else {
                     isLoading = false
