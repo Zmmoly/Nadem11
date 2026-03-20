@@ -40,6 +40,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import awab.quran.ar.R
 import com.google.firebase.auth.FirebaseAuth
 
@@ -61,7 +63,15 @@ fun LoginScreen(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val auth = FirebaseAuth.getInstance()
-    val coroutineScope = rememberCoroutineScope()
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        handleGoogleSignInResult(
+            data = result.data,
+            onSuccess = { onLoginSuccess() },
+            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
+        )
+    }
 
     fun performLogin() {
         if (!validateInputs(email, password,
@@ -264,12 +274,7 @@ fun LoginScreen(
 
             Row(horizontalArrangement = Arrangement.Center) {
                 SocialButton(R.drawable.ic_google, "Google") {
-                    signInWithGoogle(
-                        context = context,
-                        coroutineScope = coroutineScope,
-                        onSuccess = { onLoginSuccess() },
-                        onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
-                    )
+                    googleSignInLauncher.launch(getGoogleSignInIntent(context))
                 }
             }
 
