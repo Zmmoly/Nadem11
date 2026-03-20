@@ -59,6 +59,8 @@ fun RegisterScreen(
 
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
+    var showVerificationSent by remember { mutableStateOf(false) }
+    var resendLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -91,14 +93,22 @@ fun RegisterScreen(
                         "createdAt" to System.currentTimeMillis(),
                         "totalRecitations" to 0, "completedSurahs" to 0
                     )
-                    // ✅ احفظ في Firestore في الخلفية بدون انتظار
+                    // ✅ احفظ في Firestore في الخلفية
                     if (userId != null) {
                         firestore.collection("users").document(userId).set(userData)
                     }
-                    // ✅ انتقل فوراً بعد نجاح Firebase Auth
-                    isLoading = false
-                    Toast.makeText(context, "تم إنشاء الحساب بنجاح", Toast.LENGTH_SHORT).show()
-                    onRegisterSuccess()
+                    // ✅ أرسل إيميل التحقق واعرض شاشة التأكيد
+                    auth.currentUser?.sendEmailVerification()
+                        ?.addOnCompleteListener {
+                            isLoading = false
+                            auth.signOut()
+                            showVerificationSent = true
+                        }
+                        ?: run {
+                            isLoading = false
+                            auth.signOut()
+                            showVerificationSent = true
+                        }
                 } else {
                     isLoading = false
                     val errorMsg = task.exception?.message ?: ""
@@ -242,6 +252,76 @@ fun RegisterScreen(
             """.trimIndent(),
             onDismiss = { showTermsDialog = false }
         )
+    }
+
+    // ✅ شاشة "تحقق من بريدك" بعد التسجيل
+    if (showVerificationSent) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.login_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("✉️", fontSize = 64.sp)
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    "تحقق من بريدك الإلكتروني",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3D2410),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "تم إرسال رابط التفعيل إلى\n$email\nافتح بريدك وفعّل حسابك ثم سجّل الدخول",
+                    fontSize = 14.sp,
+                    color = Color(0xFF4A3020),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = { onNavigateToLogin() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6D7B62)),
+                    shape = RoundedCornerShape(25.dp)
+                ) {
+                    Text("الذهاب لتسجيل الدخول", fontSize = 16.sp, color = Color.White)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(
+                    onClick = {
+                        resendLoading = true
+                        auth.signInWithEmailAndPassword(email, password)
+                            .addOnSuccessListener {
+                                auth.currentUser?.sendEmailVerification()
+                                    ?.addOnCompleteListener {
+                                        auth.signOut()
+                                        resendLoading = false
+                                        Toast.makeText(context, "تم إعادة إرسال الرابط ✉️", Toast.LENGTH_LONG).show()
+                                    }
+                            }
+                            .addOnFailureListener {
+                                resendLoading = false
+                                Toast.makeText(context, "حدث خطأ، حاول مرة أخرى", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                ) {
+                    if (resendLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFF4A7C59), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text("إعادة إرسال رابط التفعيل", color = Color(0xFF4A7C59), fontSize = 13.sp)
+                }
+            }
+        }
+        return
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
