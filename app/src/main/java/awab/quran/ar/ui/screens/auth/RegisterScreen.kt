@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import awab.quran.ar.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -67,7 +69,15 @@ fun RegisterScreen(
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        handleGoogleSignInResult(
+            data = result.data,
+            onSuccess = { onRegisterSuccess() },
+            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
+        )
+    }
 
     fun performRegister() {
         var isValid = true
@@ -445,7 +455,7 @@ fun RegisterScreen(
 
                     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                         SocialButton(R.drawable.ic_google, "Google") {
-                            signInWithGoogle(context = context, coroutineScope = coroutineScope, onSuccess = { onRegisterSuccess() }, onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() })
+                            googleSignInLauncher.launch(getGoogleSignInIntent(context))
                         }
                     }
 
