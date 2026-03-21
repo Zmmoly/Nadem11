@@ -2,7 +2,9 @@ package awab.quran.ar.ui.screens.surah
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.graphics.Typeface
 import android.media.ToneGenerator
 import android.media.AudioManager
@@ -173,6 +175,7 @@ fun SurahScreen(
     
     // الوضع الحالي: قراءة، تسميع، اختبار
     var selectedMode by remember { mutableStateOf("قراءة") }
+    var showDonationDialog by remember { mutableStateOf(false) }
     
     // البحث عن رقم الصفحة التي تبدأ بها السورة
     val initialPageNumber = remember(surah.number) {
@@ -220,6 +223,11 @@ fun SurahScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = iconColor)
                         }
                     },
+                    actions = {
+                        IconButton(onClick = { showDonationDialog = true }) {
+                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935))
+                        }
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBg)
                 )
             },
@@ -242,6 +250,59 @@ fun SurahScreen(
                 }
             }
         }
+    }
+
+    // نافذة التبرع
+    if (showDonationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(44.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "ادعم تطوير التطبيق",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "جزاك الله خيرًا على دعمك لهذا المشروع القرآني. تبرعك يساعدنا على الاستمرار وخدمة المسلمين.",
+                        fontSize = 13.sp,
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(donationUrl))
+                            context.startActivity(intent)
+                            showDonationDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
+                        Text("تبرع الآن", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
+        )
     }
 }
 
