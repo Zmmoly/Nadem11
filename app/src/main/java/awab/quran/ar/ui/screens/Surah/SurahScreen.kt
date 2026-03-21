@@ -225,7 +225,7 @@ fun SurahScreen(
                     },
                     actions = {
                         IconButton(onClick = { showDonationDialog = true }) {
-                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935))
+                            Icon(Icons.Default.Star, contentDescription = "تبرع", tint = Color(0xFFE53935))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBg)
@@ -259,7 +259,7 @@ fun SurahScreen(
             containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
             title = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(44.dp))
+                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(44.dp))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "ادعم تطوير التطبيق",
@@ -291,7 +291,7 @@ fun SurahScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
+                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
                         Text("تبرع الآن", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
