@@ -1,5 +1,7 @@
 package awab.quran.ar.ui.screens.recitation
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +39,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     var recordingSeconds by remember { mutableStateOf(0) }
     var transcribedLines by remember { mutableStateOf(listOf<String>()) }
     var statusMessage by remember { mutableStateOf("") }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
     // ألوان
     val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
@@ -97,6 +100,11 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                 TopAppBar(
                     title = { Text("تسميع القرآن", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
                     navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor) } },
+                    actions = {
+                        IconButton(onClick = { showDonationDialog = true }) {
+                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935))
+                        }
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
                 )
             }
@@ -172,8 +180,121 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                     }
                 }
 
+                // بطاقة التبرع
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C1A1A) else Color(0xFFFFF3E0))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ادعم تطوير التطبيق 🤍",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDarkMode) Color(0xFFFFCC80) else Color(0xFF6B5744)
+                            )
+                            Text(
+                                text = "مساهمتك تساعدنا على الاستمرار",
+                                fontSize = 12.sp,
+                                color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.7f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Button(
+                            onClick = { showDonationDialog = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp).padding(end = 4.dp), tint = Color.White)
+                            Text("تبرع", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+
+    // نافذة التبرع
+    if (showDonationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "ادعم تطوير التطبيق",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        fontSize = 14.sp,
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "اختر طريقة التبرع:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationOptions = listOf(
+                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
+                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
+                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
+                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                    )
+                    donationOptions.chunked(2).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (label, url, color) ->
+                                val ctx = context
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        ctx.startActivity(intent)
+                                        showDonationDialog = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+                                    border = androidx.compose.foundation.BorderStroke(1.5.dp, color)
+                                ) {
+                                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
+        )
     }
 }
