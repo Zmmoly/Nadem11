@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -225,8 +226,15 @@ fun SurahScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { showDonationDialog = true }) {
-                            Icon(Icons.Default.Star, contentDescription = "تبرع", tint = Color(0xFFE53935))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clickable { showDonationDialog = true }
+                                .padding(4.dp)
+                        ) {
+                            Icon(Icons.Default.Star, contentDescription = "تبرع", tint = Color(0xFFD4AF37), modifier = Modifier.size(22.dp))
+                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFD4AF37), fontWeight = FontWeight.Bold)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBg)
