@@ -1,7 +1,11 @@
 package awab.quran.ar.ui.screens.profile
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import awab.quran.ar.R
@@ -47,6 +52,7 @@ fun ProfileScreen(
     var completedSurahs by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
     val settingsRepo = remember { RecitationSettingsRepository(context) }
     val themeRepo = remember { ThemeRepository(context) }
@@ -97,6 +103,18 @@ fun ProfileScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
+                        }
+                    },
+                    actions = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clickable { showDonationDialog = true }
+                                .padding(4.dp)
+                        ) {
+                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935), modifier = Modifier.size(22.dp))
+                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
@@ -471,6 +489,74 @@ fun ProfileScreen(
                 }
             },
             containerColor = cardColor
+        )
+    }
+
+    // نافذة التبرع
+    if (showDonationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "ادعم تطوير التطبيق",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        fontSize = 14.sp,
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("اختر طريقة التبرع:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationOptions = listOf(
+                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
+                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
+                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
+                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                    )
+                    donationOptions.chunked(2).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (label, url, color) ->
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                        showDonationDialog = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+                                    border = BorderStroke(1.5.dp, color)
+                                ) {
+                                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
         )
     }
 }
