@@ -563,6 +563,54 @@ fun buildColoredText(
 }
 
 /**
+ * تلوين الكلمة على مستوى الحرف:
+ * - الحروف الصحيحة باللون الأخضر
+ * - الحروف الخاطئة أو الزائدة باللون الأحمر
+ * - يُعرض النص المنطوق كما هو مع تلوين أحرفه
+ */
+fun appendWordWithCharColors(
+    builder: androidx.compose.ui.text.AnnotatedString.Builder,
+    spokenWord: String,
+    refWord: String,
+    settings: awab.quran.ar.data.RecitationSettings
+) {
+    val normSpoken = normalizeArabic(spokenWord, settings)
+    val normRef    = normalizeArabic(refWord, settings)
+
+    // خوارزمية LCS لمعرفة أي حرف صحيح وأيه خاطئ
+    val n = normSpoken.length
+    val m = normRef.length
+    val dp = Array(n + 1) { IntArray(m + 1) }
+    for (i in 1..n) for (j in 1..m) {
+        dp[i][j] = if (normSpoken[i-1] == normRef[j-1]) dp[i-1][j-1] + 1
+                   else maxOf(dp[i-1][j], dp[i][j-1])
+    }
+
+    // تتبع المسار لمعرفة الحروف المتطابقة
+    val matchedSpokenIdx = mutableSetOf<Int>()
+    var i = n; var j = m
+    while (i > 0 && j > 0) {
+        when {
+            normSpoken[i-1] == normRef[j-1] -> { matchedSpokenIdx.add(i-1); i--; j-- }
+            dp[i-1][j] >= dp[i][j-1]        -> i--
+            else                             -> j--
+        }
+    }
+
+    // رسم كل حرف من الكلمة المنطوقة بلونه
+    spokenWord.forEachIndexed { idx, ch ->
+        // نحسب موضع الحرف في النص المُعيَّر (بعد حذف التشكيل)
+        val normIdx = normalizeArabic(spokenWord.substring(0, idx + 1), settings).length - 1
+        val isMatch = normIdx in matchedSpokenIdx
+        builder.withStyle(SpanStyle(
+            color = if (isMatch) Color(0xFF1B5E20) else Color(0xFFD32F2F),
+            background = if (isMatch) Color.Transparent else Color(0x22FF0000)
+        )) { append(ch.toString()) }
+    }
+    builder.append(" ")
+}
+
+/**
  * وضع التسميع
  */
 @Composable
@@ -686,7 +734,7 @@ fun RecitationMode(
                     // هل الكلمة تطابق الكلمة الحالية في المرجع؟
                     val currentRef = referenceWords.getOrNull(currentPos) ?: ""
                     if (normalizeArabic(currentRef, settings) == normalizedWord) {
-                        // تطابق مباشر ✅
+                        // تطابق مباشر ✅ — الكلمة كاملة خضراء
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
                             append("$word ")
                         }
@@ -743,13 +791,8 @@ fun RecitationMode(
                                 currentPos++
                                 correctWords++
                             } else {
-                                // كلمة خاطئة ❌
-                                withStyle(SpanStyle(
-                                    color = Color(0xFFD32F2F),
-                                    background = Color(0x22FF0000)
-                                )) {
-                                    append("$word ")
-                                }
+                                // كلمة خاطئة ❌ — لوّن حرفاً بحرف
+                                appendWordWithCharColors(this, word, currentRef, settings)
                                 currentPos++
                                 errorWords++
                                 hasError = true
@@ -1395,10 +1438,13 @@ fun ExamMode(
                     val refWord = referenceWords.getOrNull(wordCount + i) ?: ""
                     val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
                     if (!isCorrect) hasError = true
-                    withStyle(SpanStyle(
-                        color = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFD32F2F),
-                        background = if (isCorrect) Color.Transparent else Color(0x22FF0000)
-                    )) { append("$word ") }
+                    if (isCorrect) {
+                        // كلمة صحيحة ✅ — كاملة خضراء
+                        withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
+                    } else {
+                        // كلمة خاطئة ❌ — لوّن حرفاً بحرف
+                        appendWordWithCharColors(this, word, refWord, settings)
+                    }
                 }
             }
             CoroutineScope(Dispatchers.Main).launch {
