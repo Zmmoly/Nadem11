@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +61,7 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf("الكل") }
     var searchQuery by remember { mutableStateOf("") }
     var favoriteSurahs by remember { mutableStateOf<Set<Int>>(emptySet()) }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
     // آخر 10 سور تم فتحها
     val prefs = remember { context.getSharedPreferences("recent_surahs", android.content.Context.MODE_PRIVATE) }
@@ -292,20 +296,38 @@ fun HomeScreen(
                         )
                     }
 
-                    // زر الوضع الليلي على اليمين
-                    IconButton(
-                        onClick = {
-                            val newValue = !isDarkMode
-                            onToggleDarkMode(newValue)
-                            scope.launch { themeRepo.setDarkMode(newValue) }
-                        },
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Icon(
-                            imageVector = if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightlightRound,
-                            contentDescription = if (isDarkMode) "الوضع النهاري" else "الوضع الليلي",
-                            tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744)
-                        )
+                    // زر التبرع + زر الوضع الليلي على اليمين
+                    Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically) {
+                        // زر التبرع
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { showDonationDialog = true }
+                                .padding(horizontal = 4.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "تبرع",
+                                tint = Color(0xFFE53935),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                        }
+
+                        // زر الوضع الليلي
+                        IconButton(
+                            onClick = {
+                                val newValue = !isDarkMode
+                                onToggleDarkMode(newValue)
+                                scope.launch { themeRepo.setDarkMode(newValue) }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightlightRound,
+                                contentDescription = if (isDarkMode) "الوضع النهاري" else "الوضع الليلي",
+                                tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744)
+                            )
+                        }
                     }
 
                     // نديم وخير جليس في المنتصف
@@ -453,6 +475,80 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // نافذة التبرع
+    if (showDonationDialog) {
+        val context2 = androidx.compose.ui.platform.LocalContext.current
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "ادعم تطوير التطبيق",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        fontSize = 14.sp,
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "اختر طريقة التبرع:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationOptions = listOf(
+                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
+                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
+                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
+                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                    )
+                    donationOptions.chunked(2).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (label, url, color) ->
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context2.startActivity(intent)
+                                        showDonationDialog = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+                                    border = androidx.compose.foundation.BorderStroke(1.5.dp, color)
+                                ) {
+                                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
+        )
     }
 }
 
