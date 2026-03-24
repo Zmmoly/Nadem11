@@ -266,13 +266,9 @@ fun RegisterScreen(
 
     // ✅ شاشة "تحقق من بريدك" بعد التسجيل
     if (showVerificationSent) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = R.drawable.login_background),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color(0xFF121212))
+        ) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -280,29 +276,20 @@ fun RegisterScreen(
             ) {
                 Text("✉️", fontSize = 64.sp)
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    "تحقق من بريدك الإلكتروني",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3D2410),
-                    textAlign = TextAlign.Center
-                )
+                Text("تحقق من بريدك الإلكتروني", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "تم إرسال رابط التفعيل إلى\n$email\nافتح بريدك وفعّل حسابك ثم سجّل الدخول",
-                    fontSize = 14.sp,
-                    color = Color(0xFF4A3020),
-                    textAlign = TextAlign.Center,
-                    lineHeight = 22.sp
+                    fontSize = 14.sp, color = Color(0xFFAAAAAA), textAlign = TextAlign.Center, lineHeight = 22.sp
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = { onNavigateToLogin() },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6D7B62)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37)),
                     shape = RoundedCornerShape(25.dp)
                 ) {
-                    Text("الذهاب لتسجيل الدخول", fontSize = 16.sp, color = Color.White)
+                    Text("الذهاب لتسجيل الدخول", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF121212))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 TextButton(
@@ -324,40 +311,60 @@ fun RegisterScreen(
                     }
                 ) {
                     if (resendLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFF4A7C59), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFFD4AF37), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text("إعادة إرسال رابط التفعيل", color = Color(0xFF4A7C59), fontSize = 13.sp)
+                    Text("إعادة إرسال رابط التفعيل", color = Color(0xFFD4AF37), fontSize = 13.sp)
                 }
             }
         }
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.app_background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    // ألوان الوضع الليلي
+    val bgColor     = Color(0xFF121212)
+    val cardColor   = Color(0xFF1E1E1E)
+    val fieldBg     = Color(0xFF2C2C2C)
+    val titleColor  = Color(0xFFE0E0E0)
+    val subColor    = Color(0xFFAAAAAA)
+    val accentColor = Color(0xFFD4AF37)
+    val hintColor   = Color(0xFF888888)
 
+    Box(
+        modifier = Modifier.fillMaxSize().background(bgColor)
+    ) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(56.dp))
 
-            Text("إنشاء حساب جديد", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D2410), modifier = Modifier.padding(bottom = 8.dp))
-            Text("انضم إلينا في رحلة حفظ القرآن الكريم", fontSize = 16.sp, color = Color(0xFF4A3020), textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 32.dp))
+            Text("إنشاء حساب جديد", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = accentColor, modifier = Modifier.padding(bottom = 8.dp))
+            Text("انضم إلينا في رحلة حفظ القرآن الكريم", fontSize = 16.sp, color = subColor, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 32.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F3ED).copy(alpha = 0.95f)),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    val fieldColors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accentColor,
+                        unfocusedBorderColor = Color(0xFF444444),
+                        focusedContainerColor = fieldBg,
+                        unfocusedContainerColor = fieldBg,
+                        focusedTextColor = titleColor,
+                        unfocusedTextColor = titleColor,
+                        focusedLabelColor = accentColor,
+                        unfocusedLabelColor = hintColor,
+                        cursorColor = accentColor,
+                        focusedLeadingIconColor = accentColor,
+                        unfocusedLeadingIconColor = hintColor,
+                        focusedTrailingIconColor = accentColor,
+                        unfocusedTrailingIconColor = hintColor
+                    )
 
                     OutlinedTextField(
                         value = fullName, onValueChange = { fullName = it; nameError = null },
@@ -367,7 +374,7 @@ fun RegisterScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF8B7355), unfocusedBorderColor = Color(0xFFD4C5A9), focusedLabelColor = Color(0xFF8B7355), cursorColor = Color(0xFF8B7355))
+                        colors = fieldColors
                     )
 
                     OutlinedTextField(
@@ -378,7 +385,7 @@ fun RegisterScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF8B7355), unfocusedBorderColor = Color(0xFFD4C5A9), focusedLabelColor = Color(0xFF8B7355), cursorColor = Color(0xFF8B7355))
+                        colors = fieldColors
                     )
 
                     OutlinedTextField(
@@ -391,7 +398,7 @@ fun RegisterScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF8B7355), unfocusedBorderColor = Color(0xFFD4C5A9), focusedLabelColor = Color(0xFF8B7355), cursorColor = Color(0xFF8B7355))
+                        colors = fieldColors
                     )
 
                     OutlinedTextField(
@@ -404,54 +411,43 @@ fun RegisterScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); performRegister() }),
                         singleLine = true, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF8B7355), unfocusedBorderColor = Color(0xFFD4C5A9), focusedLabelColor = Color(0xFF8B7355), cursorColor = Color(0xFF8B7355))
+                        colors = fieldColors
                     )
 
-                    // *** نص السياسة مع روابط قابلة للضغط ***
                     val annotatedText = buildAnnotatedString {
                         append("بإنشاء حساب، فإنك توافق على ")
                         pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                        withStyle(style = SpanStyle(color = Color(0xFF8B7355), fontWeight = FontWeight.Bold)) {
-                            append("شروط الاستخدام")
-                        }
+                        withStyle(style = SpanStyle(color = accentColor, fontWeight = FontWeight.Bold)) { append("شروط الاستخدام") }
                         pop()
                         append(" و")
                         pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                        withStyle(style = SpanStyle(color = Color(0xFF8B7355), fontWeight = FontWeight.Bold)) {
-                            append("سياسة الخصوصية")
-                        }
+                        withStyle(style = SpanStyle(color = accentColor, fontWeight = FontWeight.Bold)) { append("سياسة الخصوصية") }
                         pop()
                     }
 
                     androidx.compose.foundation.text.ClickableText(
                         text = annotatedText,
-                        style = androidx.compose.ui.text.TextStyle(
-                            fontSize = 13.sp,
-                            color = Color(0xFF4A3020),
-                            textAlign = TextAlign.Center
-                        ),
+                        style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = subColor, textAlign = TextAlign.Center),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         onClick = { offset ->
-                            annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
-                                .firstOrNull()?.let { showTermsDialog = true }
-                            annotatedText.getStringAnnotations(tag = "PRIVACY", start = offset, end = offset)
-                                .firstOrNull()?.let { showPrivacyDialog = true }
+                            annotatedText.getStringAnnotations("TERMS", offset, offset).firstOrNull()?.let { showTermsDialog = true }
+                            annotatedText.getStringAnnotations("PRIVACY", offset, offset).firstOrNull()?.let { showPrivacyDialog = true }
                         }
                     )
 
                     Button(
                         onClick = { performRegister() }, enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B7355)),
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                        else Text("إنشاء الحساب", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF121212), strokeWidth = 2.dp)
+                        else Text("إنشاء الحساب", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF121212))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = Color(0xFF4A3020), modifier = Modifier.padding(vertical = 8.dp))
+                    Text("أو تابع التسجيل بإستخدام", fontSize = 13.sp, color = subColor, modifier = Modifier.padding(vertical = 8.dp))
 
                     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                         SocialButton(R.drawable.ic_google, "Google") {
@@ -462,7 +458,7 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     TextButton(onClick = onNavigateToLogin) {
-                        Text("لديك حساب بالفعل؟ سجل الدخول", color = Color(0xFF3D2410), fontSize = 16.sp)
+                        Text("لديك حساب بالفعل؟ سجل الدخول", color = accentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -470,7 +466,7 @@ fun RegisterScreen(
         }
 
         IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = accentColor)
         }
     }
 }
@@ -483,27 +479,25 @@ fun PolicyDialog(title: String, content: String, onDismiss: () -> Unit) {
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.85f),
+            modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.85f),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F0E8))
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5D4037), modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally))
-                Divider(color = Color(0xFFD4C5A9))
+                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally))
+                Divider(color = Color(0xFF333333))
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(modifier = Modifier.weight(1f).verticalScroll(scrollState)) {
-                    Text(content, fontSize = 14.sp, color = Color(0xFF4A4A4A), lineHeight = 22.sp, textAlign = TextAlign.Right)
+                    Text(content, fontSize = 14.sp, color = Color(0xFFCCCCCC), lineHeight = 22.sp, textAlign = TextAlign.Right)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D4037))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37))
                 ) {
-                    Text("إغلاق", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("إغلاق", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF121212))
                 }
             }
         }
