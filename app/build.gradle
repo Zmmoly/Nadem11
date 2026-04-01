@@ -16,6 +16,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "TRANSCRIBE_API_URL", "\"${System.getenv('TRANSCRIBE_API_URL') ?: ''}\""
+        buildConfigField "String", "DEEPGRAM_API_KEY", "\"${System.getenv('DEEPGRAM_API_KEY') ?: ''}\""
         vectorDrawables {
             useSupportLibrary true
         }
