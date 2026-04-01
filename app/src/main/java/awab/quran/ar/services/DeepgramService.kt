@@ -15,23 +15,21 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
+import java.util.concurrent.TimeUnit
 
 class DeepgramService(private val context: Context) {
 
-    // ─── URLs والمفاتيح ────────────────────────────────
     private val MODAL_API_URL: String = BuildConfig.TRANSCRIBE_API_URL
     private val DEEPGRAM_API_KEY: String = BuildConfig.DEEPGRAM_API_KEY
-    private val DEEPGRAM_URL =
-        "https://api.deepgram.com/v1/listen?language=ar&model=nova-2&punctuate=true"
+    private val DEEPGRAM_URL = "https://api.deepgram.com/v1/listen?model=nova-2&language=ar"
 
-    // ─── حالة GPU ─────────────────────────────────────
-    // true = Modal GPU جاهز، false = استخدم Deepgram
-    @Volatile private var isGpuReady = false
-
-    // ─── إعدادات الصوت ────────────────────────────────
     private val SILENCE_THRESHOLD = 1500
-    private val SILENCE_DURATION_MS = 800L   // رُفع من 500 لتقليل الطلبات
-    private val MIN_AUDIO_BYTES = 16000      // تجاهل الأصوات القصيرة جداً (~0.5 ثانية)
+    private val SILENCE_DURATION_MS = 500L
+    private val GPU_CHECK_TIMEOUT_MS = 2000L // ثانيتان للتحقق من الـ GPU
+
+    // حالة الـ GPU
+    private var isGpuAwake = false
+    private var isCheckingGpu = false
 
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
@@ -46,19 +44,25 @@ class DeepgramService(private val context: Context) {
         AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
     }
 
+    // عميل HTTP عادي
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-        .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // ─── Callbacks ────────────────────────────────────
+    // عميل HTTP سريع للتحقق من الـ GPU (ثانيتان فقط)
+    private val fastHttpClient = OkHttpClient.Builder()
+        .connectTimeout(2, TimeUnit.SECONDS)
+        .readTimeout(2, TimeUnit.SECONDS)
+        .writeTimeout(2, TimeUnit.SECONDS)
+        .build()
+
     var onTranscriptionReceived: ((String) -> Unit)? = null
     var onInterimTranscription: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
 
-    // ─── بدء التسجيل ──────────────────────────────────
     fun startRecitation() {
         if (isRecording) return
         if (ActivityCompat.checkSelfPermission(
@@ -69,35 +73,17 @@ class DeepgramService(private val context: Context) {
             return
         }
         audioBuffer.reset()
+        isGpuAwake = false
+
+        // تحقق من الـ GPU عند البدء
+        CoroutineScope(Dispatchers.IO).launch {
+            checkGpuStatus()
+        }
+
         onConnectionEstablished?.invoke()
-
-        // ✅ أيقظ GPU في الخلفية فور بدء التسجيل
-        warmupGpu()
-
         startAudioCapture()
     }
 
-    // ─── إيقاظ GPU بشكل غير متزامن ───────────────────
-    private fun warmupGpu() {
-        if (MODAL_API_URL.isEmpty()) return
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val request = Request.Builder()
-                    .url("$MODAL_API_URL/health")  // endpoint بسيط للإيقاظ
-                    .get()
-                    .build()
-                val response = httpClient.newCall(request).execute()
-                if (response.isSuccessful) {
-                    isGpuReady = true
-                }
-            } catch (_: Exception) {
-                // GPU لم يستجب — نبقى على Deepgram
-                isGpuReady = false
-            }
-        }
-    }
-
-    // ─── إيقاف التسجيل ────────────────────────────────
     fun stopRecitation() {
         isRecording = false
         recordingJob?.cancel()
@@ -105,10 +91,33 @@ class DeepgramService(private val context: Context) {
         audioRecord?.release()
         audioRecord = null
         audioBuffer.reset()
-        isGpuReady = false  // ريست عند الإيقاف
     }
 
-    // ─── التقاط الصوت ─────────────────────────────────
+    // التحقق من حالة الـ GPU في Modal
+    private fun checkGpuStatus() {
+        if (isCheckingGpu) return
+        isCheckingGpu = true
+        try {
+            val request = Request.Builder()
+                .url(MODAL_API_URL)
+                .head() // طلب HEAD خفيف فقط للتحقق
+                .build()
+
+            val startTime = System.currentTimeMillis()
+            val response = fastHttpClient.newCall(request).execute()
+            val elapsed = System.currentTimeMillis() - startTime
+
+            // إذا رجع في أقل من ثانيتين الـ GPU مفتوح
+            isGpuAwake = response.isSuccessful && elapsed < GPU_CHECK_TIMEOUT_MS
+            response.close()
+        } catch (e: Exception) {
+            // تأخر أو فشل = الـ GPU نائم
+            isGpuAwake = false
+        } finally {
+            isCheckingGpu = false
+        }
+    }
+
     private fun startAudioCapture() {
         if (ActivityCompat.checkSelfPermission(
                 context, Manifest.permission.RECORD_AUDIO
@@ -166,9 +175,6 @@ class DeepgramService(private val context: Context) {
                             isSilent = false
                             silenceStart = 0L
 
-                            // ✅ تجاهل الأصوات القصيرة جداً (ضوضاء)
-                            if (audioData.size < MIN_AUDIO_BYTES) continue
-
                             if (!isProcessing) {
                                 isProcessing = true
                                 launch {
@@ -183,69 +189,25 @@ class DeepgramService(private val context: Context) {
         }
     }
 
-    // ─── توجيه الصوت: Deepgram أم Modal؟ ─────────────
+    // يقرر هل يرسل لـ Deepgram أو Modal بناءً على حالة الـ GPU
     private fun sendAudio(pcmData: ByteArray) {
+        if (pcmData.isEmpty()) return
         val wavBytes = pcmToWav(pcmData, sampleRate)
 
-        if (isGpuReady && MODAL_API_URL.isNotEmpty()) {
-            // ✅ GPU جاهز → Modal (النموذج الخاص)
+        if (isGpuAwake) {
+            // الـ GPU مفتوح — أرسل لـ Modal مباشرة
             sendToModal(wavBytes)
         } else {
-            // ⏳ GPU نايم → Deepgram فوراً
+            // الـ GPU نائم — استخدم Deepgram الآن وأيقظ Modal في الخلفية
             sendToDeepgram(wavBytes)
-        }
-    }
-
-    // ─── إرسال لـ Deepgram ────────────────────────────
-    // Deepgram يستقبل raw bytes مباشرة (ليس multipart)
-    private fun sendToDeepgram(wavBytes: ByteArray) {
-        try {
-            if (DEEPGRAM_API_KEY.isEmpty()) {
-                onError?.invoke("مفتاح Deepgram غير موجود")
-                return
-            }
-
-            val requestBody = wavBytes.toRequestBody("audio/wav".toMediaType())
-
-            val request = Request.Builder()
-                .url(DEEPGRAM_URL)
-                .addHeader("Authorization", "Token $DEEPGRAM_API_KEY")
-                .post(requestBody)
-                .build()
-
-            val response = httpClient.newCall(request).execute()
-            val body = response.body?.string()
-
-            if (response.isSuccessful && body != null) {
-                // استخراج النص من رد Deepgram المتداخل
-                val text = JSONObject(body)
-                    .getJSONObject("results")
-                    .getJSONArray("channels")
-                    .getJSONObject(0)
-                    .getJSONArray("alternatives")
-                    .getJSONObject(0)
-                    .getString("transcript")
-                    .trim()
-
-                if (text.isNotEmpty()) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        onTranscriptionReceived?.invoke(text)
-                    }
-                }
-            } else {
-                CoroutineScope(Dispatchers.Main).launch {
-                    onError?.invoke("Deepgram خطأ: ${response.code}")
-                }
-            }
-        } catch (e: Exception) {
-            CoroutineScope(Dispatchers.Main).launch {
-                onError?.invoke("Deepgram خطأ: ${e.message}")
+            // أيقظ الـ GPU في الخلفية
+            CoroutineScope(Dispatchers.IO).launch {
+                wakeUpModal()
             }
         }
     }
 
-    // ─── إرسال لـ Modal (النموذج الخاص) ──────────────
-    // Modal يستقبل multipart/form-data
+    // إرسال الصوت لـ Modal API
     private fun sendToModal(wavBytes: ByteArray) {
         try {
             val requestBody = MultipartBody.Builder()
@@ -265,11 +227,44 @@ class DeepgramService(private val context: Context) {
             val body = response.body?.string()
 
             if (response.isSuccessful && body != null) {
-                val rawText = JSONObject(body).getString("text")
-                val text = rawText
-                    .replace(Regex("\\[[^\\]]*\\]"), "")
-                    .replace(Regex("^['\"]|['\"]$"), "")
-                    .replace(Regex("\\s+"), " ")
+                parseAndReturn(body)
+            } else {
+                // فشل Modal — ارجع لـ Deepgram
+                isGpuAwake = false
+                onError?.invoke("تعذر الاتصال بالسيرفر، جاري التحويل...")
+            }
+        } catch (e: Exception) {
+            isGpuAwake = false
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ: ${e.message}")
+            }
+        }
+    }
+
+    // إرسال الصوت لـ Deepgram
+    private fun sendToDeepgram(wavBytes: ByteArray) {
+        try {
+            val requestBody = wavBytes.toRequestBody("audio/wav".toMediaType())
+
+            val request = Request.Builder()
+                .url(DEEPGRAM_URL)
+                .addHeader("Authorization", "Token $DEEPGRAM_API_KEY")
+                .post(requestBody)
+                .build()
+
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string()
+
+            if (response.isSuccessful && body != null) {
+                // استخراج النص من رد Deepgram
+                val json = JSONObject(body)
+                val text = json
+                    .getJSONObject("results")
+                    .getJSONArray("channels")
+                    .getJSONObject(0)
+                    .getJSONArray("alternatives")
+                    .getJSONObject(0)
+                    .getString("transcript")
                     .trim()
 
                 if (text.isNotEmpty()) {
@@ -278,20 +273,56 @@ class DeepgramService(private val context: Context) {
                     }
                 }
             } else {
-                // ✅ Modal فشل → ارجع لـ Deepgram تلقائياً
-                isGpuReady = false
-                sendToDeepgram(wavBytes)
+                CoroutineScope(Dispatchers.Main).launch {
+                    onError?.invoke("خطأ Deepgram: ${response.code}")
+                }
             }
         } catch (e: Exception) {
-            // ✅ Modal فشل → ارجع لـ Deepgram تلقائياً
-            isGpuReady = false
-            CoroutineScope(Dispatchers.IO).launch {
-                sendToDeepgram(wavBytes)
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ: ${e.message}")
             }
         }
     }
 
-    // ─── PCM → WAV ────────────────────────────────────
+    // إيقاظ الـ GPU في Modal عن طريق إرسال طلب بسيط
+    private fun wakeUpModal() {
+        try {
+            val request = Request.Builder()
+                .url(MODAL_API_URL)
+                .head()
+                .build()
+            val response = httpClient.newCall(request).execute()
+            // إذا رجع بنجاح الـ GPU استيقظ
+            if (response.isSuccessful) {
+                isGpuAwake = true
+            }
+            response.close()
+        } catch (e: Exception) {
+            isGpuAwake = false
+        }
+    }
+
+    // تحليل رد Modal وإرجاع النص
+    private fun parseAndReturn(body: String) {
+        try {
+            val rawText = JSONObject(body).getString("text")
+            val text = rawText
+                .replace(Regex("\\[[^\\]]*\\]"), "")
+                .replace(Regex("^['\"]|['\"]$"), "")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+            if (text.isNotEmpty()) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    onTranscriptionReceived?.invoke(text)
+                }
+            }
+        } catch (e: Exception) {
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ في تحليل الرد")
+            }
+        }
+    }
+
     private fun pcmToWav(pcm: ByteArray, sampleRate: Int): ByteArray {
         val out = ByteArrayOutputStream()
         val dataSize = pcm.size
