@@ -306,6 +306,9 @@ class DeepgramService(private val context: Context) {
             // إذا رجع بنجاح الـ GPU استيقظ
             if (response.isSuccessful) {
                 isGpuAwake = true
+                CoroutineScope(Dispatchers.Main).launch {
+                    onModelChanged?.invoke("modal")
+                }
             }
             response.close()
         } catch (e: Exception) {
