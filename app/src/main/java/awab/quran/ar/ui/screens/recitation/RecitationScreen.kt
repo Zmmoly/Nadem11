@@ -40,6 +40,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     var transcribedLines by remember { mutableStateOf(listOf<String>()) }
     var statusMessage by remember { mutableStateOf("") }
     var showDonationDialog by remember { mutableStateOf(false) }
+    var activeModel by remember { mutableStateOf("") } // "modal" أو "deepgram"
 
     // ألوان
     val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
@@ -69,6 +70,10 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
             onInterimTranscription = {
                 isAnalyzing = true
                 statusMessage = "جاري التحليل..."
+            }
+
+            onModelChanged = { model ->
+                activeModel = model
             }
 
             onError = { error ->
@@ -144,7 +149,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                         Button(
                             onClick = {
                                 if (isRecording) {
-                                    service.stopRecitation(); isRecording = false; statusMessage = ""
+                                    service.stopRecitation(); isRecording = false; statusMessage = ""; activeModel = ""
                                 } else {
                                     transcribedLines = listOf(); service.startRecitation(); isRecording = true
                                 }
@@ -155,6 +160,37 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                         ) {
                             Icon(imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
                             Text(text = if (isRecording) "إيقاف التسميع" else "ابدأ التسميع", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+
+                        // مؤشر النموذج النشط
+                        if (activeModel.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (activeModel == "modal") Color(0xFF2E7D32).copy(alpha = 0.15f) else Color(0xFF1565C0).copy(alpha = 0.15f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(
+                                                color = if (activeModel == "modal") Color(0xFF43A047) else Color(0xFF1E88E5),
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (activeModel == "modal") "نموذج القرآن (Modal)" else "Deepgram Nova-3",
+                                        fontSize = 12.sp,
+                                        color = if (activeModel == "modal") Color(0xFF43A047) else Color(0xFF1E88E5),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                         }
                     }
                 }
