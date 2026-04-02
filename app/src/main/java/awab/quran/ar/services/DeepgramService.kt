@@ -62,6 +62,7 @@ class DeepgramService(private val context: Context) {
     var onInterimTranscription: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnectionEstablished: (() -> Unit)? = null
+    var onModelChanged: ((String) -> Unit)? = null // "modal" أو "deepgram"
 
     fun startRecitation() {
         if (isRecording) return
@@ -196,9 +197,11 @@ class DeepgramService(private val context: Context) {
 
         if (isGpuAwake) {
             // الـ GPU مفتوح — أرسل لـ Modal مباشرة
+            CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("modal") }
             sendToModal(wavBytes)
         } else {
             // الـ GPU نائم — استخدم Deepgram الآن وأيقظ Modal في الخلفية
+            CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
             sendToDeepgram(wavBytes)
             // أيقظ الـ GPU في الخلفية
             CoroutineScope(Dispatchers.IO).launch {
