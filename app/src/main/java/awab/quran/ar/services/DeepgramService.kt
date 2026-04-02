@@ -111,12 +111,15 @@ class DeepgramService(private val context: Context) {
             // إذا رجع في أقل من ثانيتين الـ GPU مفتوح
             isGpuAwake = response.isSuccessful && elapsed < GPU_CHECK_TIMEOUT_MS
             response.close()
-        } catch (e: Exception) {
-            // تأخر أو فشل = الـ GPU نائم
-            isGpuAwake = false
             // أعلم الواجهة بالنموذج المستخدم فور معرفة الحالة
             CoroutineScope(Dispatchers.Main).launch {
                 onModelChanged?.invoke(if (isGpuAwake) "modal" else "deepgram")
+            }
+        } catch (e: Exception) {
+            // تأخر أو فشل = الـ GPU نائم
+            isGpuAwake = false
+            CoroutineScope(Dispatchers.Main).launch {
+                onModelChanged?.invoke("deepgram")
             }
         } finally {
             isCheckingGpu = false
