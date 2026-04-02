@@ -41,6 +41,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     var statusMessage by remember { mutableStateOf("") }
     var showDonationDialog by remember { mutableStateOf(false) }
     var activeModel by remember { mutableStateOf("") } // "modal" أو "deepgram"
+    var isConnecting by remember { mutableStateOf(false) } // حالة الاتصال الأولية
 
     // ألوان
     val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
@@ -74,6 +75,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
             onModelChanged = { model ->
                 activeModel = model
+                isConnecting = false
             }
 
             onError = { error ->
@@ -149,9 +151,9 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                         Button(
                             onClick = {
                                 if (isRecording) {
-                                    service.stopRecitation(); isRecording = false; statusMessage = ""; activeModel = ""
+                                    service.stopRecitation(); isRecording = false; statusMessage = ""; activeModel = ""; isConnecting = false
                                 } else {
-                                    transcribedLines = listOf(); service.startRecitation(); isRecording = true
+                                    transcribedLines = listOf(); isConnecting = true; service.startRecitation(); isRecording = true
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(60.dp),
@@ -163,11 +165,15 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                         }
 
                         // مؤشر النموذج النشط
-                        if (activeModel.isNotEmpty()) {
+                        if (activeModel.isNotEmpty() || isConnecting) {
                             Spacer(modifier = Modifier.height(12.dp))
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = if (activeModel == "modal") Color(0xFF2E7D32).copy(alpha = 0.15f) else Color(0xFF1565C0).copy(alpha = 0.15f)
+                                color = when {
+                                    isConnecting -> Color(0xFF757575).copy(alpha = 0.15f)
+                                    activeModel == "modal" -> Color(0xFF2E7D32).copy(alpha = 0.15f)
+                                    else -> Color(0xFF1565C0).copy(alpha = 0.15f)
+                                }
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -178,15 +184,27 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                                         modifier = Modifier
                                             .size(8.dp)
                                             .background(
-                                                color = if (activeModel == "modal") Color(0xFF43A047) else Color(0xFF1E88E5),
+                                                color = when {
+                                                    isConnecting -> Color(0xFF9E9E9E)
+                                                    activeModel == "modal" -> Color(0xFF43A047)
+                                                    else -> Color(0xFF1E88E5)
+                                                },
                                                 shape = RoundedCornerShape(4.dp)
                                             )
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (activeModel == "modal") "نموذج القرآن (Modal)" else "Deepgram Nova-3",
+                                        text = when {
+                                            isConnecting -> "جاري الاتصال بالنموذج..."
+                                            activeModel == "modal" -> "نموذج القرآن (Modal)"
+                                            else -> "Deepgram Nova-3"
+                                        },
                                         fontSize = 12.sp,
-                                        color = if (activeModel == "modal") Color(0xFF43A047) else Color(0xFF1E88E5),
+                                        color = when {
+                                            isConnecting -> Color(0xFF9E9E9E)
+                                            activeModel == "modal" -> Color(0xFF43A047)
+                                            else -> Color(0xFF1E88E5)
+                                        },
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
