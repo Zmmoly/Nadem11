@@ -114,6 +114,10 @@ class DeepgramService(private val context: Context) {
         } catch (e: Exception) {
             // تأخر أو فشل = الـ GPU نائم
             isGpuAwake = false
+            // أعلم الواجهة بالنموذج المستخدم فور معرفة الحالة
+            CoroutineScope(Dispatchers.Main).launch {
+                onModelChanged?.invoke(if (isGpuAwake) "modal" else "deepgram")
+            }
         } finally {
             isCheckingGpu = false
         }
@@ -234,6 +238,7 @@ class DeepgramService(private val context: Context) {
             } else {
                 // فشل Modal — ارجع لـ Deepgram
                 isGpuAwake = false
+                CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
                 onError?.invoke("تعذر الاتصال بالسيرفر، جاري التحويل...")
             }
         } catch (e: Exception) {
