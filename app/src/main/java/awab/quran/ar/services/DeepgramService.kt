@@ -21,7 +21,7 @@ class DeepgramService(private val context: Context) {
 
     private val MODAL_API_URL: String = BuildConfig.TRANSCRIBE_API_URL
     private val DEEPGRAM_API_KEY: String = BuildConfig.DEEPGRAM_API_KEY
-    private val DEEPGRAM_URL = "https://api.deepgram.com/v1/listen?model=nova-2&language=ar"
+    private val DEEPGRAM_URL = "https://api.deepgram.com/v1/listen?model=nova-3&language=ar"
 
     private val SILENCE_THRESHOLD = 1500
     private val SILENCE_DURATION_MS = 500L
