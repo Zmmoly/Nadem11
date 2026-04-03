@@ -178,7 +178,12 @@ fun SurahScreen(
     // الوضع الحالي: قراءة، تسميع، اختبار
     var selectedMode by remember { mutableStateOf("قراءة") }
     var showDonationDialog by remember { mutableStateOf(false) }
-    
+
+    // إظهار نافذة التبرع عند فتح الصفحة
+    LaunchedEffect(Unit) {
+        showDonationDialog = true
+    }
+
     // البحث عن رقم الصفحة التي تبدأ بها السورة
     val initialPageNumber = remember(surah.number) {
         repository.findPageNumber(surah.number, 1) ?: 1
