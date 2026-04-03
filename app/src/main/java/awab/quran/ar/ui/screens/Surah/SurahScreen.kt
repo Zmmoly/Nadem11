@@ -179,9 +179,14 @@ fun SurahScreen(
     var selectedMode by remember { mutableStateOf("قراءة") }
     var showDonationDialog by remember { mutableStateOf(false) }
 
-    // إظهار نافذة التبرع عند فتح الصفحة
+    // عداد فتحات الصفحة — يظهر التبرع كل 3 فتحات
+    val prefs = remember { context.getSharedPreferences("nadem_prefs", android.content.Context.MODE_PRIVATE) }
     LaunchedEffect(Unit) {
-        showDonationDialog = true
+        val openCount = prefs.getInt("page_open_count", 0) + 1
+        prefs.edit().putInt("page_open_count", openCount).apply()
+        if (openCount % 3 == 1) {
+            showDonationDialog = true
+        }
     }
 
     // البحث عن رقم الصفحة التي تبدأ بها السورة
