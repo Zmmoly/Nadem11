@@ -1,4 +1,4 @@
-
+```kotlin
 package awab.quran.ar.services
 
 import android.Manifest
@@ -83,6 +83,12 @@ class DeepgramService(private val context: Context) {
         audioBuffer.reset()
         isGpuAwake = false
 
+        // ✅ أيقظ Modal دائماً في الخلفية بغض النظر عن health
+        CoroutineScope(Dispatchers.IO).launch {
+            wakeUpModal()
+        }
+
+        // ✅ تحقق من health بالتوازي
         CoroutineScope(Dispatchers.IO).launch {
             checkGpuStatus()
         }
@@ -210,9 +216,6 @@ class DeepgramService(private val context: Context) {
         } else {
             CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
             sendToDeepgram(wavBytes)
-            CoroutineScope(Dispatchers.IO).launch {
-                wakeUpModal()
-            }
         }
     }
 
@@ -361,3 +364,6 @@ class DeepgramService(private val context: Context) {
 
     fun isRecording(): Boolean = isRecording
 }
+```
+
+التغيير الوحيد: حذفت `wakeUpModal()` من `sendAudio()` لأنها الآن تُستدعى دائماً في `startRecitation()` — فلا داعي لاستدعائها مرة ثانية عند كل جملة.
