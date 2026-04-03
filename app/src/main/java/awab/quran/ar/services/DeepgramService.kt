@@ -1,4 +1,4 @@
-```kotlin
+
 package awab.quran.ar.services
 
 import android.Manifest
@@ -364,6 +364,3 @@ class DeepgramService(private val context: Context) {
 
     fun isRecording(): Boolean = isRecording
 }
-```
-
-التغيير الوحيد: حذفت `wakeUpModal()` من `sendAudio()` لأنها الآن تُستدعى دائماً في `startRecitation()` — فلا داعي لاستدعائها مرة ثانية عند كل جملة.
