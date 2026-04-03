@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 class DeepgramService(private val context: Context) {
 
-    // \u2705 \u062b\u0644\u0627\u062b\u0629 URLs \u0645\u0646\u0641\u0635\u0644\u0629
+    // ✅ ثلاثة URLs منفصلة
     private val MODAL_TRANSCRIBE_URL = "https://nadem--quran-transcription-transcribe-endpoint.modal.run"
     private val MODAL_HEALTH_URL     = "https://nadem--quran-transcription-health.modal.run"
     private val MODAL_WARMUP_URL     = "https://nadem--quran-transcription-warmup-endpoint.modal.run"
@@ -47,21 +47,21 @@ class DeepgramService(private val context: Context) {
         AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
     }
 
-    // \u0639\u0645\u064a\u0644 HTTP \u0639\u0627\u062f\u064a \u0644\u0644\u062a\u0641\u0631\u064a\u063a \u0627\u0644\u0635\u0648\u062a\u064a
+    // عميل HTTP عادي للتفريغ الصوتي
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // \u2705 \u0639\u0645\u064a\u0644 \u0633\u0631\u064a\u0639 \u0644\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 /health (\u062b\u0627\u0646\u064a\u062a\u0627\u0646 \u0641\u0642\u0637)
+    // ✅ عميل سريع للتحقق من /health (ثانيتان فقط)
     private val fastHttpClient = OkHttpClient.Builder()
         .connectTimeout(2, TimeUnit.SECONDS)
         .readTimeout(2, TimeUnit.SECONDS)
         .writeTimeout(2, TimeUnit.SECONDS)
         .build()
 
-    // \u2705 \u0639\u0645\u064a\u0644 \u0644\u0644\u0625\u064a\u0642\u0627\u0638 \u2014 \u064a\u0646\u062a\u0638\u0631 \u0623\u0637\u0648\u0644 \u0644\u0623\u0646 Modal \u064a\u062d\u0645\u0651\u0644 \u0627\u0644\u0646\u0645\u0648\u0630\u062c
+    // ✅ عميل للإيقاظ — ينتظر أطول لأن Modal يحمّل النموذج
     private val warmupHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
@@ -78,4 +78,287 @@ class DeepgramService(private val context: Context) {
         if (isRecording) return
         if (ActivityCompat.checkSelfPermission(
                 context, Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            onError?.invoke("صلاحية الميكروفون غير ممنوحة")
+            return
+        }
+        audioBuffer.reset()
+        isGpuAwake = false
+
+        // ✅ التحقق عبر /health (خفيف وسريع)
+        CoroutineScope(Dispatchers.IO).launch {
+            checkGpuStatus()
+        }
+
+        onConnectionEstablished?.invoke()
+        startAudioCapture()
+    }
+
+    fun stopRecitation() {
+        isRecording = false
+        recordingJob?.cancel()
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
+        audioBuffer.reset()
+    }
+
+    // ✅ التحقق عبر /health — يرد فوراً بدون تحميل النموذج
+    private fun checkGpuStatus() {
+        if (isCheckingGpu) return
+        isCheckingGpu = true
+        try {
+            val request = Request.Builder()
+                .url(MODAL_HEALTH_URL)
+                .get()
+                .build()
+
+            val startTime = System.currentTimeMillis()
+            val response = fastHttpClient.newCall(request).execute()
+            val elapsed = System.currentTimeMillis() - startTime
+
+            isGpuAwake = response.isSuccessful && elapsed < GPU_CHECK_TIMEOUT_MS
+            response.close()
+
+            CoroutineScope(Dispatchers.Main).launch {
+                onModelChanged?.invoke(if (isGpuAwake) "modal" else "deepgram")
+            }
+        } catch (e: Exception) {
+            isGpuAwake = false
+            CoroutineScope(Dispatchers.Main).launch {
+                onModelChanged?.invoke("deepgram")
+            }
+        } finally {
+            isCheckingGpu = false
+        }
+    }
+
+    private fun startAudioCapture() {
+        if (ActivityCompat.checkSelfPermission(
+                context, Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate, channelConfig, audioFormat,
+            bufferSize * 2
+        )
+        audioRecord?.startRecording()
+        isRecording = true
+
+        recordingJob = CoroutineScope(Dispatchers.IO).launch {
+            val buffer = ShortArray(bufferSize)
+            var silenceStart = 0L
+            var isSilent = false
+            var hasAudio = false
+
+            while (isActive && isRecording) {
+                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+
+                if (read > 0) {
+                    val amplitude = buffer.take(read).map {
+                        Math.abs(it.toInt())
+                    }.average()
+
+                    val byteBuffer = ByteArray(read * 2)
+                    for (i in 0 until read) {
+                        byteBuffer[i * 2] = (buffer[i].toInt() and 0xFF).toByte()
+                        byteBuffer[i * 2 + 1] = (buffer[i].toInt() shr 8).toByte()
+                    }
+                    audioBuffer.write(byteBuffer)
+
+                    if (amplitude > SILENCE_THRESHOLD) {
+                        isSilent = false
+                        hasAudio = true
+                        silenceStart = 0L
+                    } else {
+                        if (!isSilent) {
+                            silenceStart = System.currentTimeMillis()
+                            isSilent = true
+                        }
+
+                        val silenceDuration = System.currentTimeMillis() - silenceStart
+                        if (isSilent &&
+                            silenceStart > 0 &&
+                            silenceDuration >= SILENCE_DURATION_MS &&
+                            hasAudio
+                        ) {
+                            val audioData = audioBuffer.toByteArray()
+                            audioBuffer.reset()
+                            hasAudio = false
+                            isSilent = false
+                            silenceStart = 0L
+
+                            if (!isProcessing) {
+                                isProcessing = true
+                                launch {
+                                    sendAudio(audioData)
+                                    isProcessing = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun sendAudio(pcmData: ByteArray) {
+        if (pcmData.isEmpty()) return
+        val wavBytes = pcmToWav(pcmData, sampleRate)
+
+        if (isGpuAwake) {
+            CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("modal") }
+            sendToModal(wavBytes)
+        } else {
+            CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
+            sendToDeepgram(wavBytes)
+            // ✅ إيقاظ Modal عبر /warmup_endpoint في الخلفية
+            CoroutineScope(Dispatchers.IO).launch {
+                wakeUpModal()
+            }
+        }
+    }
+
+    // ✅ يرسل لـ /transcribe_endpoint
+    private fun sendToModal(wavBytes: ByteArray) {
+        try {
+            val requestBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                    "file", "audio.wav",
+                    wavBytes.toRequestBody("audio/wav".toMediaType())
+                )
+                .build()
+
+            val request = Request.Builder()
+                .url(MODAL_TRANSCRIBE_URL)
+                .post(requestBody)
+                .build()
+
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string()
+
+            if (response.isSuccessful && body != null) {
+                parseAndReturn(body)
+            } else {
+                isGpuAwake = false
+                CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
+                onError?.invoke("تعذر الاتصال بالسيرفر، جاري التحويل...")
+            }
+        } catch (e: Exception) {
+            isGpuAwake = false
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ: ${e.message}")
+            }
+        }
+    }
+
+    private fun sendToDeepgram(wavBytes: ByteArray) {
+        try {
+            val requestBody = wavBytes.toRequestBody("audio/wav".toMediaType())
+
+            val request = Request.Builder()
+                .url(DEEPGRAM_URL)
+                .addHeader("Authorization", "Token $DEEPGRAM_API_KEY")
+                .post(requestBody)
+                .build()
+
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string()
+
+            if (response.isSuccessful && body != null) {
+                val json = JSONObject(body)
+                val text = json
+                    .getJSONObject("results")
+                    .getJSONArray("channels")
+                    .getJSONObject(0)
+                    .getJSONArray("alternatives")
+                    .getJSONObject(0)
+                    .getString("transcript")
+                    .trim()
+
+                if (text.isNotEmpty()) {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        onTranscriptionReceived?.invoke(text)
+                    }
+                }
+            } else {
+                CoroutineScope(Dispatchers.Main).launch {
+                    onError?.invoke("خطأ Deepgram: ${response.code}")
+                }
+            }
+        } catch (e: Exception) {
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ: ${e.message}")
+            }
+        }
+    }
+
+    // ✅ يرسل لـ /warmup_endpoint مع timeout طويل — ينتظر حتى يستيقظ النموذج فعلاً
+    private fun wakeUpModal() {
+        try {
+            val request = Request.Builder()
+                .url(MODAL_WARMUP_URL)
+                .get()
+                .build()
+
+            val response = warmupHttpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                isGpuAwake = true
+                CoroutineScope(Dispatchers.Main).launch {
+                    onModelChanged?.invoke("modal")
+                }
+            }
+            response.close()
+        } catch (e: Exception) {
+            isGpuAwake = false
+        }
+    }
+
+    private fun parseAndReturn(body: String) {
+        try {
+            val rawText = JSONObject(body).getString("text")
+            val text = rawText
+                .replace(Regex("\\[[^\\]]*\\]"), "")
+                .replace(Regex("^['\"]|['\"]$"), "")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+            if (text.isNotEmpty()) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    onTranscriptionReceived?.invoke(text)
+                }
+            }
+        } catch (e: Exception) {
+            CoroutineScope(Dispatchers.Main).launch {
+                onError?.invoke("خطأ في تحليل الرد")
+            }
+        }
+    }
+
+    private fun pcmToWav(pcm: ByteArray, sampleRate: Int): ByteArray {
+        val out = ByteArrayOutputStream()
+        val dataSize = pcm.size
+        DataOutputStream(out).apply {
+            writeBytes("RIFF")
+            writeInt(Integer.reverseBytes(dataSize + 36))
+            writeBytes("WAVE")
+            writeBytes("fmt ")
+            writeInt(Integer.reverseBytes(16))
+            writeShort(java.lang.Short.reverseBytes(1.toShort()).toInt())
+            writeShort(java.lang.Short.reverseBytes(1.toShort()).toInt())
+            writeInt(Integer.reverseBytes(sampleRate))
+            writeInt(Integer.reverseBytes(sampleRate * 2))
+            writeShort(java.lang.Short.reverseBytes(2.toShort()).toInt())
+            writeShort(java.lang.Short.reverseBytes(16.toShort()).toInt())
+            writeBytes("data")
+            writeInt(Integer.reverseBytes(dataSize))
+            write(pcm)
+        }
+        return out.toByteArray()
+    }
+
+    fun isRecording(): Boolean = isRecording
+}
