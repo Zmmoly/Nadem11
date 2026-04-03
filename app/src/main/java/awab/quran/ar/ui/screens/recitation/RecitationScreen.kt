@@ -226,39 +226,6 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                     }
                 }
 
-                // تنبيه النموذج
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1A2C1A) else Color(0xFFE8F5E9))
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(
-                            text = "⚠️ النموذج الحالي في مرحلة تجريبية",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDarkMode) Color(0xFF81C784) else Color(0xFF2E7D32)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "نسعى لخدمة كتاب الله بأفضل صورة، تبرع لدعم وتطوير النموذج وتحسين دقته. كل ريال يُقربنا من هدفنا.",
-                            fontSize = 13.sp,
-                            color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF2E7D32).copy(alpha = 0.8f),
-                            lineHeight = 20.sp
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = { showDonationDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF43A047)),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp).padding(end = 4.dp), tint = Color.White)
-                            Text("ساهم في تحسين النموذج", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-
                 // نصيحة
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = hintCardColor)) {
                     Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
