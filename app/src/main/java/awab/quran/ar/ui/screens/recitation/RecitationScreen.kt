@@ -213,45 +213,6 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                     }
                 }
 
-                // بطاقة التبرع
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C1A1A) else Color(0xFFFFF3E0))
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "ادعم تطوير التطبيق 🤍",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDarkMode) Color(0xFFFFCC80) else Color(0xFF6B5744)
-                            )
-                            Text(
-                                text = "مساهمتك تساعدنا على الاستمرار",
-                                fontSize = 12.sp,
-                                color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.7f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Button(
-                            onClick = { showDonationDialog = true },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE53935)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp).padding(end = 4.dp), tint = Color.White)
-                            Text("تبرع", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-
                 // بطاقة النص
                 if (transcribedLines.isNotEmpty()) {
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = cardColor)) {
