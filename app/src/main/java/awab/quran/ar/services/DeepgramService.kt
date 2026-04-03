@@ -311,13 +311,12 @@ class DeepgramService(private val context: Context) {
         }
     }
 
-    // ✅ دالة تنظيف مشتركة لـ Modal و Deepgram
     private fun cleanText(raw: String): String {
         return raw
-            .replace(Regex("\\[[^\\]]*\\]"), "")   // احذف [...]
-            .replace(Regex("\\([^)]*\\)"), "")      // احذف (...)
-            .replace(Regex("[\"'""'']"), "")        // احذف علامات الاقتباس
-            .replace(Regex("[\\{\\}]"), "")         // احذف الأقواس المعقوفة
+            .replace(Regex("\\[[^\\]]*\\]"), "")
+            .replace(Regex("\\([^)]*\\)"), "")
+            .replace(Regex("[\\u0022\\u0027\\u201C\\u201D\\u2018\\u2019]"), "")
+            .replace(Regex("[\\{\\}]"), "")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
