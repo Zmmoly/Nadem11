@@ -1438,23 +1438,46 @@ fun ExamMode(
         deepgramService.onTranscriptionReceived = { text ->
             val newWords = text.trim().split(" ").filter { it.isNotEmpty() }
             var hasError = false
+
+            // --- Flexible Start: إذا كان أول نص يصل، ابحث عن أفضل نقطة بداية ---
+            var startPos = wordCount
+            if (wordCount == 0 && newWords.isNotEmpty()) {
+                val lookupWords = newWords.take(3).map { normalizeArabic(it, settings) }
+                var bestScore = 0
+                var bestIndex = 0
+                for (i in referenceWords.indices) {
+                    var score = 0
+                    lookupWords.forEachIndexed { j, w ->
+                        val ref = referenceWords.getOrNull(i + j) ?: ""
+                        if (normalizeArabic(ref, settings) == w) score++
+                    }
+                    if (score > bestScore) { bestScore = score; bestIndex = i }
+                }
+                // إذا وجدنا تطابقاً جيداً ابدأ من هناك، وإلا ابدأ من الأول
+                startPos = if (bestScore >= 1) bestIndex else 0
+            }
+
+            var currentPos = startPos
             val newSegment = buildAnnotatedString {
-                newWords.forEachIndexed { i, word ->
-                    val refWord = referenceWords.getOrNull(wordCount + i) ?: ""
+                newWords.forEach { word ->
+                    val refWord = referenceWords.getOrNull(currentPos) ?: ""
                     val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
                     if (!isCorrect) hasError = true
                     if (isCorrect) {
                         // كلمة صحيحة ✅ — كاملة خضراء
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
+                        currentPos++
                     } else {
                         // كلمة خاطئة ❌ — لوّن حرفاً بحرف
                         appendWordWithCharColors(this, word, refWord, settings)
+                        currentPos++
                     }
                 }
             }
+            val finalPos = currentPos
             CoroutineScope(Dispatchers.Main).launch {
                 coloredText = buildAnnotatedString { append(coloredText); append(newSegment) }
-                wordCount += newWords.size
+                wordCount = finalPos
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
 
@@ -1786,16 +1809,24 @@ fun ExamMode(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // زر تشغيل الصوت
+            // زر تشغيل/إيقاف الصوت
             Button(
-                onClick = { playAudio() },
-                enabled = !isPlayingAudio,
+                onClick = {
+                    if (isPlayingAudio) {
+                        mediaPlayer?.stop()
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+                        isPlayingAudio = false
+                    } else {
+                        playAudio()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37)),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth().height(46.dp)
             ) {
                 Text(
-                    text = if (isPlayingAudio) "⏸ جارٍ التشغيل" else "▶ استمع للآية",
+                    text = if (isPlayingAudio) "⏹ إيقاف" else "▶ استمع للآية",
                     fontSize = 14.sp,
                     color = quranTextColor,
                     fontWeight = FontWeight.Bold
