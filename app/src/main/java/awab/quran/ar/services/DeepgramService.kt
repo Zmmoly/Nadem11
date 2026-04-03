@@ -1,3 +1,4 @@
+
 package awab.quran.ar.services
 
 import android.Manifest
@@ -19,7 +20,6 @@ import java.util.concurrent.TimeUnit
 
 class DeepgramService(private val context: Context) {
 
-    // ✅ ثلاثة URLs منفصلة
     private val MODAL_TRANSCRIBE_URL = "https://nadem--quran-transcription-transcribe-endpoint.modal.run"
     private val MODAL_HEALTH_URL     = "https://nadem--quran-transcription-health.modal.run"
     private val MODAL_WARMUP_URL     = "https://nadem--quran-transcription-warmup-endpoint.modal.run"
@@ -47,21 +47,18 @@ class DeepgramService(private val context: Context) {
         AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
     }
 
-    // عميل HTTP عادي للتفريغ الصوتي
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // ✅ عميل سريع للتحقق من /health (ثانيتان فقط)
     private val fastHttpClient = OkHttpClient.Builder()
         .connectTimeout(2, TimeUnit.SECONDS)
         .readTimeout(2, TimeUnit.SECONDS)
         .writeTimeout(2, TimeUnit.SECONDS)
         .build()
 
-    // ✅ عميل للإيقاظ — ينتظر أطول لأن Modal يحمّل النموذج
     private val warmupHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
@@ -86,7 +83,6 @@ class DeepgramService(private val context: Context) {
         audioBuffer.reset()
         isGpuAwake = false
 
-        // ✅ التحقق عبر /health (خفيف وسريع)
         CoroutineScope(Dispatchers.IO).launch {
             checkGpuStatus()
         }
@@ -104,7 +100,6 @@ class DeepgramService(private val context: Context) {
         audioBuffer.reset()
     }
 
-    // ✅ التحقق عبر /health — يرد فوراً بدون تحميل النموذج
     private fun checkGpuStatus() {
         if (isCheckingGpu) return
         isCheckingGpu = true
@@ -215,14 +210,12 @@ class DeepgramService(private val context: Context) {
         } else {
             CoroutineScope(Dispatchers.Main).launch { onModelChanged?.invoke("deepgram") }
             sendToDeepgram(wavBytes)
-            // ✅ إيقاظ Modal عبر /warmup_endpoint في الخلفية
             CoroutineScope(Dispatchers.IO).launch {
                 wakeUpModal()
             }
         }
     }
 
-    // ✅ يرسل لـ /transcribe_endpoint
     private fun sendToModal(wavBytes: ByteArray) {
         try {
             val requestBody = MultipartBody.Builder()
@@ -271,14 +264,15 @@ class DeepgramService(private val context: Context) {
 
             if (response.isSuccessful && body != null) {
                 val json = JSONObject(body)
-                val text = json
+                val rawText = json
                     .getJSONObject("results")
                     .getJSONArray("channels")
                     .getJSONObject(0)
                     .getJSONArray("alternatives")
                     .getJSONObject(0)
                     .getString("transcript")
-                    .trim()
+
+                val text = cleanText(rawText)
 
                 if (text.isNotEmpty()) {
                     CoroutineScope(Dispatchers.Main).launch {
@@ -297,7 +291,6 @@ class DeepgramService(private val context: Context) {
         }
     }
 
-    // ✅ يرسل لـ /warmup_endpoint مع timeout طويل — ينتظر حتى يستيقظ النموذج فعلاً
     private fun wakeUpModal() {
         try {
             val request = Request.Builder()
@@ -318,14 +311,21 @@ class DeepgramService(private val context: Context) {
         }
     }
 
+    // ✅ دالة تنظيف مشتركة لـ Modal و Deepgram
+    private fun cleanText(raw: String): String {
+        return raw
+            .replace(Regex("\\[[^\\]]*\\]"), "")   // احذف [...]
+            .replace(Regex("\\([^)]*\\)"), "")      // احذف (...)
+            .replace(Regex("[\"'""'']"), "")        // احذف علامات الاقتباس
+            .replace(Regex("[\\{\\}]"), "")         // احذف الأقواس المعقوفة
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
     private fun parseAndReturn(body: String) {
         try {
             val rawText = JSONObject(body).getString("text")
-            val text = rawText
-                .replace(Regex("\\[[^\\]]*\\]"), "")
-                .replace(Regex("^['\"]|['\"]$"), "")
-                .replace(Regex("\\s+"), " ")
-                .trim()
+            val text = cleanText(rawText)
             if (text.isNotEmpty()) {
                 CoroutineScope(Dispatchers.Main).launch {
                     onTranscriptionReceived?.invoke(text)
