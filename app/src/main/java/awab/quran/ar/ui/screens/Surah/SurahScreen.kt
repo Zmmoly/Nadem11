@@ -1298,14 +1298,9 @@ fun ExamMode(
 
         // بناء المرجع من باقي الآيات بعد الآية المختارة
         // المرجع هو نص الآية العشوائية نفسها فقط
-        referenceWords = cleanQuranText(ayah.text)
-            .replace(Regex("[﴿﴾]"), "")
+        referenceWords = ayah.text
             .replace(Regex("\\(\\d+\\)"), "")
-            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
-            .replace("ٱ", "ا")
-            .replace("ٰ", "ا")
-            .replace("ـ", "")
-            .replace(Regex("[\u064B-\u065F]"), "")
+            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
             .replace(Regex("\\s+"), " ").trim()
             .split(" ").filter { it.isNotEmpty() }
 
@@ -1848,9 +1843,34 @@ fun ExamMode(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // زر تغيير النطاق
-            TextButton(onClick = { showSetup = true }) {
-                Text("⚙ تغيير نطاق الصفحات", color = subColor, fontSize = 13.sp)
+            // أزرار تغيير النطاق والتخطي
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { showSetup = true }) {
+                    Text("⚙ تغيير نطاق الصفحات", color = subColor, fontSize = 13.sp)
+                }
+                TextButton(
+                    onClick = {
+                        if (isRecording) {
+                            deepgramService.stopRecitation()
+                            isRecording = false
+                        }
+                        mediaPlayer?.stop()
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+                        isPlayingAudio = false
+                        if (currentQuestion >= totalQuestions) {
+                            showFinished = true
+                        } else {
+                            pickRandomAyah()
+                        }
+                    }
+                ) {
+                    Text("⏭ تخطي", color = Color(0xFFD4AF37), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
