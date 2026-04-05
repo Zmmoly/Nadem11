@@ -665,7 +665,7 @@ fun RecitationMode(
             .replace(Regex("\\(\\d+\\)"), "")    // إزالة أرقام الآيات (1) (2)
             .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "") // إزالة أرقام عربية وإنجليزية
             .replace("ٱ", "ا")
-            .replace("ٰ", "")
+            .replace("ٰ", "ا")
             .replace("ـ", "")
             .replace(Regex("\\s+"), " ")
             .trim()
@@ -1300,7 +1300,7 @@ fun ExamMode(
         // المرجع هو نص الآية العشوائية نفسها فقط
         referenceWords = ayah.text
             .replace(Regex("\\(\\d+\\)"), "")
-            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
+            .replace("ٱ", "ا").replace("ٰ", "ا").replace("ـ", "")
             .replace(Regex("\\s+"), " ").trim()
             .split(" ").filter { it.isNotEmpty() }
 
