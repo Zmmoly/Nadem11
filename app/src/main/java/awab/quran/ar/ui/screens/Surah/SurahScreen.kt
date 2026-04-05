@@ -640,9 +640,8 @@ fun RecitationMode(
     val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
+    val repository = remember { QuranPageRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
-
-    // تحميل الإعدادات من DataStore
 
     // النص الكامل كـ AnnotatedString مع التلوين
     var coloredText by remember { mutableStateOf(buildAnnotatedString { }) }
@@ -655,15 +654,16 @@ fun RecitationMode(
     var correctWords by remember { mutableStateOf(0) }
     var errorWords by remember { mutableStateOf(0) }
     var showScore by remember { mutableStateOf(false) }
+    var currentPageNumber by remember { mutableStateOf(page.pageNumber) }
+    var pageChangedMessage by remember { mutableStateOf<String?>(null) }
 
-    // حساب عدد الكلمات لكل آية
-    // نص الصفحة كمرجع - قائمة كلمات
-    val referenceWords = remember(page) {
-        page.ayahs
+    // دالة تحويل نص صفحة إلى قائمة كلمات للمرجع
+    fun buildPageWords(quranPage: QuranPage): List<String> =
+        quranPage.ayahs
             .joinToString(" ") { cleanQuranText(it.text) }
-            .replace(Regex("[﴿﴾]"), "")          // إزالة أقواس الآيات
-            .replace(Regex("\\(\\d+\\)"), "")    // إزالة أرقام الآيات (1) (2)
-            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "") // إزالة أرقام عربية وإنجليزية
+            .replace(Regex("[﴿﴾]"), "")
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
             .replace("ٱ", "ا")
             .replace("ٰ", "ا")
             .replace("ـ", "")
@@ -671,7 +671,9 @@ fun RecitationMode(
             .trim()
             .split(" ")
             .filter { it.isNotEmpty() }
-    }
+
+    // نص الصفحة كمرجع - قائمة كلمات (قابلة للتوسع عند الانتقال للصفحة التالية)
+    var referenceWords by remember { mutableStateOf(buildPageWords(page)) }
 
     // دالة اختيار آية عشوائية
 
@@ -824,6 +826,21 @@ fun RecitationMode(
                 wordCount = finalPos
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
+
+                // إذا وصل المستخدم لنهاية الصفحة، حمّل الصفحة التالية تلقائياً
+                if (finalPos >= referenceWords.size && currentPageNumber < 604) {
+                    val nextPageNum = currentPageNumber + 1
+                    val nextPage = repository.getPage(nextPageNum)
+                    if (nextPage != null) {
+                        val nextWords = buildPageWords(nextPage)
+                        referenceWords = referenceWords + nextWords
+                        currentPageNumber = nextPageNum
+                        pageChangedMessage = "📖 انتقلت للصفحة $nextPageNum"
+                        // أخفِ الرسالة بعد 3 ثوانٍ
+                        kotlinx.coroutines.delay(3000)
+                        pageChangedMessage = null
+                    }
+                }
             }
         }
 
@@ -1024,6 +1041,24 @@ fun RecitationMode(
         }
 
         Spacer(modifier = Modifier.height(4.dp))
+
+        // رسالة الانتقال للصفحة التالية
+        pageChangedMessage?.let { msg ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = msg,
+                    color = Color(0xFF1B5E20),
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        }
 
         // رسالة الخطأ
         errorMessage?.let { error ->
@@ -1300,7 +1335,7 @@ fun ExamMode(
         // المرجع هو نص الآية العشوائية نفسها فقط
         referenceWords = ayah.text
             .replace(Regex("\\(\\d+\\)"), "")
-            .replace("ٱ", "ا").replace("ٰ", "ا").replace("ـ", "")
+            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
             .replace(Regex("\\s+"), " ").trim()
             .split(" ").filter { it.isNotEmpty() }
 
