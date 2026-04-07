@@ -956,11 +956,9 @@ fun RecitationMode(
             },
             text = {
                 Text(
-                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت.
-
-قد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة.
-
-يمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
+                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت." +
+                        "\n\nقد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة." +
+                        "\n\nيمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
                     fontSize = 14.sp,
                     color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744),
                     textAlign = TextAlign.Center,
@@ -1353,7 +1351,6 @@ fun ExamMode(
     val repository = remember { QuranPageRepository(context) }
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
-    val repository = remember { QuranPageRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
 
     // نطاق الصفحات
@@ -1666,11 +1663,9 @@ fun ExamMode(
             },
             text = {
                 Text(
-                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت.
-
-قد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة.
-
-يمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
+                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت." +
+                        "\n\nقد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة." +
+                        "\n\nيمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
                     fontSize = 14.sp,
                     color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744),
                     textAlign = TextAlign.Center,
