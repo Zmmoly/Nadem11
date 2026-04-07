@@ -1577,17 +1577,56 @@ fun ExamMode(
             var currentPos = startPos
             val newSegment = buildAnnotatedString {
                 newWords.forEach { word ->
-                    val refWord = referenceWords.getOrNull(currentPos) ?: ""
-                    val isCorrect = normalizeArabic(word, settings) == normalizeArabic(refWord, settings)
-                    if (!isCorrect) hasError = true
-                    if (isCorrect) {
-                        // كلمة صحيحة ✅ — كاملة خضراء
+                    val normalizedWord = normalizeArabic(word, settings)
+                    val currentRef = referenceWords.getOrNull(currentPos) ?: ""
+
+                    if (normalizeArabic(currentRef, settings) == normalizedWord) {
+                        // تطابق مباشر ✅
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
                         currentPos++
                     } else {
-                        // كلمة خاطئة ❌ — لوّن حرفاً بحرف
-                        appendWordWithCharColors(this, word, refWord, settings)
-                        currentPos++
+                        // ابحث للأمام (كلمة منسية)
+                        val lookAhead = 4
+                        var foundAt = -1
+                        for (j in 1..lookAhead) {
+                            val ahead = referenceWords.getOrNull(currentPos + j) ?: break
+                            if (normalizeArabic(ahead, settings) == normalizedWord) {
+                                foundAt = j; break
+                            }
+                        }
+
+                        if (foundAt > 0) {
+                            // الكلمات المنسية باللون الأحمر
+                            for (skip in 0 until foundAt) {
+                                val skipped = referenceWords.getOrNull(currentPos + skip) ?: ""
+                                withStyle(SpanStyle(color = Color(0xFFD32F2F), background = Color(0x22FF0000))) {
+                                    append("[$skipped] ")
+                                }
+                            }
+                            withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
+                            currentPos += foundAt + 1
+                            hasError = true
+                        } else {
+                            // ابحث للخلف (المستخدم أعاد)
+                            val lookBack = 6
+                            var foundBefore = -1
+                            for (j in 1..lookBack) {
+                                val before = referenceWords.getOrNull(currentPos - j) ?: break
+                                if (normalizeArabic(before, settings) == normalizedWord) {
+                                    foundBefore = j; break
+                                }
+                            }
+                            if (foundBefore > 0) {
+                                currentPos -= (foundBefore - 1)
+                                withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
+                                currentPos++
+                            } else {
+                                // كلمة خاطئة ❌
+                                appendWordWithCharColors(this, word, currentRef, settings)
+                                currentPos++
+                                hasError = true
+                            }
+                        }
                     }
                 }
             }
