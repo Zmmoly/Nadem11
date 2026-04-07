@@ -187,7 +187,7 @@ fun SurahScreen(
         count
     }
     LaunchedEffect(Unit) {
-        if (openCount % 3 == 0) {
+        if (openCount % 7 == 0) {
             showDonationDialog = true
         }
     }
@@ -640,6 +640,7 @@ fun RecitationMode(
     val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
+    val repository = remember { QuranPageRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
 
     // تحميل الإعدادات من DataStore
@@ -655,17 +656,39 @@ fun RecitationMode(
     var correctWords by remember { mutableStateOf(0) }
     var errorWords by remember { mutableStateOf(0) }
     var showScore by remember { mutableStateOf(false) }
+    var currentPageNumber by remember { mutableStateOf(page.pageNumber) }
+    val micPrefs = remember { context.getSharedPreferences("mic_prefs", android.content.Context.MODE_PRIVATE) }
+    var showMicPrivacyDialog by remember { mutableStateOf(false) }
+    var pageChangedMessage by remember { mutableStateOf<String?>(null) }
 
-    // حساب عدد الكلمات لكل آية
-    // نص الصفحة كمرجع - قائمة كلمات
-    val referenceWords = remember(page) {
+    // دالة تحويل نص صفحة إلى قائمة كلمات للمرجع
+    fun buildPageWords(quranPage: QuranPage): List<String> =
+        quranPage.ayahs
+            .joinToString(" ") { cleanQuranText(it.text) }
+            .replace(Regex("[\u064B-\u065F]"), "")
+            .replace(Regex("[﴿﴾]"), "")
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
+            .replace("ٱ", "ا")
+            .replace("ٰ", "ا")
+            .replace("ـ", "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .split(" ")
+            .filter { it.isNotEmpty() }
+
+    // نص الصفحة كمرجع - قابل للتوسع
+    var referenceWords by remember { mutableStateOf(buildPageWords(page)) }
+
+    @Suppress("UNUSED_EXPRESSION")
+    remember(page) {
         page.ayahs
             .joinToString(" ") { cleanQuranText(it.text) }
             .replace(Regex("[﴿﴾]"), "")          // إزالة أقواس الآيات
             .replace(Regex("\\(\\d+\\)"), "")    // إزالة أرقام الآيات (1) (2)
             .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "") // إزالة أرقام عربية وإنجليزية
             .replace("ٱ", "ا")
-            .replace("ٰ", "")
+            .replace("ٰ", "ا")
             .replace("ـ", "")
             .replace(Regex("\\s+"), " ")
             .trim()
@@ -824,6 +847,20 @@ fun RecitationMode(
                 wordCount = finalPos
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
+
+                // إذا وصل المستخدم لنهاية الصفحة، حمّل الصفحة التالية تلقائياً
+                if (finalPos >= referenceWords.size && currentPageNumber < 604) {
+                    val nextPageNum = currentPageNumber + 1
+                    val nextPage = repository.getPage(nextPageNum)
+                    if (nextPage != null) {
+                        val nextWords = buildPageWords(nextPage)
+                        referenceWords = referenceWords + nextWords
+                        currentPageNumber = nextPageNum
+                        pageChangedMessage = "📖 انتقلت للصفحة $nextPageNum"
+                        kotlinx.coroutines.delay(3000)
+                        pageChangedMessage = null
+                    }
+                }
             }
         }
 
@@ -905,6 +942,51 @@ fun RecitationMode(
         )
     }
 
+    // dialog الخصوصية - تظهر مرة واحدة فقط
+    if (showMicPrivacyDialog) {
+        AlertDialog(
+            onDismissRequest = { showMicPrivacyDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("🎙 إذن الميكروفون", fontWeight = FontWeight.Bold, fontSize = 17.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35),
+                        textAlign = TextAlign.Center)
+                }
+            },
+            text = {
+                Text(
+                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت.
+
+قد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة.
+
+يمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
+                    fontSize = 14.sp,
+                    color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        micPrefs.edit().putBoolean("privacy_accepted", true).apply()
+                        showMicPrivacyDialog = false
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) { Text("فهمت، متابعة", color = Color.White, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMicPrivacyDialog = false }) {
+                    Text("إلغاء", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -958,7 +1040,11 @@ fun RecitationMode(
                         errorMessage = null
                         deepgramService.startRecitation()
                     } else {
-                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        if (micPrefs.getBoolean("privacy_accepted", false)) {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        } else {
+                            showMicPrivacyDialog = true
+                        }
                     }
                 }
             },
@@ -1024,6 +1110,24 @@ fun RecitationMode(
         }
 
         Spacer(modifier = Modifier.height(4.dp))
+
+        // رسالة الانتقال للصفحة التالية
+        pageChangedMessage?.let { msg ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = msg,
+                    color = Color(0xFF1B5E20),
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        }
 
         // رسالة الخطأ
         errorMessage?.let { error ->
@@ -1249,6 +1353,7 @@ fun ExamMode(
     val repository = remember { QuranPageRepository(context) }
     val deepgramService = remember { DeepgramService(context) }
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
+    val repository = remember { QuranPageRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
 
     // نطاق الصفحات
@@ -1283,6 +1388,8 @@ fun ExamMode(
     var errorWords by remember { mutableStateOf(0) }
     var showScore by remember { mutableStateOf(false) }
     var referenceWords by remember { mutableStateOf<List<String>>(emptyList()) }
+    val micPrefs = remember { context.getSharedPreferences("mic_prefs", android.content.Context.MODE_PRIVATE) }
+    var showMicPrivacyDialog by remember { mutableStateOf(false) }
 
 
     fun pickRandomAyah() {
@@ -1298,9 +1405,14 @@ fun ExamMode(
 
         // بناء المرجع من باقي الآيات بعد الآية المختارة
         // المرجع هو نص الآية العشوائية نفسها فقط
-        referenceWords = ayah.text
+        referenceWords = cleanQuranText(ayah.text)
+            .replace(Regex("[﴿﴾]"), "")
             .replace(Regex("\\(\\d+\\)"), "")
-            .replace("ٱ", "ا").replace("ٰ", "").replace("ـ", "")
+            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
+            .replace("ٱ", "ا")
+            .replace("ٰ", "ا")
+            .replace("ـ", "")
+            .replace(Regex("[\u064B-\u065F]"), "")
             .replace(Regex("\\s+"), " ").trim()
             .split(" ").filter { it.isNotEmpty() }
 
@@ -1539,6 +1651,51 @@ fun ExamMode(
 
 
 
+
+    // dialog الخصوصية في وضع الاختبار
+    if (showMicPrivacyDialog) {
+        AlertDialog(
+            onDismissRequest = { showMicPrivacyDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("🎙 إذن الميكروفون", fontWeight = FontWeight.Bold, fontSize = 17.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35),
+                        textAlign = TextAlign.Center)
+                }
+            },
+            text = {
+                Text(
+                    text = "يستخدم التطبيق خدمة خارجية للتعرف على الصوت.
+
+قد تُستخدم التسجيلات الصوتية لأغراض تحسين نماذج الذكاء الاصطناعي من قِبَل مزود الخدمة.
+
+يمكنك إلغاء هذا الإذن في أي وقت من إعدادات التطبيق.",
+                    fontSize = 14.sp,
+                    color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        micPrefs.edit().putBoolean("privacy_accepted", true).apply()
+                        showMicPrivacyDialog = false
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) { Text("فهمت، متابعة", color = Color.White, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMicPrivacyDialog = false }) {
+                    Text("إلغاء", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                }
+            }
+        )
+    }
 
     if (showSetup) {
         // شاشة إعداد النطاق
@@ -1907,7 +2064,11 @@ fun ExamMode(
                                 errorMessage = null
                                 deepgramService.startRecitation()
                             } else {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                if (micPrefs.getBoolean("privacy_accepted", false)) {
+                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                } else {
+                                    showMicPrivacyDialog = true
+                                }
                             }
                         }
                     },
