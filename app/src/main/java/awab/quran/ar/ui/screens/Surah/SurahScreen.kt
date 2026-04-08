@@ -1577,6 +1577,8 @@ fun ExamMode(
             }
 
             var currentPos = startPos
+            var localCorrect = 0
+            var localError = 0
             val newSegment = buildAnnotatedString {
                 newWords.forEach { word ->
                     val normalizedWord = normalizeArabic(word, settings)
@@ -1586,6 +1588,7 @@ fun ExamMode(
                         // تطابق مباشر ✅
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
                         currentPos++
+                        localCorrect++
                     } else {
                         // ابحث للأمام (كلمة منسية)
                         val lookAhead = 4
@@ -1604,9 +1607,11 @@ fun ExamMode(
                                 withStyle(SpanStyle(color = Color(0xFFD32F2F), background = Color(0x22FF0000))) {
                                     append("[$skipped] ")
                                 }
+                                localError++
                             }
                             withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
                             currentPos += foundAt + 1
+                            localCorrect++
                             hasError = true
                         } else {
                             // ابحث للخلف (المستخدم أعاد)
@@ -1622,10 +1627,12 @@ fun ExamMode(
                                 currentPos -= (foundBefore - 1)
                                 withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
                                 currentPos++
+                                localCorrect++
                             } else {
                                 // كلمة خاطئة ❌
                                 appendWordWithCharColors(this, word, currentRef, settings)
                                 currentPos++
+                                localError++
                                 hasError = true
                             }
                         }
@@ -1636,6 +1643,8 @@ fun ExamMode(
             CoroutineScope(Dispatchers.Main).launch {
                 coloredText = buildAnnotatedString { append(coloredText); append(newSegment) }
                 wordCount = finalPos
+                correctWords += localCorrect
+                errorWords += localError
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
 
@@ -1652,7 +1661,7 @@ fun ExamMode(
                     }
                     kotlinx.coroutines.delay(1200)
                     if (currentQuestion >= totalQuestions) {
-                        showFinished = true
+                        showScore = true
                     } else {
                         shouldAdvance = true
                     }
@@ -1733,7 +1742,58 @@ fun ExamMode(
         )
     }
 
-    if (showSetup) {
+    // dialog الدرجة النهائية للاختبار
+    if (showScore) {
+        val total = correctWords + errorWords
+        val score = if (total > 0) (correctWords.toFloat() / total * 100).toInt() else 0
+        val scoreColor = when {
+            score >= 90 -> Color(0xFF1B5E20)
+            score >= 70 -> Color(0xFFF57F17)
+            else -> Color(0xFFD32F2F)
+        }
+        val scoreEmoji = when {
+            score >= 90 -> "🌟 ممتاز!"
+            score >= 80 -> "👍 جيد جداً!"
+            score >= 70 -> "😊 جيد!"
+            score >= 50 -> "💪 تحتاج مراجعة"
+            else -> "📖 راجع هذا الجزء"
+        }
+        val scoreBg = when {
+            score >= 90 -> Color(0xFFE8F5E9)
+            score >= 70 -> Color(0xFFFFFDE7)
+            else -> Color(0xFFFFEBEE)
+        }
+        AlertDialog(
+            onDismissRequest = { showScore = false; showFinished = true },
+            containerColor = scoreBg,
+            title = null,
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("$score%", fontSize = 72.sp, fontWeight = FontWeight.Bold, color = scoreColor)
+                    Text(scoreEmoji, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = scoreColor, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text("✅ صحيح: $correctWords", fontSize = 14.sp, color = Color(0xFF1B5E20))
+                        Text("❌ خطأ: $errorWords", fontSize = 14.sp, color = Color(0xFFD32F2F))
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showScore = false; showFinished = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = scoreColor),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) { Text("إنهاء الاختبار", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp) }
+            }
+        )
+    }
+
+
         // شاشة إعداد النطاق
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -1908,6 +1968,8 @@ fun ExamMode(
                                 else -> 60
                             }
                             currentQuestion = 0
+                            correctWords = 0
+                            errorWords = 0
                             showFinished = false
                             pickRandomAyah()
                         },
