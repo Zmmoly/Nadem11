@@ -1794,6 +1794,8 @@ fun ExamMode(
     }
 
 
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
+    if (showSetup) {
         // شاشة إعداد النطاق
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -2246,6 +2248,7 @@ fun ExamMode(
             }
         }
     }
+    } // end Box
 }
 
 /**
