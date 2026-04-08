@@ -24,6 +24,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -1979,13 +1981,18 @@ fun ExamMode(
 
             // بطاقة الآية العشوائية
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5744)),
                 elevation = CardDefaults.cardElevation(6.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -2138,36 +2145,39 @@ fun ExamMode(
                 colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5EFE6)),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                    item {
-                        if (coloredText.text.isEmpty() && interimText.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    if (coloredText.text.isEmpty() && interimText.isEmpty()) {
+                        Text(
+                            text = "اضغط تسميع وواصل القراءة...",
+                            fontSize = 20.sp,
+                            color = Color(0xFF9E9E9E),
+                            textAlign = TextAlign.Right,
+                            lineHeight = 40.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text(
+                            text = coloredText,
+                            fontSize = 20.sp,
+                            fontFamily = uthmanicFont,
+                            textAlign = TextAlign.Right,
+                            lineHeight = 40.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (interimText.isNotEmpty()) {
                             Text(
-                                text = "اضغط تسميع وواصل القراءة...",
+                                text = interimText,
                                 fontSize = 20.sp,
-                                color = Color(0xFF9E9E9E),
+                                color = Color(0xFF9E7B5A),
                                 textAlign = TextAlign.Right,
                                 lineHeight = 40.sp,
                                 modifier = Modifier.fillMaxWidth()
                             )
-                        } else {
-                            Text(
-                                text = coloredText,
-                                fontSize = 20.sp,
-                                fontFamily = uthmanicFont,
-                                textAlign = TextAlign.Right,
-                                lineHeight = 40.sp,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            if (interimText.isNotEmpty()) {
-                                Text(
-                                    text = interimText,
-                                    fontSize = 20.sp,
-                                    color = Color(0xFF9E7B5A),
-                                    textAlign = TextAlign.Right,
-                                    lineHeight = 40.sp,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
                         }
                     }
                 }
