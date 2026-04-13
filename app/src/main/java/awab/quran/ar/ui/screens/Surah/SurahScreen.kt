@@ -297,7 +297,7 @@ fun SurahScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "نسعى لخدمة كتاب الله بأفضل صورة، تبرع لدعم وتطوير النموذج وتحسين دقته. كل ريال يُقربنا من هدفنا.",
+                        "نسعى لخدمة كتاب الله بأفضل صورة، تبرعك يساعدنا على تحسين التطبيق وتقديم تجربة أفضل لك ولكل من يتلو كتاب الله.",
                         fontSize = 13.sp,
                         color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
