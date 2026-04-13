@@ -499,7 +499,7 @@ fun HomeScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        "نسعى لخدمة كتاب الله بأفضل صورة. تبرعك يساعدنا على تحسين التطبيق وتقديم تجربة أفضل لك ولكل من يتلو كتاب الله.",
                         fontSize = 14.sp,
                         color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
