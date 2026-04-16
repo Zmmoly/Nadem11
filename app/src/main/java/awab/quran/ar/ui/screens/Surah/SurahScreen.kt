@@ -139,12 +139,10 @@ fun rememberUthmanicFontFromAssets(): FontFamily? {
     val context = LocalContext.current
     return remember {
         try {
-            // الطريقة الأولى: من assets
             val typeface = Typeface.createFromAsset(context.assets, "fonts/kfgqpc_uthman_taha.ttf")
             FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
         } catch (e1: Exception) {
             try {
-                // الطريقة الثانية: من res/font مباشرة
                 val typeface = androidx.core.content.res.ResourcesCompat.getFont(
                     context, awab.quran.ar.R.font.kfgqpc_uthman_taha
                 )
@@ -177,11 +175,9 @@ fun SurahScreen(
     val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
     val iconColor = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
     
-    // الوضع الحالي: قراءة، تسميع، اختبار
     var selectedMode by remember { mutableStateOf("قراءة") }
     var showDonationDialog by remember { mutableStateOf(false) }
 
-    // عداد فتحات الصفحة — يظهر التبرع كل 3 فتحات
     val prefs = remember { context.getSharedPreferences("nadem_prefs", android.content.Context.MODE_PRIVATE) }
     val openCount = remember {
         val count = prefs.getInt("page_open_count", 0) + 1
@@ -194,20 +190,16 @@ fun SurahScreen(
         }
     }
 
-    // البحث عن رقم الصفحة التي تبدأ بها السورة
     val initialPageNumber = remember(surah.number) {
         repository.findPageNumber(surah.number, 1) ?: 1
     }
     
-    // Pager state - الصفحة الحالية
     val pagerState = rememberPagerState(initialPage = initialPageNumber - 1)
     val currentPage = pagerState.currentPage + 1
     
-    // تحميل بيانات الصفحة الحالية
     var pageData by remember { mutableStateOf<QuranPage?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     
-    // تحميل الصفحة عند تغيير رقم الصفحة
     LaunchedEffect(currentPage) {
         isLoading = true
         pageData = repository.getPage(currentPage)
@@ -276,7 +268,6 @@ fun SurahScreen(
         }
     }
 
-    // نافذة التبرع
     if (showDonationDialog) {
         AlertDialog(
             onDismissRequest = { showDonationDialog = false },
@@ -359,9 +350,8 @@ fun ReadingMode(
 ) {
     val quranTextColor = if (isDarkMode) Color(0xFFE8D5B0) else Color(0xFF2C2416)
     val ayahNumColor = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
-    // تجميع الآيات في مجموعات: كل مجموعة تبدأ برأس سورة أو هي استمرار
     data class AyahGroup(
-        val surahHeader: String? = null,   // اسم السورة إذا كانت بداية سورة
+        val surahHeader: String? = null,
         val surahNumber: Int = 0,
         val showBasmala: Boolean = false,
         val ayahs: List<PageAyah>
@@ -375,19 +365,17 @@ fun ReadingMode(
         for (ayah in page.ayahs) {
             if (ayah.isFirstInSura && ayah.isFirstInPage ||
                 (ayah.isFirstInSura && ayah.suraNumber != currentSura)) {
-                // حفظ المجموعة السابقة
                 if (currentGroup.isNotEmpty()) {
                     result.add(AyahGroup(ayahs = currentGroup.toList()))
                     currentGroup = mutableListOf()
                 }
-                // بدء مجموعة جديدة برأس سورة - الآية الأولى تنضم لباقي الآيات
                 currentSura = ayah.suraNumber
                 currentGroup.add(ayah)
                 result.add(AyahGroup(
                     surahHeader = ayah.suraName,
                     surahNumber = ayah.suraNumber,
                     showBasmala = ayah.suraNumber != 1 && ayah.suraNumber != 9,
-                    ayahs = emptyList() // الآيات ستُضاف لاحقاً
+                    ayahs = emptyList()
                 ))
             } else {
                 currentSura = ayah.suraNumber
@@ -447,7 +435,6 @@ fun ReadingMode(
             }
         }
 
-        // رقم الصفحة في الأسفل
         item {
             Spacer(modifier = Modifier.height(16.dp))
             PageNumberFooter(pageNumber = page.pageNumber)
@@ -460,15 +447,15 @@ fun ReadingMode(
  */
 fun cleanQuranText(text: String): String {
     return text
-        .replace(Regex("[\u06D6-\u06DC\u06DE-\u06ED]"), "") // علامات التجويد والوقف
-        .replace("\u0640\u0654", "ء") // كشيدة + همزة superscript أولاً (الآخرة)
-        .replace("\u0640\u0655", "")  // كشيدة + همزة subscript
-        .replace("\u0654", "ء")       // همزة superscript منفردة → همزة
-        .replace("\u0655", "")        // همزة subscript منفردة → تُحذف
-        .replace("\u0640", "")        // كشيدة منفردة → تُحذف
-        .replace("\u0671", "ا")       // همزة الوصل ٱ → ألف عادية
-        .replace("\u200F", "")        // علامة RTL
-        .replace("\u200E", "")        // علامة LTR
+        .replace(Regex("[\u06D6-\u06DC\u06DE-\u06ED]"), "")
+        .replace("\u0640\u0654", "ء")
+        .replace("\u0640\u0655", "")
+        .replace("\u0654", "ء")
+        .replace("\u0655", "")
+        .replace("\u0640", "")
+        .replace("\u0671", "ا")
+        .replace("\u200F", "")
+        .replace("\u200E", "")
         .trim()
 }
 
@@ -478,43 +465,35 @@ fun cleanQuranText(text: String): String {
 fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSettings): String {
     var result = text
 
-    // حذف أرقام الآيات والرموز الخاصة
     result = result.replace(Regex("\\(\\d+\\)"), "")
-    result = result.replace("ـ", "")  // تطويل
+    result = result.replace("ـ", "")
 
-    // توحيد جميع أشكال الألف → ا (هذا يحل مشكلة الكلمات التي فيها ألف)
-    result = result.replace("ٱ", "ا")  // همزة الوصل
-    result = result.replace("أ", "ا")  // همزة فوق
-    result = result.replace("إ", "ا")  // همزة تحت
-    result = result.replace("آ", "ا")  // مد
-    result = result.replace("ٰ", "ا")  // ألف خنجرية (سبب المشكلة الرئيسي)
+    result = result.replace("ٱ", "ا")
+    result = result.replace("أ", "ا")
+    result = result.replace("إ", "ا")
+    result = result.replace("آ", "ا")
+    result = result.replace("ٰ", "ا")
 
-    // حذف التشكيل (الحركات)
     result = result.replace(Regex("[\u064B-\u065F]"), "")
     result = result.replace(Regex("[،؟!]"), "")
 
-    // توحيد التاء المربوطة والياء
     result = result.replace("ة", "ه")
     result = result.replace("ى", "ي")
 
-    // تجاهل حرف الحاء
     if (settings.ignoreHaa) {
         result = result.replace("ح", "ه")
     }
 
-    // تجاهل حرف العين
     if (settings.ignoreAyn) {
         result = result.replace("ع", "ا").replace("ء", "ا").replace("ئ", "ا").replace("ؤ", "ا")
     }
 
-    // تجاهل المدود
     if (settings.ignoreMadd) {
         result = result.replace(Regex("ا+"), "ا")
         result = result.replace(Regex("و+"), "و")
         result = result.replace(Regex("ي+"), "ي")
     }
 
-    // تجاهل مواضع الوقف
     if (settings.ignoreWaqf) {
         result = result.trimEnd('ن', 'ا', 'ه', 'م')
     }
@@ -528,10 +507,8 @@ fun normalizeArabic(text: String, settings: awab.quran.ar.data.RecitationSetting
 @SuppressLint("MissingPermission")
 fun playErrorSound(context: Context? = null) {
     try {
-        // صوت
         val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
         toneGen.startTone(ToneGenerator.TONE_PROP_NACK, 300)
-        // اهتزاز
         context?.let { ctx ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vm = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -554,7 +531,6 @@ fun playErrorSound(context: Context? = null) {
 
 /**
  * مقارنة جملة منطوقة بالمرجع وإرجاع AnnotatedString
- * النص يُكتب كما نُطق مع تعليم الأخطاء
  */
 fun buildColoredText(
     spokenWords: List<String>,
@@ -578,10 +554,7 @@ fun buildColoredText(
 }
 
 /**
- * تلوين الكلمة على مستوى الحرف:
- * - الحروف الصحيحة باللون الأخضر
- * - الحروف الخاطئة أو الزائدة باللون الأحمر
- * - يُعرض النص المنطوق كما هو مع تلوين أحرفه
+ * تلوين الكلمة على مستوى الحرف
  */
 fun appendWordWithCharColors(
     builder: androidx.compose.ui.text.AnnotatedString.Builder,
@@ -592,7 +565,6 @@ fun appendWordWithCharColors(
     val normSpoken = normalizeArabic(spokenWord, settings)
     val normRef    = normalizeArabic(refWord, settings)
 
-    // خوارزمية LCS لمعرفة أي حرف صحيح وأيه خاطئ
     val n = normSpoken.length
     val m = normRef.length
     val dp = Array(n + 1) { IntArray(m + 1) }
@@ -601,7 +573,6 @@ fun appendWordWithCharColors(
                    else maxOf(dp[i-1][j], dp[i][j-1])
     }
 
-    // تتبع المسار لمعرفة الحروف المتطابقة
     val matchedSpokenIdx = mutableSetOf<Int>()
     var i = n; var j = m
     while (i > 0 && j > 0) {
@@ -612,9 +583,7 @@ fun appendWordWithCharColors(
         }
     }
 
-    // رسم كل حرف من الكلمة المنطوقة بلونه
     spokenWord.forEachIndexed { idx, ch ->
-        // نحسب موضع الحرف في النص المُعيَّر (بعد حذف التشكيل)
         val normIdx = normalizeArabic(spokenWord.substring(0, idx + 1), settings).length - 1
         val isMatch = normIdx in matchedSpokenIdx
         builder.withStyle(SpanStyle(
@@ -645,9 +614,6 @@ fun RecitationMode(
     val repository = remember { QuranPageRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
 
-    // تحميل الإعدادات من DataStore
-
-    // النص الكامل كـ AnnotatedString مع التلوين
     var coloredText by remember { mutableStateOf(buildAnnotatedString { }) }
     var interimText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
@@ -663,7 +629,6 @@ fun RecitationMode(
     var showMicPrivacyDialog by remember { mutableStateOf(false) }
     var pageChangedMessage by remember { mutableStateOf<String?>(null) }
 
-    // دالة تحويل نص صفحة إلى قائمة كلمات للمرجع
     fun buildPageWords(quranPage: QuranPage): List<String> =
         quranPage.ayahs
             .joinToString(" ") { cleanQuranText(it.text) }
@@ -679,16 +644,15 @@ fun RecitationMode(
             .split(" ")
             .filter { it.isNotEmpty() }
 
-    // نص الصفحة كمرجع - قابل للتوسع
     var referenceWords by remember { mutableStateOf(buildPageWords(page)) }
 
     @Suppress("UNUSED_EXPRESSION")
     remember(page) {
         page.ayahs
             .joinToString(" ") { cleanQuranText(it.text) }
-            .replace(Regex("[﴿﴾]"), "")          // إزالة أقواس الآيات
-            .replace(Regex("\\(\\d+\\)"), "")    // إزالة أرقام الآيات (1) (2)
-            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "") // إزالة أرقام عربية وإنجليزية
+            .replace(Regex("[﴿﴾]"), "")
+            .replace(Regex("\\(\\d+\\)"), "")
+            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
             .replace("ٱ", "ا")
             .replace("ٰ", "ا")
             .replace("ـ", "")
@@ -697,9 +661,6 @@ fun RecitationMode(
             .split(" ")
             .filter { it.isNotEmpty() }
     }
-
-    // دالة اختيار آية عشوائية
-
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -719,7 +680,6 @@ fun RecitationMode(
         onDispose {
             if (isRecording) {
                 deepgramService.stopRecitation()
-                // زيادة العداد عند الخروج من الصفحة أثناء التسميع
                 val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                 user?.let {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance()
@@ -731,10 +691,8 @@ fun RecitationMode(
     }
 
     LaunchedEffect(Unit) {
-        // تحميل الإعدادات
         launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
 
-        // عند وصول نتيجة نهائية - مقارنة ذكية تكتشف الكلمات المنسية
         deepgramService.onTranscriptionReceived = { rawText ->
             val text = rawText
                 .replace(Regex("[\\[\\]\"'،؟!]"), "")
@@ -743,12 +701,10 @@ fun RecitationMode(
             val newWords = text.split(" ").filter { it.isNotEmpty() }
             var hasError = false
 
-            // إذا كانت أول مرة يتكلم المستخدم، ابحث عن أين بدأ في النص
             var currentPos = if (wordCount == 0 && newWords.isNotEmpty()) {
                 val lookupWords = newWords.take(3).map { normalizeArabic(it, settings) }
                 var bestMatch = 0
                 var bestScore = 0
-                // ابحث عن أفضل تطابق لأول 3 كلمات
                 for (i in referenceWords.indices) {
                     var score = 0
                     lookupWords.forEachIndexed { j, word ->
@@ -769,17 +725,14 @@ fun RecitationMode(
                 newWords.forEach { word ->
                     val normalizedWord = normalizeArabic(word, settings)
 
-                    // هل الكلمة تطابق الكلمة الحالية في المرجع؟
                     val currentRef = referenceWords.getOrNull(currentPos) ?: ""
                     if (normalizeArabic(currentRef, settings) == normalizedWord) {
-                        // تطابق مباشر ✅ — الكلمة كاملة خضراء
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
                             append("$word ")
                         }
                         currentPos++
                         correctWords++
                     } else {
-                        // لا تطابق — ابحث للأمام أولاً (كلمة منسية)
                         val lookAhead = 4
                         var foundAt = -1
                         for (j in 1..lookAhead) {
@@ -791,7 +744,6 @@ fun RecitationMode(
                         }
 
                         if (foundAt > 0) {
-                            // وجدنا الكلمة للأمام — أضف الكلمات المنسية باللون الأحمر
                             for (skip in 0 until foundAt) {
                                 val skipped = referenceWords.getOrNull(currentPos + skip) ?: ""
                                 withStyle(SpanStyle(
@@ -809,7 +761,6 @@ fun RecitationMode(
                             correctWords++
                             hasError = true
                         } else {
-                            // ابحث للخلف (المستخدم أعاد من نقطة سابقة)
                             val lookBack = 10
                             var foundBefore = -1
                             for (j in 1..lookBack) {
@@ -821,7 +772,6 @@ fun RecitationMode(
                             }
 
                             if (foundBefore > 0) {
-                                // وجدنا الكلمة للخلف — رجّع الموضع وأكمل
                                 currentPos -= (foundBefore - 1)
                                 withStyle(SpanStyle(color = Color(0xFF1B5E20))) {
                                     append("$word ")
@@ -829,7 +779,6 @@ fun RecitationMode(
                                 currentPos++
                                 correctWords++
                             } else {
-                                // كلمة خاطئة ❌ — لوّن حرفاً بحرف
                                 appendWordWithCharColors(this, word, currentRef, settings)
                                 currentPos++
                                 errorWords++
@@ -850,7 +799,6 @@ fun RecitationMode(
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
 
-                // إذا وصل المستخدم لنهاية الصفحة، حمّل الصفحة التالية تلقائياً
                 if (finalPos >= referenceWords.size && currentPageNumber < 604) {
                     val nextPageNum = currentPageNumber + 1
                     val nextPage = repository.getPage(nextPageNum)
@@ -866,7 +814,6 @@ fun RecitationMode(
             }
         }
 
-        // النتيجة المؤقتة - تُعرض كنص عادي بدون تلوين
         deepgramService.onInterimTranscription = { text ->
             CoroutineScope(Dispatchers.Main).launch { interimText = text }
         }
@@ -883,7 +830,6 @@ fun RecitationMode(
         }
     }
 
-    // Dialog نتيجة التسميع — درجة فقط
     if (showScore) {
         val score = if (correctWords + errorWords > 0)
             (correctWords.toFloat() / (correctWords + errorWords) * 100).toInt()
@@ -944,7 +890,6 @@ fun RecitationMode(
         )
     }
 
-    // dialog الخصوصية - تظهر مرة واحدة فقط
     if (showMicPrivacyDialog) {
         AlertDialog(
             onDismissRequest = { showMicPrivacyDialog = false },
@@ -991,7 +936,6 @@ fun RecitationMode(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // أيقونة الميكروفون
         Box(
             modifier = Modifier.size(140.dp).padding(20.dp),
             contentAlignment = Alignment.Center
@@ -1011,7 +955,6 @@ fun RecitationMode(
             )
         }
 
-        // زر بدء/إيقاف
         Button(
             onClick = {
                 if (isRecording) {
@@ -1063,7 +1006,6 @@ fun RecitationMode(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // زر التلميح — يكشف 10 كلمات تالية
         TextButton(
             onClick = {
                 val nextWords = referenceWords
@@ -1081,7 +1023,6 @@ fun RecitationMode(
             )
         }
 
-        // بطاقة التلميح
         if (showHint && hintWords.isNotEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -1111,7 +1052,6 @@ fun RecitationMode(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // رسالة الانتقال للصفحة التالية
         pageChangedMessage?.let { msg ->
             Card(
                 modifier = Modifier.fillMaxWidth().padding(4.dp),
@@ -1129,7 +1069,6 @@ fun RecitationMode(
             Spacer(modifier = Modifier.height(6.dp))
         }
 
-        // رسالة الخطأ
         errorMessage?.let { error ->
             Card(
                 modifier = Modifier.fillMaxWidth().padding(4.dp),
@@ -1146,7 +1085,6 @@ fun RecitationMode(
             Spacer(modifier = Modifier.height(6.dp))
         }
 
-        // مفتاح الألوان
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.End
@@ -1157,7 +1095,6 @@ fun RecitationMode(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // النص مع التلوين
         Card(
             modifier = Modifier.fillMaxWidth().weight(1f),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFF5EFE6)),
@@ -1177,7 +1114,6 @@ fun RecitationMode(
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
-                        // النص المُلوَّن (نهائي)
                         Text(
                             text = coloredText,
                             fontSize = 20.sp,
@@ -1186,7 +1122,6 @@ fun RecitationMode(
                             lineHeight = 44.sp,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        // النص المؤقت أثناء الكلام (رمادي)
                         if (interimText.isNotEmpty()) {
                             Text(
                                 text = interimText,
@@ -1232,7 +1167,6 @@ fun QuranAyahText(
     showSuraHeader: Boolean
 ) {
     Column {
-        // عنوان السورة إذا كانت أول السورة
         if (showSuraHeader) {
             SuraHeader(
                 suraName = ayah.suraName,
@@ -1240,14 +1174,12 @@ fun QuranAyahText(
             )
             Spacer(modifier = Modifier.height(8.dp))
             
-            // البسملة بعد رأس السورة (ما عدا سورة التوبة والفاتحة)
             if (ayah.suraNumber != 1 && ayah.suraNumber != 9) {
                 BasmalaHeader(font = font)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
         
-        // نص الآية مع رقمها
         Text(
             text = buildAnnotatedString {
                 append(ayah.text)
@@ -1355,11 +1287,10 @@ fun ExamMode(
     val settingsRepo = remember { awab.quran.ar.data.RecitationSettingsRepository(context) }
     var settings by remember { mutableStateOf(awab.quran.ar.data.RecitationSettings()) }
 
-    // نطاق الصفحات
     var fromPage by remember { mutableStateOf("1") }
     var toPage by remember { mutableStateOf("604") }
     var questionCount by remember { mutableStateOf("10") }
-    var questionLength by remember { mutableStateOf("متوسط") } // قصير=40، متوسط=60، طويل=80
+    var questionLength by remember { mutableStateOf("متوسط") }
     var targetWordCount by remember { mutableStateOf(60) }
     var totalQuestions by remember { mutableStateOf(10) }
     var currentQuestion by remember { mutableStateOf(0) }
@@ -1368,14 +1299,12 @@ fun ExamMode(
     var shouldAdvance by remember { mutableStateOf(false) }
     var shouldStartRecording by remember { mutableStateOf(false) }
 
-    // الآية العشوائية المختارة
     var randomAyah by remember { mutableStateOf<PageAyah?>(null) }
     var randomPageData by remember { mutableStateOf<QuranPage?>(null) }
     var ayahAudioUrl by remember { mutableStateOf("") }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     var isPlayingAudio by remember { mutableStateOf(false) }
 
-    // التسميع
     var coloredText by remember { mutableStateOf(buildAnnotatedString { }) }
     var interimText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
@@ -1402,8 +1331,6 @@ fun ExamMode(
         randomAyah = ayah
         randomPageData = pageData
 
-        // بناء المرجع من باقي الآيات بعد الآية المختارة
-        // المرجع هو نص الآية العشوائية نفسها فقط
         referenceWords = cleanQuranText(ayah.text)
             .replace(Regex("[﴿﴾]"), "")
             .replace(Regex("\\(\\d+\\)"), "")
@@ -1415,12 +1342,10 @@ fun ExamMode(
             .replace(Regex("\\s+"), " ").trim()
             .split(" ").filter { it.isNotEmpty() }
 
-        // رابط الصوت من everyayah.com
         val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
         val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
         ayahAudioUrl = "https://everyayah.com/data/Alafasy_128kbps/${suraFormatted}${ayahFormatted}.mp3"
 
-        // إعادة ضبط التسميع
         coloredText = buildAnnotatedString { }
         interimText = ""
         wordCount = 0
@@ -1435,7 +1360,6 @@ fun ExamMode(
         showFinished = false
     }
 
-    // دالة تشغيل الصوت مع كشف الصمت
     fun playAudio() {
         mediaPlayer?.release()
         mediaPlayer = null
@@ -1445,12 +1369,11 @@ fun ExamMode(
                 setDataSource(ayahAudioUrl)
                 setOnPreparedListener { mp ->
                     mp.start()
-                    // راقب مستوى الصوت كل 100ms لكشف الصمت
                     CoroutineScope(Dispatchers.Main).launch {
                         var silenceStart = 0L
                         var lastPosition = -1
-                        val silenceThresholdMs = 600L // صمت لأكثر من 600ms = وقفة القارئ
-                        val minPlayMs = 2000L          // على الأقل ثانيتين قبل الكشف
+                        val silenceThresholdMs = 600L
+                        val minPlayMs = 2000L
                         val startTime = System.currentTimeMillis()
 
                         while (isPlayingAudio && mp.isPlaying) {
@@ -1459,14 +1382,11 @@ fun ExamMode(
 
                             if (elapsed >= minPlayMs) {
                                 if (pos == lastPosition) {
-                                    // الموضع لم يتغير = صمت أو وقف
                                     if (silenceStart == 0L) silenceStart = System.currentTimeMillis()
                                     val silenceDuration = System.currentTimeMillis() - silenceStart
                                     if (silenceDuration >= silenceThresholdMs) {
-                                        // وقفة مكتشفة → أوقف التشغيل وأصدر تنبيه للمستخدم
                                         mp.pause()
                                         isPlayingAudio = false
-                                        // صوت تنبيه ثم ابدأ التسميع تلقائياً
                                         CoroutineScope(Dispatchers.IO).launch {
                                             try {
                                                 val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
@@ -1513,7 +1433,6 @@ fun ExamMode(
         }
     }
 
-    // تنظيف MediaPlayer عند الخروج
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.release()
@@ -1522,7 +1441,6 @@ fun ExamMode(
         }
     }
 
-    // مراقبة shouldAdvance للانتقال للسؤال التالي من composable scope
     LaunchedEffect(shouldAdvance) {
         if (shouldAdvance) {
             shouldAdvance = false
@@ -1530,7 +1448,6 @@ fun ExamMode(
         }
     }
 
-    // فتح الميكروفون تلقائياً بعد الصفارة
     LaunchedEffect(shouldStartRecording) {
         if (shouldStartRecording) {
             shouldStartRecording = false
@@ -1542,7 +1459,6 @@ fun ExamMode(
         }
     }
 
-    // تشغيل الصوت تلقائياً عند اختيار آية جديدة
     LaunchedEffect(randomAyah) {
         if (randomAyah != null && ayahAudioUrl.isNotEmpty()) {
             kotlinx.coroutines.delay(300)
@@ -1550,7 +1466,6 @@ fun ExamMode(
         }
     }
 
-    // تحميل إعدادات التسميع
     LaunchedEffect(Unit) {
         launch { settingsRepo.settingsFlow.collectLatest { settings = it } }
 
@@ -1558,7 +1473,6 @@ fun ExamMode(
             val newWords = text.trim().split(" ").filter { it.isNotEmpty() }
             var hasError = false
 
-            // --- Flexible Start: إذا كان أول نص يصل، ابحث عن أفضل نقطة بداية ---
             var startPos = wordCount
             if (wordCount == 0 && newWords.isNotEmpty()) {
                 val lookupWords = newWords.take(3).map { normalizeArabic(it, settings) }
@@ -1572,7 +1486,6 @@ fun ExamMode(
                     }
                     if (score > bestScore) { bestScore = score; bestIndex = i }
                 }
-                // إذا وجدنا تطابقاً جيداً ابدأ من هناك، وإلا ابدأ من الأول
                 startPos = if (bestScore >= 1) bestIndex else 0
             }
 
@@ -1585,12 +1498,10 @@ fun ExamMode(
                     val currentRef = referenceWords.getOrNull(currentPos) ?: ""
 
                     if (normalizeArabic(currentRef, settings) == normalizedWord) {
-                        // تطابق مباشر ✅
                         withStyle(SpanStyle(color = Color(0xFF1B5E20))) { append("$word ") }
                         currentPos++
                         localCorrect++
                     } else {
-                        // ابحث للأمام (كلمة منسية)
                         val lookAhead = 4
                         var foundAt = -1
                         for (j in 1..lookAhead) {
@@ -1601,7 +1512,6 @@ fun ExamMode(
                         }
 
                         if (foundAt > 0) {
-                            // الكلمات المنسية باللون الأحمر
                             for (skip in 0 until foundAt) {
                                 val skipped = referenceWords.getOrNull(currentPos + skip) ?: ""
                                 withStyle(SpanStyle(color = Color(0xFFD32F2F), background = Color(0x22FF0000))) {
@@ -1614,7 +1524,6 @@ fun ExamMode(
                             localCorrect++
                             hasError = true
                         } else {
-                            // ابحث للخلف (المستخدم أعاد)
                             val lookBack = 6
                             var foundBefore = -1
                             for (j in 1..lookBack) {
@@ -1629,7 +1538,6 @@ fun ExamMode(
                                 currentPos++
                                 localCorrect++
                             } else {
-                                // كلمة خاطئة ❌
                                 appendWordWithCharColors(this, word, currentRef, settings)
                                 currentPos++
                                 localError++
@@ -1648,11 +1556,9 @@ fun ExamMode(
                 interimText = ""
                 if (hasError) CoroutineScope(Dispatchers.IO).launch { playErrorSound(context) }
 
-                // أوقف التسميع تلقائياً عند بلوغ عدد الكلمات المطلوب
                 if (wordCount >= targetWordCount) {
                     deepgramService.stopRecitation()
                     isRecording = false
-                    // نغمة إنهاء تنبّه المستخدم بالتوقف
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
@@ -1696,10 +1602,6 @@ fun ExamMode(
         }
     }
 
-
-
-
-    // dialog الخصوصية في وضع الاختبار
     if (showMicPrivacyDialog) {
         AlertDialog(
             onDismissRequest = { showMicPrivacyDialog = false },
@@ -1742,7 +1644,6 @@ fun ExamMode(
         )
     }
 
-    // dialog الدرجة النهائية للاختبار
     if (showScore) {
         val total = correctWords + errorWords
         val score = if (total > 0) (correctWords.toFloat() / total * 100).toInt() else 0
@@ -1793,461 +1694,464 @@ fun ExamMode(
         )
     }
 
-
     Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
-    if (showSetup) {
-        // شاشة إعداد النطاق
-        Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "🧠 وضع الاختبار",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = titleColor,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = "حدد نطاق الصفحات للاختبار",
-                fontSize = 15.sp,
-                color = subColor,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = cardColor),
-                elevation = CardDefaults.cardElevation(4.dp)
+        // ====== شاشة الإعداد - الإصلاح الرئيسي هنا ======
+        if (showSetup) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())  // ← الإصلاح: يتيح التمرير
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+                // ← تم حذف: verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Spacer(modifier = Modifier.height(24.dp))  // ← بديل عن Arrangement.Center
+
+                Text(
+                    text = "🧠 وضع الاختبار",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = titleColor,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "حدد نطاق الصفحات للاختبار",
+                    fontSize = 15.sp,
+                    color = subColor,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),  // ← الإصلاح: لا يمتد أكثر من محتواه
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor),
+                    elevation = CardDefaults.cardElevation(4.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("من صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
-                            OutlinedTextField(
-                                value = fromPage,
-                                onValueChange = { if (it.length <= 3) fromPage = it.filter { c -> c.isDigit() } },
-                                modifier = Modifier.width(100.dp),
-                                singleLine = true,
-                                textStyle = androidx.compose.ui.text.TextStyle(
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                                ),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                                ),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFD4AF37),
-                                    unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
-                                    focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                                    unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                                    focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
-                                    unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-
-                        Text("—", fontSize = 24.sp, color = subColor)
-
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("إلى صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
-                            OutlinedTextField(
-                                value = toPage,
-                                onValueChange = { if (it.length <= 3) toPage = it.filter { c -> c.isDigit() } },
-                                modifier = Modifier.width(100.dp),
-                                singleLine = true,
-                                textStyle = androidx.compose.ui.text.TextStyle(
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                                ),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                                ),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFD4AF37),
-                                    unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
-                                    focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                                    unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                                    focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
-                                    unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // عدد الأسئلة
-                    Text("عدد الأسئلة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
-                    OutlinedTextField(
-                        value = questionCount,
-                        onValueChange = { if (it.length <= 3) questionCount = it.filter { c -> c.isDigit() } },
-                        modifier = Modifier.width(120.dp),
-                        singleLine = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            textAlign = TextAlign.Center,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                        ),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFD4AF37),
-                            unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
-                            focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                            unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
-                            focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
-                            unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // طول السؤال
-                    Text("طول السؤال", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        listOf(
-                            Triple("قصير", "40 كلمة", Color(0xFF4A7C59)),
-                            Triple("متوسط", "60 كلمة", Color(0xFF6B5744)),
-                            Triple("طويل", "80 كلمة", Color(0xFF8B4513))
-                        ).forEach { (label, sub, color) ->
-                            val isSelected = questionLength == label
-                            Surface(
-                                onClick = { questionLength = label },
-                                shape = RoundedCornerShape(14.dp),
-                                color = if (isSelected) color else if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFEDE8DF),
-                                modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 15.sp,
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("من صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+                                OutlinedTextField(
+                                    value = fromPage,
+                                    onValueChange = { if (it.length <= 3) fromPage = it.filter { c -> c.isDigit() } },
+                                    modifier = Modifier.width(100.dp),
+                                    singleLine = true,
+                                    textStyle = androidx.compose.ui.text.TextStyle(
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
-                                    )
-                                    Text(
-                                        text = sub,
-                                        fontSize = 12.sp,
-                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else if (isDarkMode) Color(0xFF888888) else Color(0xFF9B8B7A)
-                                    )
+                                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                                    ),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                                    ),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFD4AF37),
+                                        unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                                        focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                        unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                        focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                                        unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+
+                            Text("—", fontSize = 24.sp, color = subColor)
+
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("إلى صفحة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+                                OutlinedTextField(
+                                    value = toPage,
+                                    onValueChange = { if (it.length <= 3) toPage = it.filter { c -> c.isDigit() } },
+                                    modifier = Modifier.width(100.dp),
+                                    singleLine = true,
+                                    textStyle = androidx.compose.ui.text.TextStyle(
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                                    ),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                                    ),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFD4AF37),
+                                        unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                                        focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                        unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                        focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                                        unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text("عدد الأسئلة", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 8.dp))
+                        OutlinedTextField(
+                            value = questionCount,
+                            onValueChange = { if (it.length <= 3) questionCount = it.filter { c -> c.isDigit() } },
+                            modifier = Modifier.width(120.dp),
+                            singleLine = true,
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                textAlign = TextAlign.Center,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                            ),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFD4AF37),
+                                unfocusedBorderColor = if (isDarkMode) Color(0xFF555555) else Color(0xFFB5A590),
+                                focusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                unfocusedContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White,
+                                focusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C),
+                                unfocusedTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF2C2C2C)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text("طول السؤال", fontSize = 14.sp, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            listOf(
+                                Triple("قصير", "40 كلمة", Color(0xFF4A7C59)),
+                                Triple("متوسط", "60 كلمة", Color(0xFF6B5744)),
+                                Triple("طويل", "80 كلمة", Color(0xFF8B4513))
+                            ).forEach { (label, sub, color) ->
+                                val isSelected = questionLength == label
+                                Surface(
+                                    onClick = { questionLength = label },
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (isSelected) color else if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFEDE8DF),
+                                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
+                                        )
+                                        Text(
+                                            text = sub,
+                                            fontSize = 12.sp,
+                                            color = if (isSelected) Color.White.copy(alpha = 0.8f) else if (isDarkMode) Color(0xFF888888) else Color(0xFF9B8B7A)
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
-                        onClick = {
-                            totalQuestions = questionCount.toIntOrNull()?.coerceIn(1, 100) ?: 10
-                            targetWordCount = when (questionLength) {
-                                "قصير" -> 40
-                                "طويل" -> 80
-                                else -> 60
-                            }
-                            currentQuestion = 0
-                            correctWords = 0
-                            errorWords = 0
-                            showFinished = false
-                            pickRandomAyah()
-                        },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
-                        shape = RoundedCornerShape(26.dp)
-                    ) {
-                        Text("ابدأ الاختبار 🎲", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    } else if (showFinished) {
-        // شاشة انتهاء الاختبار
-        Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("🎉", fontSize = 60.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("أحسنت! أكملت الاختبار", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = titleColor, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("لقد أجبت على $totalQuestions سؤال", fontSize = 16.sp, color = subColor)
-            Spacer(modifier = Modifier.height(32.dp))
-            Button(
-                onClick = {
-                    currentQuestion = 0
-                    showFinished = false
-                    showSetup = true
-                },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
-                shape = RoundedCornerShape(26.dp)
-            ) {
-                Text("اختبار جديد 🔄", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-    } else {
-        // شاشة الاختبار
-        val ayah = randomAyah ?: return
-
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // شريط التقدم
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "السؤال $currentQuestion من $totalQuestions",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = titleColor
-                )
-                Text(
-                    text = "${((currentQuestion.toFloat() / totalQuestions) * 100).toInt()}%",
-                    fontSize = 14.sp,
-                    color = titleColor
-                )
-            }
-            LinearProgressIndicator(
-                progress = currentQuestion.toFloat() / totalQuestions,
-                modifier = Modifier.fillMaxWidth().height(6.dp).padding(bottom = 12.dp),
-                color = Color(0xFFD4AF37),
-                trackColor = Color(0xFFD4AF37).copy(alpha = 0.2f)
-            )
-
-            // بطاقة الآية العشوائية
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5744)),
-                elevation = CardDefaults.cardElevation(6.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "سورة ${ayah.suraName} — الآية ${convertToArabicNumerals(ayah.ayaNumber)}",
-                        fontSize = 14.sp,
-                        color = Color(0xFFD4AF37),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = ayah.text + " ﴿${convertToArabicNumerals(ayah.ayaNumber)}﴾",
-                        fontSize = 22.sp,
-                        fontFamily = uthmanicFont,
-                        color = Color.White,
-                        textAlign = TextAlign.Right,
-                        lineHeight = 42.sp,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // زر تشغيل/إيقاف الصوت
-            Button(
-                onClick = {
-                    if (isPlayingAudio) {
-                        mediaPlayer?.stop()
-                        mediaPlayer?.release()
-                        mediaPlayer = null
-                        isPlayingAudio = false
-                    } else {
-                        playAudio()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37)),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth().height(46.dp)
-            ) {
-                Text(
-                    text = if (isPlayingAudio) "⏹ إيقاف" else "▶ استمع للآية",
-                    fontSize = 14.sp,
-                    color = quranTextColor,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // أزرار تغيير النطاق والتخطي
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = { showSetup = true }) {
-                    Text("⚙ تغيير نطاق الصفحات", color = subColor, fontSize = 13.sp)
-                }
-                TextButton(
-                    onClick = {
-                        if (isRecording) {
-                            deepgramService.stopRecitation()
-                            isRecording = false
+                        Button(
+                            onClick = {
+                                totalQuestions = questionCount.toIntOrNull()?.coerceIn(1, 100) ?: 10
+                                targetWordCount = when (questionLength) {
+                                    "قصير" -> 40
+                                    "طويل" -> 80
+                                    else -> 60
+                                }
+                                currentQuestion = 0
+                                correctWords = 0
+                                errorWords = 0
+                                showFinished = false
+                                pickRandomAyah()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                            shape = RoundedCornerShape(26.dp)
+                        ) {
+                            Text("ابدأ الاختبار 🎲", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
                         }
-                        mediaPlayer?.stop()
-                        mediaPlayer?.release()
-                        mediaPlayer = null
-                        isPlayingAudio = false
-                        if (currentQuestion >= totalQuestions) {
-                            showFinished = true
-                        } else {
-                            pickRandomAyah()
-                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))  // ← مسافة أسفل الزر داخل الكارد
                     }
-                ) {
-                    Text("⏭ تخطي", color = Color(0xFFD4AF37), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))  // ← مسافة أسفل الصفحة
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "واصل القراءة من بعد هذه الآية...",
-                fontSize = 14.sp,
-                color = subColor,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // مفتاح الألوان وزر التسميع
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        } else if (showFinished) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Row {
-                    Text("● صحيح  ", color = Color(0xFF1B5E20), fontSize = 13.sp)
-                    Text("● خطأ", color = Color(0xFFD32F2F), fontSize = 13.sp)
-                }
+                Text("🎉", fontSize = 60.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("أحسنت! أكملت الاختبار", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = titleColor, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("لقد أجبت على $totalQuestions سؤال", fontSize = 16.sp, color = subColor)
+                Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = {
-                        if (isRecording) {
-                            deepgramService.stopRecitation()
-                            isRecording = false
-                        } else {
-                            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                                coloredText = buildAnnotatedString { }
-                                interimText = ""
-                                wordCount = 0
-                                errorMessage = null
-                                deepgramService.startRecitation()
-                            } else {
-                                if (micPrefs.getBoolean("privacy_accepted", false)) {
-                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                } else {
-                                    showMicPrivacyDialog = true
-                                }
-                            }
-                        }
+                        currentQuestion = 0
+                        showFinished = false
+                        showSetup = true
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isRecording) Color(0xFFD32F2F) else Color(0xFF6B5744)
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.height(40.dp)
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5744)),
+                    shape = RoundedCornerShape(26.dp)
+                ) {
+                    Text("اختبار جديد 🔄", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        } else {
+            val ayah = randomAyah ?: return
+
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isRecording) "⏹ إيقاف" else "🎤 تسميع",
+                        text = "السؤال $currentQuestion من $totalQuestions",
                         fontSize = 14.sp,
-                        color = Color.White
+                        fontWeight = FontWeight.Bold,
+                        color = titleColor
+                    )
+                    Text(
+                        text = "${((currentQuestion.toFloat() / totalQuestions) * 100).toInt()}%",
+                        fontSize = 14.sp,
+                        color = titleColor
                     )
                 }
-            }
+                LinearProgressIndicator(
+                    progress = currentQuestion.toFloat() / totalQuestions,
+                    modifier = Modifier.fillMaxWidth().height(6.dp).padding(bottom = 12.dp),
+                    color = Color(0xFFD4AF37),
+                    trackColor = Color(0xFFD4AF37).copy(alpha = 0.2f)
+                )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // منطقة النص المُلوَّن
-            errorMessage?.let { error ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF3A1A1A) else Color(0xFFFFEBEE)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = error, color = Color(0xFFD32F2F), modifier = Modifier.padding(12.dp), textAlign = TextAlign.Center)
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5EFE6)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5744)),
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
-                    if (coloredText.text.isEmpty() && interimText.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            text = "اضغط تسميع وواصل القراءة...",
-                            fontSize = 20.sp,
-                            color = Color(0xFF9E9E9E),
-                            textAlign = TextAlign.Right,
-                            lineHeight = 40.sp,
-                            modifier = Modifier.fillMaxWidth()
+                            text = "سورة ${ayah.suraName} — الآية ${convertToArabicNumerals(ayah.ayaNumber)}",
+                            fontSize = 14.sp,
+                            color = Color(0xFFD4AF37),
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
-                    } else {
                         Text(
-                            text = coloredText,
-                            fontSize = 20.sp,
+                            text = ayah.text + " ﴿${convertToArabicNumerals(ayah.ayaNumber)}﴾",
+                            fontSize = 22.sp,
                             fontFamily = uthmanicFont,
+                            color = Color.White,
                             textAlign = TextAlign.Right,
-                            lineHeight = 40.sp,
+                            lineHeight = 42.sp,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        if (interimText.isNotEmpty()) {
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = {
+                        if (isPlayingAudio) {
+                            mediaPlayer?.stop()
+                            mediaPlayer?.release()
+                            mediaPlayer = null
+                            isPlayingAudio = false
+                        } else {
+                            playAudio()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37)),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth().height(46.dp)
+                ) {
+                    Text(
+                        text = if (isPlayingAudio) "⏹ إيقاف" else "▶ استمع للآية",
+                        fontSize = 14.sp,
+                        color = quranTextColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { showSetup = true }) {
+                        Text("⚙ تغيير نطاق الصفحات", color = subColor, fontSize = 13.sp)
+                    }
+                    TextButton(
+                        onClick = {
+                            if (isRecording) {
+                                deepgramService.stopRecitation()
+                                isRecording = false
+                            }
+                            mediaPlayer?.stop()
+                            mediaPlayer?.release()
+                            mediaPlayer = null
+                            isPlayingAudio = false
+                            if (currentQuestion >= totalQuestions) {
+                                showFinished = true
+                            } else {
+                                pickRandomAyah()
+                            }
+                        }
+                    ) {
+                        Text("⏭ تخطي", color = Color(0xFFD4AF37), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "واصل القراءة من بعد هذه الآية...",
+                    fontSize = 14.sp,
+                    color = subColor,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row {
+                        Text("● صحيح  ", color = Color(0xFF1B5E20), fontSize = 13.sp)
+                        Text("● خطأ", color = Color(0xFFD32F2F), fontSize = 13.sp)
+                    }
+                    Button(
+                        onClick = {
+                            if (isRecording) {
+                                deepgramService.stopRecitation()
+                                isRecording = false
+                            } else {
+                                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                    coloredText = buildAnnotatedString { }
+                                    interimText = ""
+                                    wordCount = 0
+                                    errorMessage = null
+                                    deepgramService.startRecitation()
+                                } else {
+                                    if (micPrefs.getBoolean("privacy_accepted", false)) {
+                                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    } else {
+                                        showMicPrivacyDialog = true
+                                    }
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isRecording) Color(0xFFD32F2F) else Color(0xFF6B5744)
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.height(40.dp)
+                    ) {
+                        Text(
+                            text = if (isRecording) "⏹ إيقاف" else "🎤 تسميع",
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                errorMessage?.let { error ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF3A1A1A) else Color(0xFFFFEBEE)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = error, color = Color(0xFFD32F2F), modifier = Modifier.padding(12.dp), textAlign = TextAlign.Center)
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5EFE6)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                    ) {
+                        if (coloredText.text.isEmpty() && interimText.isEmpty()) {
                             Text(
-                                text = interimText,
+                                text = "اضغط تسميع وواصل القراءة...",
                                 fontSize = 20.sp,
-                                color = Color(0xFF9E7B5A),
+                                color = Color(0xFF9E9E9E),
                                 textAlign = TextAlign.Right,
                                 lineHeight = 40.sp,
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        } else {
+                            Text(
+                                text = coloredText,
+                                fontSize = 20.sp,
+                                fontFamily = uthmanicFont,
+                                textAlign = TextAlign.Right,
+                                lineHeight = 40.sp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (interimText.isNotEmpty()) {
+                                Text(
+                                    text = interimText,
+                                    fontSize = 20.sp,
+                                    color = Color(0xFF9E7B5A),
+                                    textAlign = TextAlign.Right,
+                                    lineHeight = 40.sp,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
     } // end Box
 }
 
