@@ -1004,7 +1004,31 @@ fun RecitationMode(
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // تنبيه وقت الإحماء
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDarkMode) Color(0xFF2C2218) else Color(0xFFFFF3CD)
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "⏳", fontSize = 16.sp, modifier = Modifier.padding(end = 8.dp))
+                Text(
+                    text = "قد تستغرق الآية الأولى ما يصل إلى ٣٠ ثانية للمعالجة، بعدها يعمل التطبيق بشكل طبيعي",
+                    fontSize = 13.sp,
+                    color = if (isDarkMode) Color(0xFFFFD54F) else Color(0xFF7B5E00),
+                    lineHeight = 20.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         TextButton(
             onClick = {
