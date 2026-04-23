@@ -65,7 +65,7 @@ class QuranReminderWorker(
             .setContentText("لا تهجر كتاب الله، مرّت ٣ أيام منذ آخر مرة فتحت التطبيق")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("لا تهجر كتاب الله ﷻ، مرّت ٣ أيام منذ آخر مرة تلوت أو سمّعت. عُد إلى القرآن الكريم.")
+                    .bigText("لا تهجر كتاب الله ﷻ، مرّت ٣ أيام منذ آخر مرة تلوت أو سمّعت.")
             )
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
