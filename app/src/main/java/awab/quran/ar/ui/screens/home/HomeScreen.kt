@@ -513,7 +513,7 @@ fun HomeScreen(
                         color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
                     val donationOptions = listOf(
                         Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
                         Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
