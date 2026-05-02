@@ -311,6 +311,18 @@ fun ProfileScreen(
                             title = "الإعدادات",
                             onClick = { showSettingsDialog = true }
                         )
+
+                        Divider(color = dividerColor)
+
+                        ProfileOption(
+                            isDarkMode = isDarkMode,
+                            icon = Icons.Default.FolderOpen,
+                            title = "تسجيلاتي",
+                            onClick = {
+                                allRecordings = recordingManager.getAllRecordings()
+                                showRecordingsList = true
+                            }
+                        )
                         
                         Divider(color = dividerColor)
                         
@@ -492,29 +504,6 @@ fun ProfileScreen(
                         }
                     )
 
-                    Divider(color = Color(0xFFE0D5C5))
-
-                    // زر تسجيلاتي
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("تسجيلاتي", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35))
-                            Text("استمع إلى تسجيلاتك الصوتية أو شاركها", fontSize = 12.sp, color = subColor)
-                        }
-                        TextButton(onClick = {
-                            allRecordings = recordingManager.getAllRecordings()
-                            showRecordingsList = true
-                        }) {
-                            Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF6B5744))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("فتح", color = Color(0xFF6B5744), fontWeight = FontWeight.Bold)
-                        }
-                    }
                 }
             },
             confirmButton = {
