@@ -1,6 +1,5 @@
 package awab.quran.ar.ui.screens.profile
 
-import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
