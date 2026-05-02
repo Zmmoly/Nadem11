@@ -1250,18 +1250,6 @@ fun RecitationMode(
             )
         }
 
-        // زر قائمة التسجيلات
-        TextButton(onClick = {
-            allRecordings = recordingManager.getAllRecordings()
-            showRecordingsList = true
-        }) {
-            Text(
-                text = "📂 تسجيلاتي",
-                color = Color(0xFF8B7355),
-                fontSize = 14.sp
-            )
-        }
-
         if (showHint && hintWords.isNotEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
