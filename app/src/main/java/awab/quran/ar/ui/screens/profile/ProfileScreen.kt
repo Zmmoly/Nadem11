@@ -597,6 +597,91 @@ fun ProfileScreen(
             }
         )
     }
+
+    // ── نافذة قائمة التسجيلات ──
+    if (showRecordingsList) {
+        AlertDialog(
+            onDismissRequest = { showRecordingsList = false },
+            containerColor = Color(0xFFFFF8F0),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF6B5744), modifier = Modifier.size(26.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("تسجيلاتي", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF4A3F35))
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (allRecordings.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("🎙", fontSize = 40.sp)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("لا توجد تسجيلات بعد", color = Color(0xFF8B7355), fontSize = 14.sp)
+                            }
+                        }
+                    } else {
+                        allRecordings.forEach { file ->
+                            val dateStr = SimpleDateFormat("dd/MM/yyyy  HH:mm", java.util.Locale.getDefault()).format(Date(file.lastModified()))
+                            val sizeKb = file.length() / 1024
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE9DF))
+                            ) {
+                                Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(file.nameWithoutExtension, fontSize = 12.sp, color = Color(0xFF3D2B1F), fontWeight = FontWeight.Bold)
+                                        Text("$dateStr  •  ${sizeKb} KB", fontSize = 10.sp, color = Color(0xFF8B7355))
+                                    }
+                                    IconButton(onClick = { recordingManager.playRecording(file) }) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = "تشغيل", tint = Color(0xFF6B5744))
+                                    }
+                                    IconButton(onClick = {
+                                        val intent = recordingManager.shareRecording(file)
+                                        context.startActivity(Intent.createChooser(intent, "شارك التسجيل").also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                                    }) {
+                                        Icon(Icons.Default.Share, contentDescription = "مشاركة", tint = Color(0xFF6B5744))
+                                    }
+                                    IconButton(onClick = { recordingToDelete = file }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFD32F2F))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showRecordingsList = false }) {
+                    Text("إغلاق", color = Color(0xFF6B5744))
+                }
+            }
+        )
+    }
+
+    // ── تأكيد الحذف ──
+    recordingToDelete?.let { file ->
+        AlertDialog(
+            onDismissRequest = { recordingToDelete = null },
+            containerColor = Color(0xFFFFF8F0),
+            title = { Text("حذف التسجيل", fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35)) },
+            text = { Text("هل تريد حذف «${file.nameWithoutExtension}»؟", color = Color(0xFF8B7355)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    recordingManager.deleteRecording(file)
+                    allRecordings = recordingManager.getAllRecordings()
+                    recordingToDelete = null
+                }) { Text("حذف", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { recordingToDelete = null }) {
+                    Text("إلغاء", color = Color(0xFF8B7355))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -719,90 +804,4 @@ fun SettingToggleRow(
             )
         )
     }
-
-    // ── نافذة قائمة التسجيلات ──
-    if (showRecordingsList) {
-        AlertDialog(
-            onDismissRequest = { showRecordingsList = false },
-            containerColor = Color(0xFFFFF8F0),
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF6B5744), modifier = Modifier.size(26.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("تسجيلاتي", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF4A3F35))
-                }
-            },
-            text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    if (allRecordings.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("🎙", fontSize = 40.sp)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("لا توجد تسجيلات بعد", color = Color(0xFF8B7355), fontSize = 14.sp)
-                            }
-                        }
-                    } else {
-                        allRecordings.forEach { file ->
-                            val dateStr = SimpleDateFormat("dd/MM/yyyy  HH:mm", java.util.Locale.getDefault()).format(Date(file.lastModified()))
-                            val sizeKb = file.length() / 1024
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE9DF))
-                            ) {
-                                Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(file.nameWithoutExtension, fontSize = 12.sp, color = Color(0xFF3D2B1F), fontWeight = FontWeight.Bold)
-                                        Text("$dateStr  •  ${sizeKb} KB", fontSize = 10.sp, color = Color(0xFF8B7355))
-                                    }
-                                    IconButton(onClick = { recordingManager.playRecording(file) }) {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = "تشغيل", tint = Color(0xFF6B5744))
-                                    }
-                                    IconButton(onClick = {
-                                        val intent = recordingManager.shareRecording(file)
-                                        context.startActivity(Intent.createChooser(intent, "شارك التسجيل").also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                                    }) {
-                                        Icon(Icons.Default.Share, contentDescription = "مشاركة", tint = Color(0xFF6B5744))
-                                    }
-                                    IconButton(onClick = { recordingToDelete = file }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFD32F2F))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showRecordingsList = false }) {
-                    Text("إغلاق", color = Color(0xFF6B5744))
-                }
-            }
-        )
-    }
-
-    // ── تأكيد الحذف ──
-    recordingToDelete?.let { file ->
-        AlertDialog(
-            onDismissRequest = { recordingToDelete = null },
-            containerColor = Color(0xFFFFF8F0),
-            title = { Text("حذف التسجيل", fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35)) },
-            text = { Text("هل تريد حذف «${file.nameWithoutExtension}»؟", color = Color(0xFF8B7355)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    recordingManager.deleteRecording(file)
-                    allRecordings = recordingManager.getAllRecordings()
-                    recordingToDelete = null
-                }) { Text("حذف", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { recordingToDelete = null }) {
-                    Text("إلغاء", color = Color(0xFF8B7355))
-                }
-            }
-        )
-    }
-
 }
