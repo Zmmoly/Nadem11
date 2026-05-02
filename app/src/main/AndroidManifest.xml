@@ -36,7 +36,6 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider لمشاركة ملفات الصوت -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
