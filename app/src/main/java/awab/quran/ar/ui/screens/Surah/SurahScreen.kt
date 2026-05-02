@@ -295,7 +295,7 @@ fun SurahScreen(
                         lineHeight = 22.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
                     Button(
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(donationUrl))
