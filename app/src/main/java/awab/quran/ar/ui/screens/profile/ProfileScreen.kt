@@ -307,7 +307,8 @@ fun ProfileScreen(
                             icon = Icons.Default.Info,
                             title = "عن التطبيق",
                             onClick = {
-                                Toast.makeText(context, "نديم - تطبيق تسميع القرآن الكريم", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://zmmoly.github.io/Nadem/nadeem-website.html"))
+                                context.startActivity(intent)
                             }
                         )
                     }
@@ -522,7 +523,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("اختر طريقة التبرع:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744))
                     Spacer(modifier = Modifier.height(12.dp))
-                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
                     val donationOptions = listOf(
                         Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
                         Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
