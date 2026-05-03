@@ -1558,16 +1558,40 @@ fun ExamMode(
         randomAyah = ayah
         randomPageData = pageData
 
-        referenceWords = cleanQuranText(ayah.text)
-            .replace(Regex("[﴿﴾]"), "")
-            .replace(Regex("\\(\\d+\\)"), "")
-            .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
-            .replace("ٱ", "ا")
-            .replace("ٰ", "ا")
-            .replace("ـ", "")
-            .replace(Regex("[\u064B-\u065F]"), "")
-            .replace(Regex("\\s+"), " ").trim()
-            .split(" ").filter { it.isNotEmpty() }
+        fun buildCleanWords(text: String): List<String> =
+            cleanQuranText(text)
+                .replace(Regex("[﴿﴾]"), "")
+                .replace(Regex("\\(\\d+\\)"), "")
+                .replace(Regex("[١٢٣٤٥٦٧٨٩٠0-9]+"), "")
+                .replace("ٱ", "ا")
+                .replace("ٰ", "ا")
+                .replace("ـ", "")
+                .replace(Regex("[\u064B-\u065F]"), "")
+                .replace(Regex("\\s+"), " ").trim()
+                .split(" ").filter { it.isNotEmpty() }
+
+        // كلمات الآية المعروضة (موجودة في المرجع لكن لا تحسب في الـ60)
+        val currentAyahWords = buildCleanWords(ayah.text)
+
+        // كلمات الآيات التالية في نفس الصفحة
+        val allAyahs = pageData.ayahs
+        val startIndex = allAyahs.indexOfFirst { it.ayaNumber == ayah.ayaNumber }
+        var nextWords = allAyahs.drop(startIndex + 1).flatMap { buildCleanWords(it.text) }
+
+        // إذا ما فيه كافي من الكلمات، كمّل من الصفحة التالية
+        if (nextWords.size < targetWordCount) {
+            var nextPageNum = randomPageNum + 1
+            while (nextWords.size < targetWordCount && nextPageNum <= 604) {
+                val nextPage = repository.getPage(nextPageNum)
+                val extraWords = nextPage?.ayahs?.flatMap { buildCleanWords(it.text) } ?: emptyList()
+                nextWords = nextWords + extraWords
+                nextPageNum++
+            }
+        }
+
+        // المرجع = الآية الحالية + الآيات التالية
+        // wordCount يبدأ من نهاية الآية الحالية حتى لا تحسب ضمن الـ60
+        referenceWords = currentAyahWords + nextWords
 
         val suraFormatted = ayah.suraNumber.toString().padStart(3, '0')
         val ayahFormatted = ayah.ayaNumber.toString().padStart(3, '0')
@@ -1575,7 +1599,7 @@ fun ExamMode(
 
         coloredText = buildAnnotatedString { }
         interimText = ""
-        wordCount = 0
+        wordCount = currentAyahWords.size  // يبدأ العد من بعد الآية المعروضة
         errorMessage = null
         isRecording = false
         isPlayingAudio = false
