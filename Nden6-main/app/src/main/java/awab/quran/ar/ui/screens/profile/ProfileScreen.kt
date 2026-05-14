@@ -1,10 +1,13 @@
 package awab.quran.ar.ui.screens.profile
 
+import android.app.Activity
+import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,36 +16,81 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import awab.quran.ar.ui.theme.QuranGreen
-import awab.quran.ar.ui.theme.QuranGold
+import awab.quran.ar.R
+import awab.quran.ar.data.RecitationSettings
+import awab.quran.ar.data.RecitationSettingsRepository
+import awab.quran.ar.data.ThemeRepository
+import awab.quran.ar.utils.LocaleHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import android.content.Intent
+import awab.quran.ar.services.AudioRecordingManager
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FolderOpen
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onNavigateBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
-    
+
     var userName by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
     var totalRecitations by remember { mutableStateOf(0) }
-    var completedSurahs by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    val recordingManager = remember { AudioRecordingManager(context) }
+    var showRecordingsList by remember { mutableStateOf(false) }
+    var allRecordings by remember { mutableStateOf(listOf<File>()) }
+    var recordingToDelete by remember { mutableStateOf<File?>(null) }
+    var showDonationDialog by remember { mutableStateOf(false) }
 
-    // جلب بيانات المستخدم
+    // ── Language selector state ──
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    val languages = listOf(
+        Pair("العربية", "ar"),
+        Pair("Bahasa Indonesia", "in"),
+        Pair("English", "en")
+    )
+    var selectedLanguage by remember {
+        mutableStateOf(
+            LocaleHelper.getSavedLanguage(context).let { saved ->
+                languages.find { it.second == saved }?.first ?: "العربية"
+            }
+        )
+    }
+
+    val settingsRepo = remember { RecitationSettingsRepository(context) }
+    val themeRepo = remember { ThemeRepository(context) }
+    val scope = rememberCoroutineScope()
+    var settings by remember { mutableStateOf(RecitationSettings()) }
+
+    LaunchedEffect(Unit) {
+        settingsRepo.settingsFlow.collect { settings = it }
+    }
+
     LaunchedEffect(Unit) {
         auth.currentUser?.let { user ->
             userEmail = user.email ?: ""
@@ -50,370 +98,687 @@ fun ProfileScreen(
                 .addOnSuccessListener { document ->
                     userName = document.getString("fullName") ?: ""
                     totalRecitations = document.getLong("totalRecitations")?.toInt() ?: 0
-                    completedSurahs = document.getLong("completedSurahs")?.toInt() ?: 0
                 }
         }
+    }
+
+    val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
+    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val topBarColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
+    val titleColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    val dividerColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFD4C5A9)
+    val avatarColor = if (isDarkMode) Color(0xFF3A3A3A) else Color(0xFF6B5744)
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(bgColor)
+    ) {
+        if (!isDarkMode) {
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = "خلفية الملف الشخصي",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { Text(text = "الملف الشخصي", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
+                        }
+                    },
+                    actions = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clickable { showDonationDialog = true }
+                                .padding(4.dp)
+                        ) {
+                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935), modifier = Modifier.size(22.dp))
+                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
+                )
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // صورة المستخدم
+                Card(
+                    modifier = Modifier.size(120.dp),
+                    shape = RoundedCornerShape(60.dp),
+                    colors = CardDefaults.cardColors(containerColor = avatarColor)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "صورة المستخدم",
+                            modifier = Modifier.size(60.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                // معلومات المستخدم
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = userName.ifEmpty { "المستخدم" },
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = subColor, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = userEmail, fontSize = 14.sp, color = subColor)
+                        }
+                    }
+                }
+
+                // إحصائيات التسميع + اختيار اللغة
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "إحصائيات التسميع",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
+                        )
+
+                        StatRow(
+                            isDarkMode = isDarkMode,
+                            icon = Icons.Default.Mic,
+                            label = "عدد التسميعات",
+                            value = totalRecitations.toString()
+                        )
+
+                        Divider(color = dividerColor)
+
+                        // ── خيار اللغة ──
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showLanguageDialog = true },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = null,
+                                    tint = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "اللغة",
+                                        fontSize = 16.sp,
+                                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                                    )
+                                    Text(
+                                        text = selectedLanguage,
+                                        fontSize = 13.sp,
+                                        color = subColor
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = subColor
+                            )
+                        }
+                    }
+                }
+
+                // خيارات الحساب
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "إعدادات الحساب",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        // زر الوضع الليلي
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = if (isDarkMode) Icons.Default.NightlightRound else Icons.Default.WbSunny,
+                                    contentDescription = null,
+                                    tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (isDarkMode) "الوضع الليلي" else "الوضع النهاري",
+                                    fontSize = 16.sp,
+                                    color = titleColor
+                                )
+                            }
+                            Switch(
+                                checked = isDarkMode,
+                                onCheckedChange = { enabled ->
+                                    onToggleDarkMode(enabled)
+                                    scope.launch { themeRepo.setDarkMode(enabled) }
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color(0xFFFFD700),
+                                    checkedTrackColor = Color(0xFF3A3A3A),
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color(0xFFD4C5A9)
+                                )
+                            )
+                        }
+
+                        Divider(color = dividerColor)
+
+                        ProfileOption(
+                            isDarkMode = isDarkMode,
+                            icon = Icons.Default.Settings,
+                            title = "الإعدادات",
+                            onClick = { showSettingsDialog = true }
+                        )
+
+                        Divider(color = dividerColor)
+
+                        ProfileOption(
+                            isDarkMode = isDarkMode,
+                            icon = Icons.Default.FolderOpen,
+                            title = "تسجيلاتي",
+                            onClick = {
+                                allRecordings = recordingManager.getAllRecordings()
+                                showRecordingsList = true
+                            }
+                        )
+
+                        Divider(color = dividerColor)
+
+                        ProfileOption(
+                            isDarkMode = isDarkMode,
+                            icon = Icons.Default.Info,
+                            title = "عن التطبيق",
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://zmmoly.github.io/Nadem/nadeem-website.html"))
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                }
+
+                // زر تسجيل الخروج
+                Button(
+                    onClick = { showLogoutDialog = true },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Logout, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
+                    Text(text = "تسجيل الخروج", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // ── نافذة اختيار اللغة ──
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            containerColor = cardColor,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Language, contentDescription = null, tint = titleColor, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("اختر اللغة", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = titleColor)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    languages.forEach { (name, code) ->
+                        val isSelected = selectedLanguage == name
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedLanguage = name
+                                    // 1. احفظ اللغة
+                                    LocaleHelper.saveLanguage(context, code)
+                                    showLanguageDialog = false
+                                    // 2. أعد تشغيل الـ Activity لتطبيق اللغة فوراً
+                                    val activity = context as Activity
+                                    activity.finish()
+                                    activity.startActivity(activity.intent)
+                                }
+                                .background(
+                                    if (isSelected) avatarColor.copy(alpha = 0.15f) else Color.Transparent,
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = name,
+                                fontSize = 16.sp,
+                                color = if (isSelected) avatarColor else titleColor,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = avatarColor, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        if (name != languages.last().first) Divider(color = dividerColor)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("إغلاق", color = subColor)
+                }
+            }
+        )
     }
 
     // حوار تأكيد تسجيل الخروج
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("تسجيل الخروج") },
-            text = { Text("هل أنت متأكد من رغبتك في تسجيل الخروج؟") },
+            title = { Text(text = "تسجيل الخروج", color = titleColor) },
+            text = { Text(text = "هل أنت متأكد من تسجيل الخروج؟", color = subColor) },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         auth.signOut()
                         showLogoutDialog = false
                         onLogout()
-                        Toast.makeText(context, "تم تسجيل الخروج بنجاح", Toast.LENGTH_SHORT).show()
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545))
                 ) {
-                    Text("نعم", color = Color.Red)
+                    Text("تسجيل الخروج", color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("إلغاء", color = QuranGreen)
+                    Text("إلغاء", color = titleColor)
+                }
+            },
+            containerColor = cardColor
+        )
+    }
+
+    // Dialog إعدادات التسميع
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = {
+                Text(
+                    text = "إعدادات التسميع",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF4A3F35)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "الأخطاء التي يتم تجاهلها:",
+                        fontSize = 14.sp,
+                        color = subColor,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    SettingToggleRow(
+                        title = "التشكيل",
+                        subtitle = "تجاهل الحركات والتنوين",
+                        checked = settings.ignoreTashkeel,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreTashkeel = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                    Divider(color = Color(0xFFE0D5C5))
+                    SettingToggleRow(
+                        title = "حرف الحاء",
+                        subtitle = "تجاهل الخلط بين ح و ه",
+                        checked = settings.ignoreHaa,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreHaa = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                    Divider(color = Color(0xFFE0D5C5))
+                    SettingToggleRow(
+                        title = "حرف العين",
+                        subtitle = "تجاهل الخلط بين ع و أ و ء",
+                        checked = settings.ignoreAyn,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreAyn = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                    Divider(color = Color(0xFFE0D5C5))
+                    SettingToggleRow(
+                        title = "المدود",
+                        subtitle = "تجاهل أخطاء المد والقصر",
+                        checked = settings.ignoreMadd,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreMadd = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                    Divider(color = Color(0xFFE0D5C5))
+                    SettingToggleRow(
+                        title = "مواضع الوقف",
+                        subtitle = "تجاهل كلمات الوقف والوصل",
+                        checked = settings.ignoreWaqf,
+                        onCheckedChange = {
+                            val updated = settings.copy(ignoreWaqf = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                    Divider(color = Color(0xFFE0D5C5))
+                    SettingToggleRow(
+                        title = "المساهمة في تحسين الذكاء الاصطناعي",
+                        subtitle = "السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي",
+                        checked = settings.allowAudioStorage,
+                        onCheckedChange = {
+                            val updated = settings.copy(allowAudioStorage = it)
+                            settings = updated
+                            scope.launch { settingsRepo.save(updated) }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showSettingsDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = avatarColor)
+                ) {
+                    Text("حفظ", color = Color.White)
+                }
+            },
+            containerColor = cardColor
+        )
+    }
+
+    // نافذة التبرع
+    if (showDonationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDonationDialog = false },
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
+            title = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "ادعم تطوير التطبيق",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        fontSize = 14.sp,
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("اختر طريقة التبرع:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
+                    val donationOptions = listOf(
+                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
+                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
+                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
+                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                    )
+                    donationOptions.chunked(2).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (label, url, color) ->
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                        showDonationDialog = false
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+                                    border = BorderStroke(1.5.dp, color)
+                                ) {
+                                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDonationDialog = false }) {
+                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
                 }
             }
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("الملف الشخصي") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+    // ── نافذة قائمة التسجيلات ──
+    if (showRecordingsList) {
+        AlertDialog(
+            onDismissRequest = { showRecordingsList = false },
+            containerColor = Color(0xFFFFF8F0),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF6B5744), modifier = Modifier.size(26.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("تسجيلاتي", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF4A3F35))
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (allRecordings.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("🎙", fontSize = 40.sp)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("لا توجد تسجيلات بعد", color = Color(0xFF8B7355), fontSize = 14.sp)
+                            }
+                        }
+                    } else {
+                        allRecordings.forEach { file ->
+                            val dateStr = SimpleDateFormat("dd/MM/yyyy  HH:mm", java.util.Locale.getDefault()).format(Date(file.lastModified()))
+                            val sizeKb = file.length() / 1024
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE9DF))
+                            ) {
+                                Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(file.nameWithoutExtension, fontSize = 12.sp, color = Color(0xFF3D2B1F), fontWeight = FontWeight.Bold)
+                                        Text("$dateStr  •  ${sizeKb} KB", fontSize = 10.sp, color = Color(0xFF8B7355))
+                                    }
+                                    IconButton(onClick = { recordingManager.playRecording(file) }) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = "تشغيل", tint = Color(0xFF6B5744))
+                                    }
+                                    IconButton(onClick = {
+                                        val intent = recordingManager.shareRecording(file)
+                                        context.startActivity(Intent.createChooser(intent, "شارك التسجيل").also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                                    }) {
+                                        Icon(Icons.Default.Share, contentDescription = "مشاركة", tint = Color(0xFF6B5744))
+                                    }
+                                    IconButton(onClick = { recordingToDelete = file }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFD32F2F))
+                                    }
+                                }
+                            }
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = QuranGreen,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
-                .verticalScroll(scrollState)
-        ) {
-            // القسم العلوي - معلومات المستخدم
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = QuranGreen
-                ),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // صورة المستخدم
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .background(
-                                color = Color.White,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = userName.firstOrNull()?.uppercase() ?: "👤",
-                            fontSize = 40.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = QuranGreen
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = userName.ifEmpty { "مستخدم" },
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = userEmail,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showRecordingsList = false }) {
+                    Text("إغلاق", color = Color(0xFF6B5744))
                 }
             }
+        )
+    }
 
-            // بطاقات الإحصائيات
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    title = "التسميعات",
-                    value = "$totalRecitations",
-                    icon = Icons.Default.CheckCircle,
-                    color = QuranGreen,
-                    modifier = Modifier.weight(1f)
-                )
-
-                StatCard(
-                    title = "السور المكتملة",
-                    value = "$completedSurahs",
-                    icon = Icons.Default.Star,
-                    color = QuranGold,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // إعدادات الحساب
-            Text(
-                text = "إعدادات الحساب",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = QuranGreen,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column {
-                    ProfileMenuItem(
-                        icon = Icons.Default.Person,
-                        title = "تعديل الملف الشخصي",
-                        onClick = {
-                            Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    Divider()
-                    ProfileMenuItem(
-                        icon = Icons.Default.Lock,
-                        title = "تغيير كلمة المرور",
-                        onClick = {
-                            Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    Divider()
-                    ProfileMenuItem(
-                        icon = Icons.Default.Notifications,
-                        title = "الإشعارات",
-                        onClick = {
-                            Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                        }
-                    )
+    // ── تأكيد الحذف ──
+    recordingToDelete?.let { file ->
+        AlertDialog(
+            onDismissRequest = { recordingToDelete = null },
+            containerColor = Color(0xFFFFF8F0),
+            title = { Text("حذف التسجيل", fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35)) },
+            text = { Text("هل تريد حذف «${file.nameWithoutExtension}»؟", color = Color(0xFF8B7355)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    recordingManager.deleteRecording(file)
+                    allRecordings = recordingManager.getAllRecordings()
+                    recordingToDelete = null
+                }) { Text("حذف", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { recordingToDelete = null }) {
+                    Text("إلغاء", color = Color(0xFF8B7355))
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // المزيد
-            Text(
-                text = "المزيد",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = QuranGreen,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column {
-                    ProfileMenuItem(
-                        icon = Icons.Default.Info,
-                        title = "عن التطبيق",
-                        onClick = {
-                            Toast.makeText(context, "نديم - تطبيق تسميع القرآن الكريم", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    Divider()
-                    ProfileMenuItem(
-                        icon = Icons.Default.Share,
-                        title = "مشاركة التطبيق",
-                        onClick = {
-                            Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    Divider()
-                    ProfileMenuItem(
-                        icon = Icons.Default.Settings,
-                        title = "الإعدادات",
-                        onClick = {
-                            Toast.makeText(context, "قريباً", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // زر تسجيل الخروج
-            OutlinedButton(
-                onClick = { showLogoutDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(56.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color.Red
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ExitToApp,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "تسجيل الخروج",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // معلومات التطبيق
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "نديم v1.0",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
+        )
     }
 }
 
 @Composable
-fun StatCard(
-    title: String,
+fun StatRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
     value: String,
-    icon: ImageVector,
-    color: Color,
-    modifier: Modifier = Modifier
+    isDarkMode: Boolean = false
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(2.dp)
+    val color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = value,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(text = label, fontSize = 16.sp, color = color)
+        }
+        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
+    }
+}
+
+@Composable
+fun ProfileOption(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    onClick: () -> Unit,
+    isDarkMode: Boolean = false
+) {
+    val tColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+    val sColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = icon, contentDescription = null, tint = tColor, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(text = title, fontSize = 16.sp, color = tColor)
+        }
+        IconButton(onClick = onClick) {
+            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "فتح", tint = sColor)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileMenuItem(
-    icon: ImageVector,
+fun SettingToggleRow(
     title: String,
-    onClick: () -> Unit
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = QuranGreen,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowRight,
-                contentDescription = null,
-                tint = Color.Gray
-            )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF4A3F35))
+            Text(text = subtitle, fontSize = 12.sp, color = Color(0xFF9E8E7E))
         }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF6B5744),
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = Color(0xFFD4C5A9)
+            )
+        )
     }
 }
