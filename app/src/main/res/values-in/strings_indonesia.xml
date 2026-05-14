@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Terjemahan Bahasa Indonesia
-    Letakkan file ini di:
-    app/src/main/res/values-in/strings.xml
--->
 <resources>
-    <!-- Nama Aplikasi -->
     <string name="app_name">Nadim</string>
-
-    <!-- Auth - Login -->
     <string name="login">Masuk</string>
     <string name="email">Email</string>
     <string name="password">Kata Sandi</string>
@@ -22,9 +14,7 @@
     <string name="back_to_login">Kembali ke Halaman Masuk</string>
     <string name="or_register_with">atau daftar dengan</string>
     <string name="by_creating_account">Dengan membuat akun, Anda menyetujui </string>
-    <string name="join_us">Bergabunglah bersama kami dalam perjalanan menghafal Al-Qur&apos;an</string>
-
-    <!-- Auth - Validasi -->
+    <string name="join_us">Bergabunglah bersama kami dalam perjalanan menghafal Al-Quran</string>
     <string name="enter_full_name">Silakan masukkan nama lengkap</string>
     <string name="enter_email">Silakan masukkan email</string>
     <string name="enter_password">Silakan masukkan kata sandi</string>
@@ -33,26 +23,20 @@
     <string name="email_already_registered">Email sudah terdaftar</string>
     <string name="check_data_first">Periksa kebenaran data terlebih dahulu</string>
     <string name="resend_activation_link">Kirim Ulang Tautan Aktivasi</string>
-
-    <!-- Auth - Lupa Kata Sandi -->
     <string name="forgot_password_desc">Masukkan email terdaftar Anda dan kami akan mengirimkan tautan untuk mengatur ulang kata sandi</string>
     <string name="send_reset_link">Kirim Tautan Reset</string>
     <string name="check_your_email">Periksa Email Anda</string>
     <string name="check_email_inbox">Periksa kotak masuk email Anda</string>
-
-    <!-- Navigasi Utama -->
     <string name="home">Beranda</string>
     <string name="profile">Profil</string>
     <string name="settings">Pengaturan</string>
     <string name="search">Cari</string>
-    <string name="search_surah">Cari surah…</string>
+    <string name="search_surah">Cari surah</string>
     <string name="favorites">Favorit</string>
     <string name="all">Semua</string>
     <string name="close">Tutup</string>
     <string name="cancel">Batal</string>
     <string name="back">Kembali</string>
-
-    <!-- Surah / Al-Qur'an -->
     <string name="surah_number">Surah %1$d</string>
     <string name="verse_count">%1$d ayat</string>
     <string name="juz_number">Juz %1$d</string>
@@ -62,49 +46,37 @@
     <string name="remove_from_favorites">Hapus dari Favorit</string>
     <string name="last_read">Terakhir Dibaca</string>
     <string name="completed_surahs">Surah yang Diselesaikan</string>
-    <string name="diacritics">Tanda Baca (Harakat)</string>
-    <string name="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
-    <string name="quran_reminder">Pengingat Al-Qur&apos;an</string>
-    <string name="quran_review_reminder">Pengingat untuk mengulang hafalan Al-Qur&apos;an</string>
-    <string name="check_your_memorization">Uji hafalan Al-Qur&apos;an Anda</string>
-
-    <!-- Tilawah / Recitation -->
+    <string name="diacritics">Tanda Baca Harakat</string>
+    <string name="basmala">&#x628;&#x650;&#x633;&#x652;&#x645;&#x650; &#x627;&#x644;&#x644;&#x651;&#x647;&#x650; &#x627;&#x644;&#x631;&#x651;&#x62D;&#x652;&#x645;&#x670;&#x646;&#x650; &#x627;&#x644;&#x631;&#x651;&#x62D;&#x650;&#x64A;&#x645;&#x650;</string>
+    <string name="quran_reminder">Pengingat Al-Quran</string>
+    <string name="quran_review_reminder">Pengingat untuk mengulang hafalan Al-Quran</string>
+    <string name="check_your_memorization">Uji hafalan Al-Quran Anda</string>
     <string name="start_recitation">Mulai Tilawah</string>
-    <string name="start_recitation_hint">Mulai tilawah…</string>
+    <string name="start_recitation_hint">Mulai tilawah</string>
     <string name="stop_recitation">Hentikan Tilawah</string>
-    <string name="press_recitation_hint">Tekan tombol tilawah dan lanjutkan membaca…</string>
+    <string name="press_recitation_hint">Tekan tombol tilawah dan lanjutkan membaca</string>
     <string name="recitation_settings">Pengaturan Tilawah</string>
     <string name="recitation_statistics">Statistik Tilawah</string>
     <string name="recited_text">Teks yang Dibaca</string>
     <string name="listen_to_recording">Dengarkan Rekaman</string>
     <string name="be_in_quiet_place">Pastikan Anda berada di tempat yang tenang untuk hasil terbaik</string>
-
-    <!-- Pengaturan Tilawah - Abaikan Kesalahan -->
     <string name="ignored_errors">Kesalahan yang diabaikan:</string>
     <string name="ignore_madd_errors">Abaikan kesalahan mad dan qashr</string>
     <string name="ignore_harakat_errors">Abaikan harakat dan tanwin</string>
-    <string name="ignore_ha_he_confusion">Abaikan kekeliruan ح dan ه</string>
-    <string name="ignore_ain_hamza_confusion">Abaikan kekeliruan ع, أ, dan ء</string>
+    <string name="ignore_ha_he_confusion">Abaikan kekeliruan ha dan he</string>
+    <string name="ignore_ain_hamza_confusion">Abaikan kekeliruan ain dan hamzah</string>
     <string name="ignore_waqf_wasl_errors">Abaikan kesalahan waqaf dan washal</string>
-
-    <!-- Kuis / Test -->
     <string name="test">Kuis</string>
-    <string name="start_test">Mulai Kuis 🎲</string>
-    <string name="new_test">Kuis Baru 🔄</string>
+    <string name="start_test">Mulai Kuis</string>
+    <string name="new_test">Kuis Baru</string>
     <string name="end_test">Akhiri Kuis</string>
     <string name="question_indicator">Pertanyaan %1$s dari %2$s</string>
     <string name="excellent_completed">Bagus! Kuis selesai</string>
-
-    <!-- Profil & Akun -->
     <string name="account_settings">Pengaturan Akun</string>
     <string name="user">Pengguna</string>
     <string name="microphone">Mikrofon</string>
-
-    <!-- Tema -->
     <string name="dark_mode">Mode Gelap</string>
     <string name="light_mode">Mode Terang</string>
-
-    <!-- Donasi -->
     <string name="donate">Donasi</string>
     <string name="donate_now">Donasi Sekarang</string>
     <string name="support_app_development">Dukung pengembangan aplikasi</string>
@@ -112,56 +84,48 @@
     <string name="donation_5">5 Riyal</string>
     <string name="donation_10">10 Riyal</string>
     <string name="donation_20">20 Riyal</string>
-
-    <!-- Kosakata -->
     <string name="word_40">40 Kata</string>
     <string name="word_60">60 Kata</string>
     <string name="word_80">80 Kata</string>
-
-    <!-- Jaringan -->
     <string name="check_internet">Periksa koneksi internet Anda</string>
-
-    <!-- Izin & AI -->
     <string name="contribute_to_ai">Berkontribusi untuk meningkatkan AI</string>
     <string name="allow_audio_storage">Izinkan penyimpanan rekaman suara Anda untuk membantu melatih model AI</string>
-    <string name="audio_ai_notice">\n\nRekaman suara mungkin digunakan untuk tujuan peningkatan model AI oleh penyedia layanan.</string>
-    <string name="revoke_permission_notice">\n\nAnda dapat mencabut izin ini kapan saja dari pengaturan aplikasi.</string>
-
-    <!-- Nama-nama Surah Al-Qur'an -->
+    <string name="audio_ai_notice">Rekaman suara mungkin digunakan untuk tujuan peningkatan model AI oleh penyedia layanan.</string>
+    <string name="revoke_permission_notice">Anda dapat mencabut izin ini kapan saja dari pengaturan aplikasi.</string>
     <string name="surah_al_fatihah">Al-Fatihah</string>
     <string name="surah_al_baqarah">Al-Baqarah</string>
-    <string name="surah_ali_imran">Ali &apos;Imran</string>
-    <string name="surah_an_nisa">An-Nisa&apos;</string>
-    <string name="surah_al_maidah">Al-Ma&apos;idah</string>
-    <string name="surah_al_anam">Al-An&apos;am</string>
-    <string name="surah_al_araf">Al-A&apos;raf</string>
+    <string name="surah_ali_imran">Ali Imran</string>
+    <string name="surah_an_nisa">An-Nisa</string>
+    <string name="surah_al_maidah">Al-Maidah</string>
+    <string name="surah_al_anam">Al-Anam</string>
+    <string name="surah_al_araf">Al-Araf</string>
     <string name="surah_al_anfal">Al-Anfal</string>
     <string name="surah_at_tawbah">At-Tawbah</string>
     <string name="surah_yunus">Yunus</string>
     <string name="surah_hud">Hud</string>
     <string name="surah_yusuf">Yusuf</string>
-    <string name="surah_ar_rad">Ar-Ra&apos;d</string>
+    <string name="surah_ar_rad">Ar-Rad</string>
     <string name="surah_ibrahim">Ibrahim</string>
     <string name="surah_al_hijr">Al-Hijr</string>
     <string name="surah_an_nahl">An-Nahl</string>
-    <string name="surah_al_isra">Al-Isra&apos;</string>
+    <string name="surah_al_isra">Al-Isra</string>
     <string name="surah_al_kahf">Al-Kahf</string>
     <string name="surah_maryam">Maryam</string>
     <string name="surah_ta_ha">Ta Ha</string>
-    <string name="surah_al_anbiya">Al-Anbiya&apos;</string>
+    <string name="surah_al_anbiya">Al-Anbiya</string>
     <string name="surah_al_hajj">Al-Hajj</string>
-    <string name="surah_al_muminun">Al-Mu&apos;minun</string>
+    <string name="surah_al_muminun">Al-Muminun</string>
     <string name="surah_an_nur">An-Nur</string>
     <string name="surah_al_furqan">Al-Furqan</string>
-    <string name="surah_ash_shuara">Ash-Shu&apos;ara&apos;</string>
+    <string name="surah_ash_shuara">Ash-Shuara</string>
     <string name="surah_an_naml">An-Naml</string>
     <string name="surah_al_qasas">Al-Qasas</string>
-    <string name="surah_al_ankabut">Al-&apos;Ankabut</string>
+    <string name="surah_al_ankabut">Al-Ankabut</string>
     <string name="surah_ar_rum">Ar-Rum</string>
     <string name="surah_luqman">Luqman</string>
     <string name="surah_as_sajdah">As-Sajdah</string>
     <string name="surah_al_ahzab">Al-Ahzab</string>
-    <string name="surah_saba">Saba&apos;</string>
+    <string name="surah_saba">Saba</string>
     <string name="surah_fatir">Fatir</string>
     <string name="surah_ya_sin">Ya Sin</string>
     <string name="surah_as_saffat">As-Saffat</string>
@@ -183,13 +147,13 @@
     <string name="surah_an_najm">An-Najm</string>
     <string name="surah_al_qamar">Al-Qamar</string>
     <string name="surah_ar_rahman">Ar-Rahman</string>
-    <string name="surah_al_waqiah">Al-Waqi&apos;ah</string>
+    <string name="surah_al_waqiah">Al-Waqiah</string>
     <string name="surah_al_hadid">Al-Hadid</string>
     <string name="surah_al_mujadilah">Al-Mujadilah</string>
     <string name="surah_al_hashr">Al-Hashr</string>
     <string name="surah_al_mumtahanah">Al-Mumtahanah</string>
     <string name="surah_as_saf">As-Saf</string>
-    <string name="surah_al_jumuah">Al-Jumu&apos;ah</string>
+    <string name="surah_al_jumuah">Al-Jumuah</string>
     <string name="surah_al_munafiqun">Al-Munafiqun</string>
     <string name="surah_at_taghabun">At-Taghabun</string>
     <string name="surah_at_talaq">At-Talaq</string>
@@ -197,7 +161,7 @@
     <string name="surah_al_mulk">Al-Mulk</string>
     <string name="surah_al_qalam">Al-Qalam</string>
     <string name="surah_al_haqqah">Al-Haqqah</string>
-    <string name="surah_al_maarij">Al-Ma&apos;arij</string>
+    <string name="surah_al_maarij">Al-Maarij</string>
     <string name="surah_nuh">Nuh</string>
     <string name="surah_al_jinn">Al-Jinn</string>
     <string name="surah_al_muzzammil">Al-Muzzammil</string>
@@ -205,16 +169,16 @@
     <string name="surah_al_qiyamah">Al-Qiyamah</string>
     <string name="surah_al_insan">Al-Insan</string>
     <string name="surah_al_mursalat">Al-Mursalat</string>
-    <string name="surah_an_naba">An-Naba&apos;</string>
-    <string name="surah_an_naziat">An-Nazi&apos;at</string>
-    <string name="surah_abasa">&apos;Abasa</string>
+    <string name="surah_an_naba">An-Naba</string>
+    <string name="surah_an_naziat">An-Naziat</string>
+    <string name="surah_abasa">Abasa</string>
     <string name="surah_at_takwir">At-Takwir</string>
     <string name="surah_al_infitar">Al-Infitar</string>
     <string name="surah_al_mutaffifin">Al-Mutaffifin</string>
     <string name="surah_al_inshiqaq">Al-Inshiqaq</string>
     <string name="surah_al_buruj">Al-Buruj</string>
     <string name="surah_at_tariq">At-Tariq</string>
-    <string name="surah_al_ala">Al-A&apos;la</string>
+    <string name="surah_al_ala">Al-Ala</string>
     <string name="surah_al_ghashiyah">Al-Ghashiyah</string>
     <string name="surah_al_fajr">Al-Fajr</string>
     <string name="surah_al_balad">Al-Balad</string>
@@ -223,18 +187,18 @@
     <string name="surah_ad_duha">Ad-Duha</string>
     <string name="surah_ash_sharh">Ash-Sharh</string>
     <string name="surah_at_tin">At-Tin</string>
-    <string name="surah_al_alaq">Al-&apos;Alaq</string>
+    <string name="surah_al_alaq">Al-Alaq</string>
     <string name="surah_al_qadr">Al-Qadr</string>
     <string name="surah_al_bayyinah">Al-Bayyinah</string>
     <string name="surah_az_zalzalah">Az-Zalzalah</string>
-    <string name="surah_al_adiyat">Al-&apos;Adiyat</string>
-    <string name="surah_al_qariah">Al-Qari&apos;ah</string>
+    <string name="surah_al_adiyat">Al-Adiyat</string>
+    <string name="surah_al_qariah">Al-Qariah</string>
     <string name="surah_at_takathur">At-Takathur</string>
-    <string name="surah_al_asr">Al-&apos;Asr</string>
+    <string name="surah_al_asr">Al-Asr</string>
     <string name="surah_al_humazah">Al-Humazah</string>
     <string name="surah_al_fil">Al-Fil</string>
     <string name="surah_quraysh">Quraysh</string>
-    <string name="surah_al_maun">Al-Ma&apos;un</string>
+    <string name="surah_al_maun">Al-Maun</string>
     <string name="surah_al_kawthar">Al-Kawthar</string>
     <string name="surah_al_kafirun">Al-Kafirun</string>
     <string name="surah_an_nasr">An-Nasr</string>
@@ -242,7 +206,5 @@
     <string name="surah_al_ikhlas">Al-Ikhlas</string>
     <string name="surah_al_falaq">Al-Falaq</string>
     <string name="surah_an_nas">An-Nas</string>
-
-    <!-- Google Client ID (jangan diubah) -->
     <string name="google_web_client_id" translatable="false">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
 </resources>
