@@ -3,5 +3,107 @@
     <string name="login">تسجيل الدخول</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
-    <string name="google_web_client_id">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
+    <string name="google_web_client_id" translatable="false">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
+
+    <string name="forgot_password">نسيت كلمة المرور؟</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="create_account">إنشاء حساب</string>
+    <string name="create_new_account">إنشاء حساب جديد</string>
+    <string name="already_have_account">لديك حساب بالفعل؟</string>
+    <string name="go_to_login">الذهاب إلى تسجيل الدخول</string>
+    <string name="back_to_login">العودة إلى تسجيل الدخول</string>
+    <string name="or_register_with">أو سجّل باستخدام</string>
+    <string name="by_creating_account">بإنشاء حساب، فإنك توافق على </string>
+    <string name="join_us">انضم إلينا في رحلة حفظ القرآن الكريم</string>
+
+    <string name="enter_full_name">الرجاء إدخال الاسم الكامل</string>
+    <string name="enter_email">الرجاء إدخال البريد الإلكتروني</string>
+    <string name="enter_password">الرجاء إدخال كلمة المرور</string>
+    <string name="confirm_password_prompt">الرجاء تأكيد كلمة المرور</string>
+    <string name="invalid_email">البريد الإلكتروني غير صحيح</string>
+    <string name="email_already_registered">البريد الإلكتروني مسجل مسبقاً</string>
+    <string name="check_data_first">يرجى التحقق من صحة البيانات أولاً</string>
+    <string name="resend_activation_link">إعادة إرسال رابط التفعيل</string>
+
+    <string name="forgot_password_desc">أدخل بريدك الإلكتروني المسجل وسنرسل لك رابطاً لإعادة تعيين كلمة المرور</string>
+    <string name="send_reset_link">إرسال رابط إعادة التعيين</string>
+    <string name="check_your_email">تحقق من بريدك الإلكتروني</string>
+    <string name="check_email_inbox">تحقق من صندوق الوارد</string>
+
+    <string name="home">الرئيسية</string>
+    <string name="profile">الملف الشخصي</string>
+    <string name="settings">الإعدادات</string>
+    <string name="search">بحث</string>
+    <string name="search_surah">ابحث عن سورة</string>
+    <string name="favorites">المفضلة</string>
+    <string name="all">الكل</string>
+    <string name="close">إغلاق</string>
+    <string name="cancel">إلغاء</string>
+    <string name="back">رجوع</string>
+
+    <string name="surah_number">سورة %1$d</string>
+    <string name="verse_count">%1$d آية</string>
+    <string name="juz_number">الجزء %1$d</string>
+    <string name="page_indicator">%1$s من %2$s</string>
+    <string name="go_to_page">الذهاب إلى صفحة</string>
+    <string name="add_to_favorites">إضافة إلى المفضلة</string>
+    <string name="remove_from_favorites">إزالة من المفضلة</string>
+    <string name="last_read">آخر قراءة</string>
+    <string name="completed_surahs">السور المكتملة</string>
+    <string name="diacritics">التشكيل</string>
+    <string name="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
+    <string name="quran_reminder">تذكير القرآن</string>
+    <string name="quran_review_reminder">تذكير بمراجعة حفظ القرآن</string>
+    <string name="check_your_memorization">اختبر حفظك للقرآن الكريم</string>
+
+    <string name="start_recitation">بدء التسميع</string>
+    <string name="start_recitation_hint">ابدأ التسميع</string>
+    <string name="stop_recitation">إيقاف التسميع</string>
+    <string name="press_recitation_hint">اضغط على زر التسميع وتابع القراءة</string>
+    <string name="recitation_settings">إعدادات التسميع</string>
+    <string name="recitation_statistics">إحصائيات التسميع</string>
+    <string name="recited_text">النص المُسمَّع</string>
+    <string name="listen_to_recording">الاستماع إلى التسجيل</string>
+    <string name="be_in_quiet_place">تأكد من وجودك في مكان هادئ للحصول على أفضل النتائج</string>
+
+    <string name="ignored_errors">الأخطاء التي يتم تجاهلها:</string>
+    <string name="ignore_madd_errors">تجاهل أخطاء المد والقصر</string>
+    <string name="ignore_harakat_errors">تجاهل الحركات والتنوين</string>
+    <string name="ignore_ha_he_confusion">تجاهل الخلط بين ح و ه</string>
+    <string name="ignore_ain_hamza_confusion">تجاهل الخلط بين ع و أ و ء</string>
+    <string name="ignore_waqf_wasl_errors">تجاهل أخطاء الوقف والوصل</string>
+
+    <string name="test">اختبار</string>
+    <string name="start_test">بدء الاختبار 🎲</string>
+    <string name="new_test">اختبار جديد 🔄</string>
+    <string name="end_test">إنهاء الاختبار</string>
+    <string name="question_indicator">السؤال %1$s من %2$s</string>
+    <string name="excellent_completed">أحسنت! اكتمل الاختبار</string>
+
+    <string name="account_settings">إعدادات الحساب</string>
+    <string name="user">المستخدم</string>
+    <string name="microphone">الميكروفون</string>
+
+    <string name="dark_mode">الوضع الليلي</string>
+    <string name="light_mode">الوضع النهاري</string>
+
+    <string name="donate">تبرع</string>
+    <string name="donate_now">تبرع الآن</string>
+    <string name="support_app_development">ادعم تطوير التطبيق</string>
+    <string name="choose_donation_method">اختر طريقة التبرع:</string>
+    <string name="donation_5">5 ريال</string>
+    <string name="donation_10">10 ريال</string>
+    <string name="donation_20">20 ريال</string>
+
+    <string name="word_40">40 كلمة</string>
+    <string name="word_60">60 كلمة</string>
+    <string name="word_80">80 كلمة</string>
+
+    <string name="check_internet">تحقق من اتصالك بالإنترنت</string>
+
+    <string name="contribute_to_ai">المساهمة في تحسين الذكاء الاصطناعي</string>
+    <string name="allow_audio_storage">السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي</string>
+    <string name="audio_ai_notice">قد تُستخدم التسجيلات الصوتية لأغراض تحسين نموذج الذكاء الاصطناعي من قِبل مزود الخدمة.</string>
+    <string name="revoke_permission_notice">يمكنك إلغاء هذه الإذن في أي وقت من إعدادات التطبيق.</string>
 </resources>
