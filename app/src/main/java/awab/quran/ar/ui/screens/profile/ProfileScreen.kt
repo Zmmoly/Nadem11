@@ -1,5 +1,6 @@
 package awab.quran.ar.ui.screens.profile
 
+import android.app.Activity
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -28,12 +29,11 @@ import awab.quran.ar.R
 import awab.quran.ar.data.RecitationSettings
 import awab.quran.ar.data.RecitationSettingsRepository
 import awab.quran.ar.data.ThemeRepository
+import awab.quran.ar.utils.LocaleHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import android.content.Intent
-import android.content.res.Configuration
-import java.util.Locale
 import awab.quran.ar.services.AudioRecordingManager
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
@@ -76,8 +76,8 @@ fun ProfileScreen(
     )
     var selectedLanguage by remember {
         mutableStateOf(
-            context.resources.configuration.locales[0].language.let { lang ->
-                languages.find { it.second == lang }?.first ?: "العربية"
+            LocaleHelper.getSavedLanguage(context).let { saved ->
+                languages.find { it.second == saved }?.first ?: "العربية"
             }
         )
     }
@@ -388,14 +388,13 @@ fun ProfileScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     selectedLanguage = name
-                                    // تطبيق اللغة
-                                    val locale = Locale(code)
-                                    Locale.setDefault(locale)
-                                    val config = Configuration(context.resources.configuration)
-                                    config.setLocale(locale)
-                                    context.resources.updateConfiguration(config, context.resources.displayMetrics)
+                                    // 1. احفظ اللغة
+                                    LocaleHelper.saveLanguage(context, code)
                                     showLanguageDialog = false
-                                    Toast.makeText(context, "تم تغيير اللغة — أعد تشغيل التطبيق", Toast.LENGTH_SHORT).show()
+                                    // 2. أعد تشغيل الـ Activity لتطبيق اللغة فوراً
+                                    val activity = context as Activity
+                                    activity.finish()
+                                    activity.startActivity(activity.intent)
                                 }
                                 .background(
                                     if (isSelected) avatarColor.copy(alpha = 0.15f) else Color.Transparent,
