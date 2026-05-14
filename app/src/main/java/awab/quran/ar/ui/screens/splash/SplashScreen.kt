@@ -11,7 +11,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringResource // تأكد من إضافة هذا الاستيراد
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,12 +39,13 @@ fun SplashScreen(
     LaunchedEffect(key1 = true) {
         startAnimation = true
         delay(3000)
-
+        
+        // التحقق من تسجيل الدخول
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             onNavigateToHome()
         } else {
-            onNavigateToRegister()
+            onNavigateToRegister()  // المستخدم الجديد يذهب لصفحة التسجيل
         }
     }
 
@@ -55,11 +56,11 @@ fun SplashScreen(
         // صورة الخلفية
         Image(
             painter = painterResource(id = R.drawable.splash_background),
-            contentDescription = null,
+            contentDescription = stringResource(id = R.string.splash_bg_desc), // تعديل هنا
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
+        
         // المحتوى فوق الخلفية
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,9 +70,9 @@ fun SplashScreen(
                 .alpha(alphaAnim.value)
                 .padding(horizontal = 40.dp)
         ) {
-            // أيقونة التطبيق
+            // أيقونة التطبيق (يمكن إبقاؤها كنص خام لأنها مجرد رمز تعبيري)
             Text(
-                text = stringResource(R.string.splash_icon),
+                text = "☪",
                 fontSize = 80.sp,
                 color = Color(0xFF8B7355),
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -79,7 +80,7 @@ fun SplashScreen(
 
             // اسم التطبيق
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(id = R.string.app_name_ar), // تعديل هنا
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B5744),
@@ -89,7 +90,7 @@ fun SplashScreen(
 
             // الوصف
             Text(
-                text = stringResource(R.string.splash_tagline),
+                text = stringResource(id = R.string.app_description), // تعديل هنا
                 fontSize = 18.sp,
                 color = Color(0xFF8B7355),
                 textAlign = TextAlign.Center,
@@ -101,7 +102,7 @@ fun SplashScreen(
 
             // آية قرآنية
             Text(
-                text = stringResource(R.string.splash_verse),
+                text = stringResource(id = R.string.splash_quran_verse), // تعديل هنا
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF6B5744),
@@ -111,7 +112,7 @@ fun SplashScreen(
             )
 
             Text(
-                text = stringResource(R.string.splash_verse_ref),
+                text = stringResource(id = R.string.splash_quran_verse_source), // تعديل هنا
                 fontSize = 14.sp,
                 color = Color(0xFF9B8B7A),
                 fontWeight = FontWeight.Medium,
@@ -121,7 +122,7 @@ fun SplashScreen(
 
         // البسملة في الأسفل
         Text(
-            text = stringResource(R.string.basmala),
+            text = stringResource(id = R.string.basmalah), // تعديل هنا
             fontSize = 18.sp,
             color = Color(0xFF8B7355),
             fontWeight = FontWeight.Medium,
