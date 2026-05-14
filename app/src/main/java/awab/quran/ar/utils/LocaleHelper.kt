@@ -23,10 +23,10 @@ object LocaleHelper {
 
     fun applyLocale(context: Context): Context {
         val lang = getSavedLanguage(context)
-        return setLocale(context, lang)
+        return wrap(context, lang)
     }
 
-    fun setLocale(context: Context, langCode: String): Context {
+    fun wrap(context: Context, langCode: String): Context {
         val locale = Locale(langCode)
         Locale.setDefault(locale)
         val config = Configuration(context.resources.configuration)
