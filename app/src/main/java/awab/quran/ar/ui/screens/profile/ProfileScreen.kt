@@ -32,6 +32,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import android.content.Intent
+import android.content.res.Configuration
+import java.util.Locale
 import awab.quran.ar.services.AudioRecordingManager
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
@@ -53,11 +55,10 @@ fun ProfileScreen(
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
-    
+
     var userName by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
     var totalRecitations by remember { mutableStateOf(0) }
-    var completedSurahs by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     val recordingManager = remember { AudioRecordingManager(context) }
@@ -65,6 +66,21 @@ fun ProfileScreen(
     var allRecordings by remember { mutableStateOf(listOf<File>()) }
     var recordingToDelete by remember { mutableStateOf<File?>(null) }
     var showDonationDialog by remember { mutableStateOf(false) }
+
+    // ── Language selector state ──
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    val languages = listOf(
+        Pair("العربية", "ar"),
+        Pair("Bahasa Indonesia", "in"),
+        Pair("English", "en")
+    )
+    var selectedLanguage by remember {
+        mutableStateOf(
+            context.resources.configuration.locales[0].language.let { lang ->
+                languages.find { it.second == lang }?.first ?: "العربية"
+            }
+        )
+    }
 
     val settingsRepo = remember { RecitationSettingsRepository(context) }
     val themeRepo = remember { ThemeRepository(context) }
@@ -82,7 +98,6 @@ fun ProfileScreen(
                 .addOnSuccessListener { document ->
                     userName = document.getString("fullName") ?: ""
                     totalRecitations = document.getLong("totalRecitations")?.toInt() ?: 0
-                    completedSurahs = document.getLong("completedSurahs")?.toInt() ?: 0
                 }
         }
     }
@@ -148,14 +163,9 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier.size(120.dp),
                     shape = RoundedCornerShape(60.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = avatarColor
-                    )
+                    colors = CardDefaults.cardColors(containerColor = avatarColor)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "صورة المستخدم",
@@ -169,14 +179,10 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = cardColor
-                    )
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
@@ -185,38 +191,22 @@ fun ProfileScreen(
                             fontWeight = FontWeight.Bold,
                             color = titleColor
                         )
-                        
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = null,
-                                tint = subColor,
-                                modifier = Modifier.size(20.dp)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = subColor, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = userEmail,
-                                fontSize = 14.sp,
-                                color = subColor
-                            )
+                            Text(text = userEmail, fontSize = 14.sp, color = subColor)
                         }
                     }
                 }
 
-                // إحصائيات التسميع
+                // إحصائيات التسميع + اختيار اللغة
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = cardColor
-                    )
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
@@ -225,22 +215,51 @@ fun ProfileScreen(
                             fontWeight = FontWeight.Bold,
                             color = titleColor
                         )
-                        
+
                         StatRow(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Mic,
                             label = "عدد التسميعات",
                             value = totalRecitations.toString()
                         )
-                        
+
                         Divider(color = dividerColor)
-                        
-                        StatRow(
-                            isDarkMode = isDarkMode,
-                            icon = Icons.Default.CheckCircle,
-                            label = "السور المكتملة",
-                            value = completedSurahs.toString()
-                        )
+
+                        // ── خيار اللغة ──
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showLanguageDialog = true },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = null,
+                                    tint = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "اللغة",
+                                        fontSize = 16.sp,
+                                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                                    )
+                                    Text(
+                                        text = selectedLanguage,
+                                        fontSize = 13.sp,
+                                        color = subColor
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = subColor
+                            )
+                        }
                     }
                 }
 
@@ -248,14 +267,10 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = cardColor
-                    )
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
@@ -268,9 +283,7 @@ fun ProfileScreen(
 
                         // زر الوضع الليلي
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -323,9 +336,9 @@ fun ProfileScreen(
                                 showRecordingsList = true
                             }
                         )
-                        
+
                         Divider(color = dividerColor)
-                        
+
                         ProfileOption(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Info,
@@ -341,26 +354,12 @@ fun ProfileScreen(
                 // زر تسجيل الخروج
                 Button(
                     onClick = { showLogoutDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFDC3545)
-                    ),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Logout,
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = 8.dp),
-                        tint = Color.White
-                    )
-                    Text(
-                        text = "تسجيل الخروج",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Icon(imageVector = Icons.Default.Logout, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
+                    Text(text = "تسجيل الخروج", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -368,22 +367,73 @@ fun ProfileScreen(
         }
     }
 
+    // ── نافذة اختيار اللغة ──
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            containerColor = cardColor,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Language, contentDescription = null, tint = titleColor, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("اختر اللغة", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = titleColor)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    languages.forEach { (name, code) ->
+                        val isSelected = selectedLanguage == name
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedLanguage = name
+                                    // تطبيق اللغة
+                                    val locale = Locale(code)
+                                    Locale.setDefault(locale)
+                                    val config = Configuration(context.resources.configuration)
+                                    config.setLocale(locale)
+                                    context.resources.updateConfiguration(config, context.resources.displayMetrics)
+                                    showLanguageDialog = false
+                                    Toast.makeText(context, "تم تغيير اللغة — أعد تشغيل التطبيق", Toast.LENGTH_SHORT).show()
+                                }
+                                .background(
+                                    if (isSelected) avatarColor.copy(alpha = 0.15f) else Color.Transparent,
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = name,
+                                fontSize = 16.sp,
+                                color = if (isSelected) avatarColor else titleColor,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = avatarColor, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        if (name != languages.last().first) Divider(color = dividerColor)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("إغلاق", color = subColor)
+                }
+            }
+        )
+    }
+
     // حوار تأكيد تسجيل الخروج
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = {
-                Text(
-                    text = "تسجيل الخروج",
-                    color = titleColor
-                )
-            },
-            text = {
-                Text(
-                    text = "هل أنت متأكد من تسجيل الخروج؟",
-                    color = subColor
-                )
-            },
+            title = { Text(text = "تسجيل الخروج", color = titleColor) },
+            text = { Text(text = "هل أنت متأكد من تسجيل الخروج؟", color = subColor) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -391,9 +441,7 @@ fun ProfileScreen(
                         showLogoutDialog = false
                         onLogout()
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFDC3545)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545))
                 ) {
                     Text("تسجيل الخروج", color = Color.White)
                 }
@@ -427,7 +475,6 @@ fun ProfileScreen(
                         color = subColor,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-
                     SettingToggleRow(
                         title = "التشكيل",
                         subtitle = "تجاهل الحركات والتنوين",
@@ -438,9 +485,7 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                     Divider(color = Color(0xFFE0D5C5))
-
                     SettingToggleRow(
                         title = "حرف الحاء",
                         subtitle = "تجاهل الخلط بين ح و ه",
@@ -451,9 +496,7 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                     Divider(color = Color(0xFFE0D5C5))
-
                     SettingToggleRow(
                         title = "حرف العين",
                         subtitle = "تجاهل الخلط بين ع و أ و ء",
@@ -464,9 +507,7 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                     Divider(color = Color(0xFFE0D5C5))
-
                     SettingToggleRow(
                         title = "المدود",
                         subtitle = "تجاهل أخطاء المد والقصر",
@@ -477,9 +518,7 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                     Divider(color = Color(0xFFE0D5C5))
-
                     SettingToggleRow(
                         title = "مواضع الوقف",
                         subtitle = "تجاهل كلمات الوقف والوصل",
@@ -490,9 +529,7 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                     Divider(color = Color(0xFFE0D5C5))
-
                     SettingToggleRow(
                         title = "المساهمة في تحسين الذكاء الاصطناعي",
                         subtitle = "السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي",
@@ -503,7 +540,6 @@ fun ProfileScreen(
                             scope.launch { settingsRepo.save(updated) }
                         }
                     )
-
                 }
             },
             confirmButton = {
@@ -685,29 +721,12 @@ fun StatRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(24.dp)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = label,
-                fontSize = 16.sp,
-                color = color
-            )
+            Text(text = label, fontSize = 16.sp, color = color)
         }
-        
-        Text(
-            text = value,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
@@ -721,35 +740,17 @@ fun ProfileOption(
     val tColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
     val sColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF8B7355)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tColor,
-                modifier = Modifier.size(24.dp)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = icon, contentDescription = null, tint = tColor, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                color = tColor
-            )
+            Text(text = title, fontSize = 16.sp, color = tColor)
         }
-        
         IconButton(onClick = onClick) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "فتح",
-                tint = sColor
-            )
+            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "فتح", tint = sColor)
         }
     }
 }
@@ -762,24 +763,13 @@ fun SettingToggleRow(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF4A3F35)
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                color = Color(0xFF9E8E7E)
-            )
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF4A3F35))
+            Text(text = subtitle, fontSize = 12.sp, color = Color(0xFF9E8E7E))
         }
         Switch(
             checked = checked,
