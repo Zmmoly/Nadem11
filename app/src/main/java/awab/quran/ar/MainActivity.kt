@@ -1,6 +1,7 @@
 package awab.quran.ar
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -12,11 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import awab.quran.ar.data.ThemeRepository
 import awab.quran.ar.ui.navigation.NadeemNavigation
 import awab.quran.ar.ui.theme.NadeemTheme
+import awab.quran.ar.utils.LocaleHelper
 import awab.quran.ar.workers.QuranReminderWorker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -26,20 +27,22 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
-        // سواء قبل أو رفض، نجدول الـ Worker (يعمل على أقل من 13 بدون إذن)
         QuranReminderWorker.schedule(this)
+    }
+
+    // ── تطبيق اللغة المحفوظة عند كل إنشاء للـ Activity ──
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.applyLocale(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // حفظ وقت آخر فتح للتطبيق
         getSharedPreferences("nadeem_prefs", MODE_PRIVATE)
             .edit()
             .putLong("last_open_timestamp", System.currentTimeMillis())
             .apply()
 
-        // طلب إذن الإشعارات (Android 13+) أو جدولة مباشرة للإصدارات الأقدم
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val granted = ContextCompat.checkSelfPermission(
                 this, Manifest.permission.POST_NOTIFICATIONS
@@ -54,7 +57,6 @@ class MainActivity : ComponentActivity() {
             QuranReminderWorker.schedule(this)
         }
 
-        // قراءة الثيم المحفوظ قبل العرض لتجنب الوميض
         val themeRepo = ThemeRepository(this)
         val initialDarkMode = runBlocking { themeRepo.isDarkModeFlow.first() }
 
