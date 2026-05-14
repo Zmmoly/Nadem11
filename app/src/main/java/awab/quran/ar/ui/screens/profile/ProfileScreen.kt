@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -126,7 +127,7 @@ fun ProfileScreen(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text(text = "الملف الشخصي", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
+                    title = { Text(text = stringResource(R.string.profile), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
@@ -140,8 +141,8 @@ fun ProfileScreen(
                                 .clickable { showDonationDialog = true }
                                 .padding(4.dp)
                         ) {
-                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935), modifier = Modifier.size(22.dp))
-                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Favorite, contentDescription = stringResource(R.string.donate), tint = Color(0xFFE53935), modifier = Modifier.size(22.dp))
+                            Text(stringResource(R.string.donate), fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
@@ -186,7 +187,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = userName.ifEmpty { "المستخدم" },
+                            text = userName.ifEmpty { stringResource(R.string.user) },
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = titleColor
@@ -210,7 +211,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "إحصائيات التسميع",
+                            text = stringResource(R.string.recitation_statistics),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = titleColor
@@ -219,7 +220,7 @@ fun ProfileScreen(
                         StatRow(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Mic,
-                            label = "عدد التسميعات",
+                            label = stringResource(R.string.microphone),
                             value = totalRecitations.toString()
                         )
 
@@ -243,7 +244,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "اللغة",
+                                        text = stringResource(R.string.settings),
                                         fontSize = 16.sp,
                                         color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
                                     )
@@ -274,7 +275,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "إعدادات الحساب",
+                            text = stringResource(R.string.account_settings),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = titleColor,
@@ -296,7 +297,7 @@ fun ProfileScreen(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = if (isDarkMode) "الوضع الليلي" else "الوضع النهاري",
+                                    text = if (isDarkMode) stringResource(R.string.dark_mode) else stringResource(R.string.light_mode),
                                     fontSize = 16.sp,
                                     color = titleColor
                                 )
@@ -321,7 +322,7 @@ fun ProfileScreen(
                         ProfileOption(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Settings,
-                            title = "الإعدادات",
+                            title = stringResource(R.string.settings),
                             onClick = { showSettingsDialog = true }
                         )
 
