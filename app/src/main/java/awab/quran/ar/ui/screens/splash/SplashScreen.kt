@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,13 +39,12 @@ fun SplashScreen(
     LaunchedEffect(key1 = true) {
         startAnimation = true
         delay(3000)
-        
-        // التحقق من تسجيل الدخول
+
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             onNavigateToHome()
         } else {
-            onNavigateToRegister()  // المستخدم الجديد يذهب لصفحة التسجيل
+            onNavigateToRegister()
         }
     }
 
@@ -52,15 +52,13 @@ fun SplashScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // صورة الخلفية
         Image(
             painter = painterResource(id = R.drawable.splash_background),
-            contentDescription = "خلفية التطبيق",
+            contentDescription = stringResource(R.string.splash_background_desc),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        
-        // المحتوى فوق الخلفية
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -69,17 +67,15 @@ fun SplashScreen(
                 .alpha(alphaAnim.value)
                 .padding(horizontal = 40.dp)
         ) {
-            // أيقونة التطبيق
             Text(
-                text = "☪",
+                text = stringResource(R.string.splash_moon_icon),
                 fontSize = 80.sp,
                 color = Color(0xFF8B7355),
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // اسم التطبيق
             Text(
-                text = "نديم",
+                text = stringResource(R.string.app_name_arabic),
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B5744),
@@ -87,9 +83,8 @@ fun SplashScreen(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // الوصف
             Text(
-                text = "رفيقك في حفظ القرآن الكريم",
+                text = stringResource(R.string.splash_subtitle),
                 fontSize = 18.sp,
                 color = Color(0xFF8B7355),
                 textAlign = TextAlign.Center,
@@ -99,9 +94,8 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // آية قرآنية
             Text(
-                text = "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا",
+                text = stringResource(R.string.splash_ayah),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF6B5744),
@@ -111,7 +105,7 @@ fun SplashScreen(
             )
 
             Text(
-                text = "سورة المزمل - آية 4",
+                text = stringResource(R.string.splash_ayah_source),
                 fontSize = 14.sp,
                 color = Color(0xFF9B8B7A),
                 fontWeight = FontWeight.Medium,
@@ -119,9 +113,8 @@ fun SplashScreen(
             )
         }
 
-        // البسملة في الأسفل
         Text(
-            text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+            text = stringResource(R.string.splash_basmala),
             fontSize = 18.sp,
             color = Color(0xFF8B7355),
             fontWeight = FontWeight.Medium,
