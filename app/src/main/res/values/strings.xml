@@ -109,6 +109,12 @@
     <string name="audio_ai_notice">قد تُستخدم التسجيلات الصوتية لأغراض تحسين نموذج الذكاء الاصطناعي من قِبل مزود الخدمة.</string>
     <string name="revoke_permission_notice">يمكنك إلغاء هذه الإذن في أي وقت من إعدادات التطبيق.</string>
 
+    <!-- Google Sign In -->
+    <string name="google_token_error">فشل الحصول على Token من Google</string>
+    <string name="default_user_name">مستخدم</string>
+    <string name="google_signin_firebase_error">فشل تسجيل الدخول: %1$s</string>
+    <string name="google_signin_error">فشل تسجيل الدخول بـ Google (%1$d)</string>
+
     <!-- Splash Screen -->
     <string name="splash_moon_icon">☪</string>
     <string name="splash_subtitle">رفيقك في حفظ القرآن الكريم</string>
