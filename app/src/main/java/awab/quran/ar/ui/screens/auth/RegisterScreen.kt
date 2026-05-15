@@ -74,6 +74,7 @@ fun RegisterScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         handleGoogleSignInResult(
+            context = context,
             data = result.data,
             onSuccess = { onRegisterSuccess() },
             onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
