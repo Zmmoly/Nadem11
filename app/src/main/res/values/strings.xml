@@ -95,6 +95,8 @@
     <string name="donation_5">5 ريال</string>
     <string name="donation_10">10 ريال</string>
     <string name="donation_20">20 ريال</string>
+    <string name="donation_other">مبلغ آخر</string>
+    <string name="donation_message">جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.</string>
 
     <string name="word_40">40 كلمة</string>
     <string name="word_60">60 كلمة</string>
@@ -106,6 +108,23 @@
     <string name="allow_audio_storage">السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي</string>
     <string name="audio_ai_notice">قد تُستخدم التسجيلات الصوتية لأغراض تحسين نموذج الذكاء الاصطناعي من قِبل مزود الخدمة.</string>
     <string name="revoke_permission_notice">يمكنك إلغاء هذه الإذن في أي وقت من إعدادات التطبيق.</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_moon_icon">☪</string>
+    <string name="splash_subtitle">رفيقك في حفظ القرآن الكريم</string>
+    <string name="splash_ayah">وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا</string>
+    <string name="splash_ayah_source">سورة المزمل - آية 4</string>
+    <string name="splash_background_desc">خلفية التطبيق</string>
+
+    <!-- Recitation Screen -->
+    <string name="recitation_title">تسميع القرآن</string>
+    <string name="recitation_timer_format">%1$02d:%2$02d</string>
+    <string name="recitation_connecting">جاري الاتصال بالنموذج...</string>
+    <string name="recitation_model_modal">نموذج القرآن (Modal)</string>
+    <string name="recitation_model_deepgram">Deepgram Nova-3</string>
+    <string name="recitation_status_listening">جاري الاستماع...</string>
+    <string name="recitation_status_analyzing">جاري التحليل...</string>
+    <string name="recitation_status_error">خطأ: %1$s</string>
 
     <!-- Surah Names -->
     <string name="surah_al_fatihah">الفاتحة</string>
