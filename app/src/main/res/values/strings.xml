@@ -248,7 +248,7 @@
     <string name="surah_al_falaq">الفلق</string>
     <string name="surah_an_nas">الناس</string>
 
-    <!-- Missing strings - HomeScreen -->
+    <!-- HomeScreen -->
     <string name="tab_recent">الأخيرة</string>
     <string name="home_background_desc">خلفية الصفحة الرئيسية</string>
     <string name="profile_icon_desc">أيقونة الملف الشخصي</string>
@@ -257,7 +257,7 @@
     <string name="surah_open">افتح السورة</string>
     <string name="surah_verse_separator"> | </string>
 
-    <!-- Missing strings - RecitationScreen -->
+    <!-- RecitationScreen -->
     <string name="recitation_back">رجوع</string>
     <string name="recitation_donate">تبرع</string>
     <string name="recitation_stop">إيقاف التسميع</string>
@@ -265,8 +265,15 @@
     <string name="recitation_transcribed_title">النص المُسمَّع</string>
     <string name="recitation_hint">اضغط على زر التسميع وتابع القراءة</string>
 
-    <!-- Missing strings - Donation Dialog -->
+    <!-- Donation Dialog -->
     <string name="donation_title">ادعم تطوير التطبيق</string>
     <string name="donation_choose_method">اختر طريقة التبرع:</string>
     <string name="donation_close">إغلاق</string>
+
+    <!-- ForgotPasswordScreen -->
+    <string name="forgot_password_no_account">لا يوجد حساب مسجل بهذا البريد الإلكتروني</string>
+    <string name="forgot_password_too_many_requests">محاولات كثيرة جداً، حاول بعد قليل</string>
+    <string name="error_try_again">حدث خطأ، حاول مرة أخرى</string>
+    <string name="forgot_password_email_sent">تم إرسال البريد!</string>
+    <string name="forgot_password_check_inbox">تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والبريد المزعج.</string>
 </resources>
