@@ -11,7 +11,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource // تأكد من إضافة هذا الاستيراد
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,7 +55,7 @@ fun SplashScreen(
         // صورة الخلفية
         Image(
             painter = painterResource(id = R.drawable.splash_background),
-            contentDescription = stringResource(id = R.string.splash_bg_desc), // تعديل هنا
+            contentDescription = "خلفية التطبيق",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -70,7 +69,7 @@ fun SplashScreen(
                 .alpha(alphaAnim.value)
                 .padding(horizontal = 40.dp)
         ) {
-            // أيقونة التطبيق (يمكن إبقاؤها كنص خام لأنها مجرد رمز تعبيري)
+            // أيقونة التطبيق
             Text(
                 text = "☪",
                 fontSize = 80.sp,
@@ -80,7 +79,7 @@ fun SplashScreen(
 
             // اسم التطبيق
             Text(
-                text = stringResource(id = R.string.app_name_ar), // تعديل هنا
+                text = "نديم",
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B5744),
@@ -90,7 +89,7 @@ fun SplashScreen(
 
             // الوصف
             Text(
-                text = stringResource(id = R.string.app_description), // تعديل هنا
+                text = "رفيقك في حفظ القرآن الكريم",
                 fontSize = 18.sp,
                 color = Color(0xFF8B7355),
                 textAlign = TextAlign.Center,
@@ -102,7 +101,7 @@ fun SplashScreen(
 
             // آية قرآنية
             Text(
-                text = stringResource(id = R.string.splash_quran_verse), // تعديل هنا
+                text = "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF6B5744),
@@ -112,7 +111,7 @@ fun SplashScreen(
             )
 
             Text(
-                text = stringResource(id = R.string.splash_quran_verse_source), // تعديل هنا
+                text = "سورة المزمل - آية 4",
                 fontSize = 14.sp,
                 color = Color(0xFF9B8B7A),
                 fontWeight = FontWeight.Medium,
@@ -122,7 +121,7 @@ fun SplashScreen(
 
         // البسملة في الأسفل
         Text(
-            text = stringResource(id = R.string.basmalah), // تعديل هنا
+            text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
             fontSize = 18.sp,
             color = Color(0xFF8B7355),
             fontWeight = FontWeight.Medium,
