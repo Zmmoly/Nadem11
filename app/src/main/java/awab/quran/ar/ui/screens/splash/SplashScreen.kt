@@ -75,7 +75,7 @@ fun SplashScreen(
             )
 
             Text(
-                text = stringResource(R.string.app_name_arabic),
+                text = stringResource(R.string.app_name),
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B5744),
@@ -114,7 +114,7 @@ fun SplashScreen(
         }
 
         Text(
-            text = stringResource(R.string.splash_basmala),
+            text = stringResource(R.string.basmala),
             fontSize = 18.sp,
             color = Color(0xFF8B7355),
             fontWeight = FontWeight.Medium,
