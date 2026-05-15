@@ -13,20 +13,21 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import awab.quran.ar.R
 
 fun getGoogleSignInIntent(context: Context): Intent {
-    val webClientId = context.getString(awab.quran.ar.R.string.google_web_client_id)
+    val webClientId = context.getString(R.string.google_web_client_id)
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken(webClientId)
         .requestEmail()
         .build()
     val client = GoogleSignIn.getClient(context, gso)
-    // تسجيل الخروج أولاً لضمان ظهور نافذة اختيار الحساب دائماً
     client.signOut()
     return client.signInIntent
 }
 
 fun handleGoogleSignInResult(
+    context: Context,
     data: Intent?,
     onSuccess: (FirebaseUser) -> Unit,
     onError: (String) -> Unit
@@ -35,7 +36,7 @@ fun handleGoogleSignInResult(
         val task = GoogleSignIn.getSignedInAccountFromIntent(data)
         val account = task.getResult(ApiException::class.java)
         val idToken = account.idToken ?: run {
-            onError("فشل الحصول على Token من Google")
+            onError(context.getString(R.string.google_token_error))
             return
         }
         val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
@@ -44,19 +45,23 @@ fun handleGoogleSignInResult(
             .addOnSuccessListener { authResult ->
                 if (authResult.additionalUserInfo?.isNewUser == true) {
                     authResult.user?.let { user ->
-                        saveUserToFirestore(user.uid, user.displayName ?: "مستخدم", user.email ?: "")
+                        saveUserToFirestore(
+                            uid = user.uid,
+                            name = user.displayName ?: context.getString(R.string.default_user_name),
+                            email = user.email ?: ""
+                        )
                     }
                 }
                 authResult.user?.let { onSuccess(it) }
             }
             .addOnFailureListener { e ->
                 Log.e("GoogleSignIn", "Firebase error: ${e.message}")
-                onError("فشل تسجيل الدخول: ${e.localizedMessage}")
+                onError(context.getString(R.string.google_signin_firebase_error, e.localizedMessage))
             }
     } catch (e: ApiException) {
         Log.e("GoogleSignIn", "ApiException: ${e.statusCode} - ${e.message}")
-        if (e.statusCode != 12501) { // 12501 = المستخدم ألغى
-            onError("فشل تسجيل الدخول بـ Google (${e.statusCode})")
+        if (e.statusCode != 12501) {
+            onError(context.getString(R.string.google_signin_error, e.statusCode))
         }
     }
 }
