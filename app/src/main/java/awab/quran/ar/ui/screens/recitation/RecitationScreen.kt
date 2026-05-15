@@ -82,7 +82,7 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
             onError = { error ->
                 isAnalyzing = false
-                statusMessage = stringResource(R.string.recitation_status_error, error)
+                statusMessage = statusErrorPrefix + error
             }
         }
     }
