@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -51,13 +52,21 @@ fun ForgotPasswordScreen(
     val fieldText = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
     val btnColor = if (isDarkMode) Color(0xFF4A7C59) else Color(0xFF6B5744)
 
+    // استخراج النصوص هنا لاستخدامها داخل اللامبدا
+    val strEnterEmail = stringResource(R.string.enter_email)
+    val strInvalidEmail = stringResource(R.string.invalid_email)
+    val strNoAccount = stringResource(R.string.forgot_password_no_account)
+    val strTooManyRequests = stringResource(R.string.forgot_password_too_many_requests)
+    val strCheckInternet = stringResource(R.string.check_internet)
+    val strErrorTryAgain = stringResource(R.string.error_try_again)
+
     fun sendResetEmail() {
         if (email.isBlank()) {
-            emailError = "الرجاء إدخال البريد الإلكتروني"
+            emailError = strEnterEmail
             return
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailError = "البريد الإلكتروني غير صحيح"
+            emailError = strInvalidEmail
             return
         }
 
@@ -66,26 +75,24 @@ fun ForgotPasswordScreen(
             .addOnCompleteListener { task ->
                 isLoading = false
                 if (task.isSuccessful) {
-                    // ✅ الإيميل مسجل وتم الإرسال
                     emailSent = true
                 } else {
-                    // ✅ ترجمة الأخطاء لرسائل عربية واضحة
                     val errorMsg = task.exception?.message ?: ""
                     emailError = when {
                         errorMsg.contains("USER_NOT_FOUND") ||
                         errorMsg.contains("no user record") ||
                         errorMsg.contains("INVALID_EMAIL") ->
-                            "لا يوجد حساب مسجل بهذا البريد الإلكتروني"
+                            strNoAccount
 
                         errorMsg.contains("too many requests") ->
-                            "محاولات كثيرة جداً، حاول بعد قليل"
+                            strTooManyRequests
 
                         errorMsg.contains("network") ||
                         errorMsg.contains("NETWORK") ->
-                            "تحقق من اتصالك بالإنترنت"
+                            strCheckInternet
 
                         else ->
-                            "حدث خطأ، حاول مرة أخرى"
+                            strErrorTryAgain
                     }
                 }
             }
@@ -95,7 +102,7 @@ fun ForgotPasswordScreen(
         if (!isDarkMode) {
             Image(
                 painter = painterResource(id = R.drawable.app_background),
-                contentDescription = "خلفية",
+                contentDescription = stringResource(R.string.splash_background_desc),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -107,7 +114,7 @@ fun ForgotPasswordScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
-                contentDescription = "رجوع",
+                contentDescription = stringResource(R.string.back),
                 tint = titleColor
             )
         }
@@ -120,7 +127,7 @@ fun ForgotPasswordScreen(
             Text(text = "🔐", fontSize = 80.sp, modifier = Modifier.padding(bottom = 24.dp))
 
             Text(
-                text = "نسيت كلمة المرور؟",
+                text = stringResource(R.string.forgot_password),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = titleColor,
@@ -128,7 +135,7 @@ fun ForgotPasswordScreen(
             )
 
             Text(
-                text = "أدخل بريدك الإلكتروني المسجل وسنرسل لك رابط إعادة تعيين كلمة المرور",
+                text = stringResource(R.string.forgot_password_desc),
                 fontSize = 14.sp,
                 color = subColor,
                 textAlign = TextAlign.Center,
@@ -151,7 +158,7 @@ fun ForgotPasswordScreen(
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it; emailError = null },
-                            label = { Text("البريد الإلكتروني", color = subColor) },
+                            label = { Text(stringResource(R.string.email), color = subColor) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Email,
@@ -203,7 +210,7 @@ fun ForgotPasswordScreen(
                                 )
                             } else {
                                 Text(
-                                    text = "إرسال رابط إعادة التعيين",
+                                    text = stringResource(R.string.send_reset_link),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
@@ -211,7 +218,6 @@ fun ForgotPasswordScreen(
                             }
                         }
                     } else {
-                        // ✅ شاشة النجاح بعد الإرسال
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = null,
@@ -219,14 +225,14 @@ fun ForgotPasswordScreen(
                             tint = titleColor
                         )
                         Text(
-                            text = "تم إرسال البريد!",
+                            text = stringResource(R.string.forgot_password_email_sent),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = titleColor,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والبريد المزعج.",
+                            text = stringResource(R.string.forgot_password_check_inbox),
                             fontSize = 14.sp,
                             color = subColor,
                             textAlign = TextAlign.Center,
@@ -240,7 +246,7 @@ fun ForgotPasswordScreen(
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(
-                                text = "العودة لتسجيل الدخول",
+                                text = stringResource(R.string.back_to_login),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
