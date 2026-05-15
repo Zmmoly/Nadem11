@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,10 +41,9 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     var transcribedLines by remember { mutableStateOf(listOf<String>()) }
     var statusMessage by remember { mutableStateOf("") }
     var showDonationDialog by remember { mutableStateOf(false) }
-    var activeModel by remember { mutableStateOf("") } // "modal" أو "deepgram"
-    var isConnecting by remember { mutableStateOf(false) } // حالة الاتصال الأولية
+    var activeModel by remember { mutableStateOf("") }
+    var isConnecting by remember { mutableStateOf(false) }
 
-    // ألوان
     val bgColor = if (isDarkMode) Color(0xFF121212) else Color.Transparent
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
     val topBarColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F3ED).copy(alpha = 0.95f)
@@ -53,24 +53,26 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
     val hintCardColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE5DFCF).copy(alpha = 0.7f)
     val micIdleColor = if (isDarkMode) Color(0xFF3A3A3A) else Color(0xFF6B5744).copy(alpha = 0.1f)
 
-    // إنشاء الخدمة
+    val statusListening = stringResource(R.string.recitation_status_listening)
+    val statusAnalyzing = stringResource(R.string.recitation_status_analyzing)
+    val statusErrorPrefix = stringResource(R.string.recitation_status_error, "")
+
     val service = remember {
         DeepgramService(context).apply {
 
             onConnectionEstablished = {
-                statusMessage = "جاري الاستماع..."
+                statusMessage = statusListening
             }
 
             onTranscriptionReceived = { text ->
-                // إضافة كل آية في سطر جديد
                 transcribedLines = transcribedLines + text
                 isAnalyzing = false
-                statusMessage = "جاري الاستماع..."
+                statusMessage = statusListening
             }
 
             onInterimTranscription = {
                 isAnalyzing = true
-                statusMessage = "جاري التحليل..."
+                statusMessage = statusAnalyzing
             }
 
             onModelChanged = { model ->
@@ -80,12 +82,11 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
             onError = { error ->
                 isAnalyzing = false
-                statusMessage = "خطأ: $error"
+                statusMessage = stringResource(R.string.recitation_status_error, error)
             }
         }
     }
 
-    // مؤقت التسجيل
     LaunchedEffect(isRecording) {
         if (isRecording) {
             recordingSeconds = 0
@@ -98,18 +99,42 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
     Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
         if (!isDarkMode) {
-            Image(painter = painterResource(id = R.drawable.app_background), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         }
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("تسميع القرآن", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
-                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor) } },
+                    title = {
+                        Text(
+                            stringResource(R.string.recitation_title),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = stringResource(R.string.recitation_back),
+                                tint = titleColor
+                            )
+                        }
+                    },
                     actions = {
                         IconButton(onClick = { showDonationDialog = true }) {
-                            Icon(Icons.Default.Favorite, contentDescription = "تبرع", tint = Color(0xFFE53935))
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = stringResource(R.string.recitation_donate),
+                                tint = Color(0xFFE53935)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
@@ -117,16 +142,31 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
             }
         ) { paddingValues ->
             Column(
-                modifier = Modifier.fillMaxSize().padding(paddingValues).verticalScroll(scrollState).padding(24.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(scrollState)
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // بطاقة الميكروفون
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = cardColor)) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Surface(shape = RoundedCornerShape(60.dp), modifier = Modifier.size(120.dp), color = if (isRecording) Color(0xFFDC3545).copy(alpha = 0.15f) else micIdleColor) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(60.dp),
+                            modifier = Modifier.size(120.dp),
+                            color = if (isRecording) Color(0xFFDC3545).copy(alpha = 0.15f) else micIdleColor
+                        ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (isAnalyzing) Icons.Default.HourglassEmpty else Icons.Default.Mic,
@@ -140,28 +180,64 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         if (isRecording) {
-                            Text(text = String.format("%02d:%02d", recordingSeconds / 60, recordingSeconds % 60), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                            Text(
+                                text = stringResource(
+                                    R.string.recitation_timer_format,
+                                    recordingSeconds / 60,
+                                    recordingSeconds % 60
+                                ),
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = titleColor
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         if (statusMessage.isNotEmpty()) {
-                            Text(text = statusMessage, fontSize = 14.sp, color = subColor, modifier = Modifier.padding(bottom = 16.dp))
+                            Text(
+                                text = statusMessage,
+                                fontSize = 14.sp,
+                                color = subColor,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
                         }
 
                         Button(
                             onClick = {
                                 if (isRecording) {
-                                    service.stopRecitation(); isRecording = false; statusMessage = ""; activeModel = ""; isConnecting = false
+                                    service.stopRecitation()
+                                    isRecording = false
+                                    statusMessage = ""
+                                    activeModel = ""
+                                    isConnecting = false
                                 } else {
-                                    transcribedLines = listOf(); isConnecting = true; service.startRecitation(); isRecording = true
+                                    transcribedLines = listOf()
+                                    isConnecting = true
+                                    service.startRecitation()
+                                    isRecording = true
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(60.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = if (isRecording) Color(0xFFDC3545) else if (isDarkMode) Color(0xFF4A7C59) else Color(0xFF6B5744)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isRecording) Color(0xFFDC3545)
+                                else if (isDarkMode) Color(0xFF4A7C59)
+                                else Color(0xFF6B5744)
+                            ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Icon(imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
-                            Text(text = if (isRecording) "إيقاف التسميع" else "ابدأ التسميع", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Icon(
+                                imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp),
+                                tint = Color.White
+                            )
+                            Text(
+                                text = if (isRecording) stringResource(R.string.recitation_stop)
+                                       else stringResource(R.string.recitation_start),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
 
                         // مؤشر النموذج النشط
@@ -195,9 +271,9 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = when {
-                                            isConnecting -> "جاري الاتصال بالنموذج..."
-                                            activeModel == "modal" -> "نموذج القرآن (Modal)"
-                                            else -> "Deepgram Nova-3"
+                                            isConnecting -> stringResource(R.string.recitation_connecting)
+                                            activeModel == "modal" -> stringResource(R.string.recitation_model_modal)
+                                            else -> stringResource(R.string.recitation_model_deepgram)
                                         },
                                         fontSize = 12.sp,
                                         color = when {
@@ -215,11 +291,28 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
                 // بطاقة النص
                 if (transcribedLines.isNotEmpty()) {
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = cardColor)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardColor)
+                    ) {
                         Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-                            Text(text = "النص المُسمَّع", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = titleColor, modifier = Modifier.padding(bottom = 12.dp))
+                            Text(
+                                text = stringResource(R.string.recitation_transcribed_title),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = titleColor,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
                             transcribedLines.forEach { line ->
-                                Text(text = line, fontSize = 22.sp, color = textColor, textAlign = TextAlign.Right, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                                Text(
+                                    text = line,
+                                    fontSize = 22.sp,
+                                    color = textColor,
+                                    textAlign = TextAlign.Right,
+                                    lineHeight = 36.sp,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                )
                                 Divider(color = titleColor.copy(alpha = 0.1f))
                             }
                         }
@@ -227,10 +320,27 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
                 }
 
                 // نصيحة
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = hintCardColor)) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lightbulb, contentDescription = null, tint = titleColor, modifier = Modifier.size(32.dp).padding(end = 12.dp))
-                        Text(text = "تأكد من وجودك في مكان هادئ للحصول على أفضل نتيجة", fontSize = 14.sp, color = titleColor, lineHeight = 20.sp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = hintCardColor)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Lightbulb,
+                            contentDescription = null,
+                            tint = titleColor,
+                            modifier = Modifier.size(32.dp).padding(end = 12.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.recitation_hint),
+                            fontSize = 14.sp,
+                            color = titleColor,
+                            lineHeight = 20.sp
+                        )
                     }
                 }
 
@@ -241,48 +351,67 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
 
     // نافذة التبرع
     if (showDonationDialog) {
+        val donationTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+        val donationSubColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f)
+
         AlertDialog(
             onDismissRequest = { showDonationDialog = false },
             containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
             title = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color(0xFFE53935),
+                        modifier = Modifier.size(48.dp)
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "ادعم تطوير التطبيق",
+                        stringResource(R.string.donation_title),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        color = donationTextColor,
                         textAlign = TextAlign.Center
                     )
                 }
             },
             text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
-                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        stringResource(R.string.donation_message),
                         fontSize = 14.sp,
-                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        color = donationSubColor,
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "اختر طريقة التبرع:",
+                        stringResource(R.string.donation_choose_method),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                        color = donationTextColor
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+
                     val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html#contact"
                     val donationOptions = listOf(
-                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
-                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
-                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
-                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                        Triple(stringResource(R.string.donation_5), donationUrl, Color(0xFF4CAF50)),
+                        Triple(stringResource(R.string.donation_10), donationUrl, Color(0xFF2196F3)),
+                        Triple(stringResource(R.string.donation_20), donationUrl, Color(0xFF9C27B0)),
+                        Triple(stringResource(R.string.donation_other), donationUrl, Color(0xFFE53935))
                     )
+
                     donationOptions.chunked(2).forEach { row ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             row.forEach { (label, url, color) ->
                                 val ctx = context
                                 OutlinedButton(
@@ -307,7 +436,10 @@ fun RecitationScreen(onNavigateBack: () -> Unit, isDarkMode: Boolean = false) {
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showDonationDialog = false }) {
-                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                    Text(
+                        stringResource(R.string.donation_close),
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
+                    )
                 }
             }
         )
