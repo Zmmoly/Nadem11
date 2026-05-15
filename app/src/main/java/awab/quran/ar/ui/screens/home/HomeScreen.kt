@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
@@ -54,16 +55,19 @@ fun HomeScreen(
 ) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val themeRepo = remember { ThemeRepository(context) }
     val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf("الكل") }
-    var searchQuery by remember { mutableStateOf("") }
     var favoriteSurahs by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var showDonationDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    // آخر 10 سور تم فتحها
+    val tabAll = stringResource(R.string.all)
+    val tabFavorites = stringResource(R.string.favorites)
+    val tabRecent = stringResource(R.string.tab_recent)
+    var selectedTab by remember { mutableStateOf(tabAll) }
+
     val prefs = remember { context.getSharedPreferences("recent_surahs", android.content.Context.MODE_PRIVATE) }
     var recentSurahs by remember {
         val saved = prefs.getString("recent", "") ?: ""
@@ -78,7 +82,6 @@ fun HomeScreen(
         prefs.edit().putString("recent", updated.joinToString(",")).apply()
     }
 
-    // جلب بيانات المستخدم والمفضلة
     LaunchedEffect(Unit) {
         auth.currentUser?.uid?.let { userId ->
             firestore.collection("users").document(userId).get()
@@ -91,7 +94,6 @@ fun HomeScreen(
         }
     }
 
-    // دالة تبديل المفضلة
     fun toggleFavorite(surahNumber: Int) {
         val userId = auth.currentUser?.uid ?: return
         val newFavorites = if (surahNumber in favoriteSurahs) {
@@ -103,148 +105,144 @@ fun HomeScreen(
         firestore.collection("users").document(userId)
             .update("favoriteSurahs", newFavorites.toList())
             .addOnFailureListener {
-                // إذا لم يكن الحقل موجوداً، أنشئه
                 firestore.collection("users").document(userId)
                     .set(mapOf("favoriteSurahs" to newFavorites.toList()), com.google.firebase.firestore.SetOptions.merge())
             }
     }
 
-    // قائمة السور الكاملة (114 سورة)
     val surahs = remember {
         listOf(
-            Surah(1, "الفاتحة", "Al-Fatihah", 7, "مكية"),
-            Surah(2, "البقرة", "Al-Baqarah", 286, "مدنية"),
-            Surah(3, "آل عمران", "Ali 'Imran", 200, "مدنية"),
-            Surah(4, "النساء", "An-Nisa", 176, "مدنية"),
-            Surah(5, "المائدة", "Al-Ma'idah", 120, "مدنية"),
-            Surah(6, "الأنعام", "Al-An'am", 165, "مكية"),
-            Surah(7, "الأعراف", "Al-A'raf", 206, "مكية"),
-            Surah(8, "الأنفال", "Al-Anfal", 75, "مدنية"),
-            Surah(9, "التوبة", "At-Tawbah", 129, "مدنية"),
-            Surah(10, "يونس", "Yunus", 109, "مكية"),
-            Surah(11, "هود", "Hud", 123, "مكية"),
-            Surah(12, "يوسف", "Yusuf", 111, "مكية"),
-            Surah(13, "الرعد", "Ar-Ra'd", 43, "مدنية"),
-            Surah(14, "إبراهيم", "Ibrahim", 52, "مكية"),
-            Surah(15, "الحجر", "Al-Hijr", 99, "مكية"),
-            Surah(16, "النحل", "An-Nahl", 128, "مكية"),
-            Surah(17, "الإسراء", "Al-Isra", 111, "مكية"),
-            Surah(18, "الكهف", "Al-Kahf", 110, "مكية"),
-            Surah(19, "مريم", "Maryam", 98, "مكية"),
-            Surah(20, "طه", "Taha", 135, "مكية"),
-            Surah(21, "الأنبياء", "Al-Anbya", 112, "مكية"),
-            Surah(22, "الحج", "Al-Hajj", 78, "مدنية"),
-            Surah(23, "المؤمنون", "Al-Mu'minun", 118, "مكية"),
-            Surah(24, "النور", "An-Nur", 64, "مدنية"),
-            Surah(25, "الفرقان", "Al-Furqan", 77, "مكية"),
-            Surah(26, "الشعراء", "Ash-Shu'ara", 227, "مكية"),
-            Surah(27, "النمل", "An-Naml", 93, "مكية"),
-            Surah(28, "القصص", "Al-Qasas", 88, "مكية"),
-            Surah(29, "العنكبوت", "Al-'Ankabut", 69, "مكية"),
-            Surah(30, "الروم", "Ar-Rum", 60, "مكية"),
-            Surah(31, "لقمان", "Luqman", 34, "مكية"),
-            Surah(32, "السجدة", "As-Sajdah", 30, "مكية"),
-            Surah(33, "الأحزاب", "Al-Ahzab", 73, "مدنية"),
-            Surah(34, "سبأ", "Saba", 54, "مكية"),
-            Surah(35, "فاطر", "Fatir", 45, "مكية"),
-            Surah(36, "يس", "Ya-Sin", 83, "مكية"),
-            Surah(37, "الصافات", "As-Saffat", 182, "مكية"),
-            Surah(38, "ص", "Sad", 88, "مكية"),
-            Surah(39, "الزمر", "Az-Zumar", 75, "مكية"),
-            Surah(40, "غافر", "Ghafir", 85, "مكية"),
-            Surah(41, "فصلت", "Fussilat", 54, "مكية"),
-            Surah(42, "الشورى", "Ash-Shuraa", 53, "مكية"),
-            Surah(43, "الزخرف", "Az-Zukhruf", 89, "مكية"),
-            Surah(44, "الدخان", "Ad-Dukhan", 59, "مكية"),
-            Surah(45, "الجاثية", "Al-Jathiyah", 37, "مكية"),
-            Surah(46, "الأحقاف", "Al-Ahqaf", 35, "مكية"),
-            Surah(47, "محمد", "Muhammad", 38, "مدنية"),
-            Surah(48, "الفتح", "Al-Fath", 29, "مدنية"),
-            Surah(49, "الحجرات", "Al-Hujurat", 18, "مدنية"),
-            Surah(50, "ق", "Qaf", 45, "مكية"),
-            Surah(51, "الذاريات", "Adh-Dhariyat", 60, "مكية"),
-            Surah(52, "الطور", "At-Tur", 49, "مكية"),
-            Surah(53, "النجم", "An-Najm", 62, "مكية"),
-            Surah(54, "القمر", "Al-Qamar", 55, "مكية"),
-            Surah(55, "الرحمن", "Ar-Rahman", 78, "مدنية"),
-            Surah(56, "الواقعة", "Al-Waqi'ah", 96, "مكية"),
-            Surah(57, "الحديد", "Al-Hadid", 29, "مدنية"),
-            Surah(58, "المجادلة", "Al-Mujadila", 22, "مدنية"),
-            Surah(59, "الحشر", "Al-Hashr", 24, "مدنية"),
-            Surah(60, "الممتحنة", "Al-Mumtahanah", 13, "مدنية"),
-            Surah(61, "الصف", "As-Saf", 14, "مدنية"),
-            Surah(62, "الجمعة", "Al-Jumu'ah", 11, "مدنية"),
-            Surah(63, "المنافقون", "Al-Munafiqun", 11, "مدنية"),
-            Surah(64, "التغابن", "At-Taghabun", 18, "مدنية"),
-            Surah(65, "الطلاق", "At-Talaq", 12, "مدنية"),
-            Surah(66, "التحريم", "At-Tahrim", 12, "مدنية"),
-            Surah(67, "الملك", "Al-Mulk", 30, "مكية"),
-            Surah(68, "القلم", "Al-Qalam", 52, "مكية"),
-            Surah(69, "الحاقة", "Al-Haqqah", 52, "مكية"),
-            Surah(70, "المعارج", "Al-Ma'arij", 44, "مكية"),
-            Surah(71, "نوح", "Nuh", 28, "مكية"),
-            Surah(72, "الجن", "Al-Jinn", 28, "مكية"),
-            Surah(73, "المزمل", "Al-Muzzammil", 20, "مكية"),
-            Surah(74, "المدثر", "Al-Muddaththir", 56, "مكية"),
-            Surah(75, "القيامة", "Al-Qiyamah", 40, "مكية"),
-            Surah(76, "الإنسان", "Al-Insan", 31, "مدنية"),
-            Surah(77, "المرسلات", "Al-Mursalat", 50, "مكية"),
-            Surah(78, "النبأ", "An-Naba", 40, "مكية"),
-            Surah(79, "النازعات", "An-Nazi'at", 46, "مكية"),
-            Surah(80, "عبس", "'Abasa", 42, "مكية"),
-            Surah(81, "التكوير", "At-Takwir", 29, "مكية"),
-            Surah(82, "الإنفطار", "Al-Infitar", 19, "مكية"),
-            Surah(83, "المطففين", "Al-Mutaffifin", 36, "مكية"),
-            Surah(84, "الإنشقاق", "Al-Inshiqaq", 25, "مكية"),
-            Surah(85, "البروج", "Al-Buruj", 22, "مكية"),
-            Surah(86, "الطارق", "At-Tariq", 17, "مكية"),
-            Surah(87, "الأعلى", "Al-A'la", 19, "مكية"),
-            Surah(88, "الغاشية", "Al-Ghashiyah", 26, "مكية"),
-            Surah(89, "الفجر", "Al-Fajr", 30, "مكية"),
-            Surah(90, "البلد", "Al-Balad", 20, "مكية"),
-            Surah(91, "الشمس", "Ash-Shams", 15, "مكية"),
-            Surah(92, "الليل", "Al-Layl", 21, "مكية"),
-            Surah(93, "الضحى", "Ad-Duhaa", 11, "مكية"),
-            Surah(94, "الشرح", "Ash-Sharh", 8, "مكية"),
-            Surah(95, "التين", "At-Tin", 8, "مكية"),
-            Surah(96, "العلق", "Al-'Alaq", 19, "مكية"),
-            Surah(97, "القدر", "Al-Qadr", 5, "مكية"),
-            Surah(98, "البينة", "Al-Bayyinah", 8, "مدنية"),
-            Surah(99, "الزلزلة", "Az-Zalzalah", 8, "مدنية"),
-            Surah(100, "العاديات", "Al-'Adiyat", 11, "مكية"),
-            Surah(101, "القارعة", "Al-Qari'ah", 11, "مكية"),
-            Surah(102, "التكاثر", "At-Takathur", 8, "مكية"),
-            Surah(103, "العصر", "Al-'Asr", 3, "مكية"),
-            Surah(104, "الهمزة", "Al-Humazah", 9, "مكية"),
-            Surah(105, "الفيل", "Al-Fil", 5, "مكية"),
-            Surah(106, "قريش", "Quraysh", 4, "مكية"),
-            Surah(107, "الماعون", "Al-Ma'un", 7, "مكية"),
-            Surah(108, "الكوثر", "Al-Kawthar", 3, "مكية"),
-            Surah(109, "الكافرون", "Al-Kafirun", 6, "مكية"),
-            Surah(110, "النصر", "An-Nasr", 3, "مدنية"),
-            Surah(111, "المسد", "Al-Masad", 5, "مكية"),
-            Surah(112, "الإخلاص", "Al-Ikhlas", 4, "مكية"),
-            Surah(113, "الفلق", "Al-Falaq", 5, "مكية"),
-            Surah(114, "الناس", "An-Nas", 6, "مكية")
+            Surah(1, context.getString(R.string.surah_al_fatihah), "Al-Fatihah", 7, "مكية"),
+            Surah(2, context.getString(R.string.surah_al_baqarah), "Al-Baqarah", 286, "مدنية"),
+            Surah(3, context.getString(R.string.surah_ali_imran), "Ali 'Imran", 200, "مدنية"),
+            Surah(4, context.getString(R.string.surah_an_nisa), "An-Nisa", 176, "مدنية"),
+            Surah(5, context.getString(R.string.surah_al_maidah), "Al-Ma'idah", 120, "مدنية"),
+            Surah(6, context.getString(R.string.surah_al_anam), "Al-An'am", 165, "مكية"),
+            Surah(7, context.getString(R.string.surah_al_araf), "Al-A'raf", 206, "مكية"),
+            Surah(8, context.getString(R.string.surah_al_anfal), "Al-Anfal", 75, "مدنية"),
+            Surah(9, context.getString(R.string.surah_at_tawbah), "At-Tawbah", 129, "مدنية"),
+            Surah(10, context.getString(R.string.surah_yunus), "Yunus", 109, "مكية"),
+            Surah(11, context.getString(R.string.surah_hud), "Hud", 123, "مكية"),
+            Surah(12, context.getString(R.string.surah_yusuf), "Yusuf", 111, "مكية"),
+            Surah(13, context.getString(R.string.surah_ar_rad), "Ar-Ra'd", 43, "مدنية"),
+            Surah(14, context.getString(R.string.surah_ibrahim), "Ibrahim", 52, "مكية"),
+            Surah(15, context.getString(R.string.surah_al_hijr), "Al-Hijr", 99, "مكية"),
+            Surah(16, context.getString(R.string.surah_an_nahl), "An-Nahl", 128, "مكية"),
+            Surah(17, context.getString(R.string.surah_al_isra), "Al-Isra", 111, "مكية"),
+            Surah(18, context.getString(R.string.surah_al_kahf), "Al-Kahf", 110, "مكية"),
+            Surah(19, context.getString(R.string.surah_maryam), "Maryam", 98, "مكية"),
+            Surah(20, context.getString(R.string.surah_ta_ha), "Taha", 135, "مكية"),
+            Surah(21, context.getString(R.string.surah_al_anbiya), "Al-Anbya", 112, "مكية"),
+            Surah(22, context.getString(R.string.surah_al_hajj), "Al-Hajj", 78, "مدنية"),
+            Surah(23, context.getString(R.string.surah_al_muminun), "Al-Mu'minun", 118, "مكية"),
+            Surah(24, context.getString(R.string.surah_an_nur), "An-Nur", 64, "مدنية"),
+            Surah(25, context.getString(R.string.surah_al_furqan), "Al-Furqan", 77, "مكية"),
+            Surah(26, context.getString(R.string.surah_ash_shuara), "Ash-Shu'ara", 227, "مكية"),
+            Surah(27, context.getString(R.string.surah_an_naml), "An-Naml", 93, "مكية"),
+            Surah(28, context.getString(R.string.surah_al_qasas), "Al-Qasas", 88, "مكية"),
+            Surah(29, context.getString(R.string.surah_al_ankabut), "Al-'Ankabut", 69, "مكية"),
+            Surah(30, context.getString(R.string.surah_ar_rum), "Ar-Rum", 60, "مكية"),
+            Surah(31, context.getString(R.string.surah_luqman), "Luqman", 34, "مكية"),
+            Surah(32, context.getString(R.string.surah_as_sajdah), "As-Sajdah", 30, "مكية"),
+            Surah(33, context.getString(R.string.surah_al_ahzab), "Al-Ahzab", 73, "مدنية"),
+            Surah(34, context.getString(R.string.surah_saba), "Saba", 54, "مكية"),
+            Surah(35, context.getString(R.string.surah_fatir), "Fatir", 45, "مكية"),
+            Surah(36, context.getString(R.string.surah_ya_sin), "Ya-Sin", 83, "مكية"),
+            Surah(37, context.getString(R.string.surah_as_saffat), "As-Saffat", 182, "مكية"),
+            Surah(38, context.getString(R.string.surah_sad), "Sad", 88, "مكية"),
+            Surah(39, context.getString(R.string.surah_az_zumar), "Az-Zumar", 75, "مكية"),
+            Surah(40, context.getString(R.string.surah_ghafir), "Ghafir", 85, "مكية"),
+            Surah(41, context.getString(R.string.surah_fussilat), "Fussilat", 54, "مكية"),
+            Surah(42, context.getString(R.string.surah_ash_shura), "Ash-Shuraa", 53, "مكية"),
+            Surah(43, context.getString(R.string.surah_az_zukhruf), "Az-Zukhruf", 89, "مكية"),
+            Surah(44, context.getString(R.string.surah_ad_dukhan), "Ad-Dukhan", 59, "مكية"),
+            Surah(45, context.getString(R.string.surah_al_jathiyah), "Al-Jathiyah", 37, "مكية"),
+            Surah(46, context.getString(R.string.surah_al_ahqaf), "Al-Ahqaf", 35, "مكية"),
+            Surah(47, context.getString(R.string.surah_muhammad), "Muhammad", 38, "مدنية"),
+            Surah(48, context.getString(R.string.surah_al_fath), "Al-Fath", 29, "مدنية"),
+            Surah(49, context.getString(R.string.surah_al_hujurat), "Al-Hujurat", 18, "مدنية"),
+            Surah(50, context.getString(R.string.surah_qaf), "Qaf", 45, "مكية"),
+            Surah(51, context.getString(R.string.surah_adh_dhariyat), "Adh-Dhariyat", 60, "مكية"),
+            Surah(52, context.getString(R.string.surah_at_tur), "At-Tur", 49, "مكية"),
+            Surah(53, context.getString(R.string.surah_an_najm), "An-Najm", 62, "مكية"),
+            Surah(54, context.getString(R.string.surah_al_qamar), "Al-Qamar", 55, "مكية"),
+            Surah(55, context.getString(R.string.surah_ar_rahman), "Ar-Rahman", 78, "مدنية"),
+            Surah(56, context.getString(R.string.surah_al_waqiah), "Al-Waqi'ah", 96, "مكية"),
+            Surah(57, context.getString(R.string.surah_al_hadid), "Al-Hadid", 29, "مدنية"),
+            Surah(58, context.getString(R.string.surah_al_mujadilah), "Al-Mujadila", 22, "مدنية"),
+            Surah(59, context.getString(R.string.surah_al_hashr), "Al-Hashr", 24, "مدنية"),
+            Surah(60, context.getString(R.string.surah_al_mumtahanah), "Al-Mumtahanah", 13, "مدنية"),
+            Surah(61, context.getString(R.string.surah_as_saf), "As-Saf", 14, "مدنية"),
+            Surah(62, context.getString(R.string.surah_al_jumuah), "Al-Jumu'ah", 11, "مدنية"),
+            Surah(63, context.getString(R.string.surah_al_munafiqun), "Al-Munafiqun", 11, "مدنية"),
+            Surah(64, context.getString(R.string.surah_at_taghabun), "At-Taghabun", 18, "مدنية"),
+            Surah(65, context.getString(R.string.surah_at_talaq), "At-Talaq", 12, "مدنية"),
+            Surah(66, context.getString(R.string.surah_at_tahrim), "At-Tahrim", 12, "مدنية"),
+            Surah(67, context.getString(R.string.surah_al_mulk), "Al-Mulk", 30, "مكية"),
+            Surah(68, context.getString(R.string.surah_al_qalam), "Al-Qalam", 52, "مكية"),
+            Surah(69, context.getString(R.string.surah_al_haqqah), "Al-Haqqah", 52, "مكية"),
+            Surah(70, context.getString(R.string.surah_al_maarij), "Al-Ma'arij", 44, "مكية"),
+            Surah(71, context.getString(R.string.surah_nuh), "Nuh", 28, "مكية"),
+            Surah(72, context.getString(R.string.surah_al_jinn), "Al-Jinn", 28, "مكية"),
+            Surah(73, context.getString(R.string.surah_al_muzzammil), "Al-Muzzammil", 20, "مكية"),
+            Surah(74, context.getString(R.string.surah_al_muddaththir), "Al-Muddaththir", 56, "مكية"),
+            Surah(75, context.getString(R.string.surah_al_qiyamah), "Al-Qiyamah", 40, "مكية"),
+            Surah(76, context.getString(R.string.surah_al_insan), "Al-Insan", 31, "مدنية"),
+            Surah(77, context.getString(R.string.surah_al_mursalat), "Al-Mursalat", 50, "مكية"),
+            Surah(78, context.getString(R.string.surah_an_naba), "An-Naba", 40, "مكية"),
+            Surah(79, context.getString(R.string.surah_an_naziat), "An-Nazi'at", 46, "مكية"),
+            Surah(80, context.getString(R.string.surah_abasa), "'Abasa", 42, "مكية"),
+            Surah(81, context.getString(R.string.surah_at_takwir), "At-Takwir", 29, "مكية"),
+            Surah(82, context.getString(R.string.surah_al_infitar), "Al-Infitar", 19, "مكية"),
+            Surah(83, context.getString(R.string.surah_al_mutaffifin), "Al-Mutaffifin", 36, "مكية"),
+            Surah(84, context.getString(R.string.surah_al_inshiqaq), "Al-Inshiqaq", 25, "مكية"),
+            Surah(85, context.getString(R.string.surah_al_buruj), "Al-Buruj", 22, "مكية"),
+            Surah(86, context.getString(R.string.surah_at_tariq), "At-Tariq", 17, "مكية"),
+            Surah(87, context.getString(R.string.surah_al_ala), "Al-A'la", 19, "مكية"),
+            Surah(88, context.getString(R.string.surah_al_ghashiyah), "Al-Ghashiyah", 26, "مكية"),
+            Surah(89, context.getString(R.string.surah_al_fajr), "Al-Fajr", 30, "مكية"),
+            Surah(90, context.getString(R.string.surah_al_balad), "Al-Balad", 20, "مكية"),
+            Surah(91, context.getString(R.string.surah_ash_shams), "Ash-Shams", 15, "مكية"),
+            Surah(92, context.getString(R.string.surah_al_layl), "Al-Layl", 21, "مكية"),
+            Surah(93, context.getString(R.string.surah_ad_duha), "Ad-Duhaa", 11, "مكية"),
+            Surah(94, context.getString(R.string.surah_ash_sharh), "Ash-Sharh", 8, "مكية"),
+            Surah(95, context.getString(R.string.surah_at_tin), "At-Tin", 8, "مكية"),
+            Surah(96, context.getString(R.string.surah_al_alaq), "Al-'Alaq", 19, "مكية"),
+            Surah(97, context.getString(R.string.surah_al_qadr), "Al-Qadr", 5, "مكية"),
+            Surah(98, context.getString(R.string.surah_al_bayyinah), "Al-Bayyinah", 8, "مدنية"),
+            Surah(99, context.getString(R.string.surah_az_zalzalah), "Az-Zalzalah", 8, "مدنية"),
+            Surah(100, context.getString(R.string.surah_al_adiyat), "Al-'Adiyat", 11, "مكية"),
+            Surah(101, context.getString(R.string.surah_al_qariah), "Al-Qari'ah", 11, "مكية"),
+            Surah(102, context.getString(R.string.surah_at_takathur), "At-Takathur", 8, "مكية"),
+            Surah(103, context.getString(R.string.surah_al_asr), "Al-'Asr", 3, "مكية"),
+            Surah(104, context.getString(R.string.surah_al_humazah), "Al-Humazah", 9, "مكية"),
+            Surah(105, context.getString(R.string.surah_al_fil), "Al-Fil", 5, "مكية"),
+            Surah(106, context.getString(R.string.surah_quraysh), "Quraysh", 4, "مكية"),
+            Surah(107, context.getString(R.string.surah_al_maun), "Al-Ma'un", 7, "مكية"),
+            Surah(108, context.getString(R.string.surah_al_kawthar), "Al-Kawthar", 3, "مكية"),
+            Surah(109, context.getString(R.string.surah_al_kafirun), "Al-Kafirun", 6, "مكية"),
+            Surah(110, context.getString(R.string.surah_an_nasr), "An-Nasr", 3, "مدنية"),
+            Surah(111, context.getString(R.string.surah_al_masad), "Al-Masad", 5, "مكية"),
+            Surah(112, context.getString(R.string.surah_al_ikhlas), "Al-Ikhlas", 4, "مكية"),
+            Surah(113, context.getString(R.string.surah_al_falaq), "Al-Falaq", 5, "مكية"),
+            Surah(114, context.getString(R.string.surah_an_nas), "An-Nas", 6, "مكية")
         )
     }
 
-    // تصفية السور حسب البحث والتبويب
     val filteredSurahs = surahs.filter { surah ->
         val matchesSearch = searchQuery.isEmpty() ||
             surah.name.contains(searchQuery) ||
             surah.translatedName.contains(searchQuery, ignoreCase = true)
 
         val matchesTab = when (selectedTab) {
-            "المفضلة" -> surah.number in favoriteSurahs
-            "اخر قراءة" -> surah.number in recentSurahs
+            tabFavorites -> surah.number in favoriteSurahs
+            tabRecent -> surah.number in recentSurahs
             else -> true
         }
 
         matchesSearch && matchesTab
     }.let { list ->
-        // ترتيب "اخر قراءة" حسب آخر فتح
-        if (selectedTab == "اخر قراءة") {
+        if (selectedTab == tabRecent) {
             list.sortedBy { recentSurahs.indexOf(it.number) }
         } else list
     }
@@ -252,31 +250,25 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                if (isDarkMode) Color(0xFF121212) else Color.Transparent
-            )
+            .background(if (isDarkMode) Color(0xFF121212) else Color.Transparent)
     ) {
-        // الخلفية - تظهر فقط في الوضع النهاري
         if (!isDarkMode) {
             Image(
                 painter = painterResource(id = R.drawable.home_background),
-                contentDescription = "خلفية الصفحة الرئيسية",
+                contentDescription = stringResource(R.string.home_background_desc),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }
 
-        // ألوان تتغير حسب الوضع
         val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
         val subTextColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
-        val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFE8DDD0).copy(alpha = 0.65f)
         val tabBorderColor = if (isDarkMode) Color(0xFFD4AF37).copy(alpha = 0.5f) else Color(0xFFD4AF37).copy(alpha = 0.3f)
         val searchBg = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE8DDD0).copy(alpha = 0.5f)
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                // نديم في المنتصف
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -284,21 +276,21 @@ fun HomeScreen(
                         .height(80.dp)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    // أيقونة الملف الشخصي على اليسار
                     IconButton(
                         onClick = onNavigateToProfile,
                         modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "الملف الشخصي",
+                            contentDescription = stringResource(R.string.profile_icon_desc),
                             tint = if (isDarkMode) Color(0xFFD4AF37) else Color(0xFF6B5744)
                         )
                     }
 
-                    // زر التبرع + زر الوضع الليلي على اليمين
-                    Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically) {
-                        // زر التبرع
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
@@ -307,14 +299,18 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Favorite,
-                                contentDescription = "تبرع",
+                                contentDescription = stringResource(R.string.donate),
                                 tint = Color(0xFFE53935),
                                 modifier = Modifier.size(22.dp)
                             )
-                            Text("تبرع", fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.donate),
+                                fontSize = 10.sp,
+                                color = Color(0xFFE53935),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
-                        // زر الوضع الليلي
                         IconButton(
                             onClick = {
                                 val newValue = !isDarkMode
@@ -324,25 +320,24 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightlightRound,
-                                contentDescription = if (isDarkMode) "الوضع النهاري" else "الوضع الليلي",
+                                contentDescription = if (isDarkMode) stringResource(R.string.light_mode) else stringResource(R.string.dark_mode),
                                 tint = if (isDarkMode) Color(0xFFFFD700) else Color(0xFF6B5744)
                             )
                         }
                     }
 
-                    // نديم وخير جليس في المنتصف
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "نديم",
+                            text = stringResource(R.string.app_name),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = textColor
                         )
                         Text(
-                            text = "خير جليس لحفظ كتاب اللَّهِ",
+                            text = stringResource(R.string.home_app_subtitle),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
                             color = subTextColor
@@ -359,7 +354,6 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // التبويبات
                 item {
                     Box(
                         modifier = Modifier
@@ -380,23 +374,23 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             TransparentTabButton(
-                                text = "الكل",
-                                isSelected = selectedTab == "الكل",
-                                onClick = { selectedTab = "الكل" },
+                                text = tabAll,
+                                isSelected = selectedTab == tabAll,
+                                onClick = { selectedTab = tabAll },
                                 modifier = Modifier.weight(1f),
                                 isDarkMode = isDarkMode
                             )
                             TransparentTabButton(
-                                text = "المفضلة",
-                                isSelected = selectedTab == "المفضلة",
-                                onClick = { selectedTab = "المفضلة" },
+                                text = tabFavorites,
+                                isSelected = selectedTab == tabFavorites,
+                                onClick = { selectedTab = tabFavorites },
                                 modifier = Modifier.weight(1f),
                                 isDarkMode = isDarkMode
                             )
                             TransparentTabButton(
-                                text = "اخر قراءة",
-                                isSelected = selectedTab == "اخر قراءة",
-                                onClick = { selectedTab = "اخر قراءة" },
+                                text = tabRecent,
+                                isSelected = selectedTab == tabRecent,
+                                onClick = { selectedTab = tabRecent },
                                 modifier = Modifier.weight(1f),
                                 isDarkMode = isDarkMode
                             )
@@ -404,7 +398,6 @@ fun HomeScreen(
                     }
                 }
 
-                // شريط البحث
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -419,7 +412,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "بحث",
+                                contentDescription = stringResource(R.string.search),
                                 tint = subTextColor.copy(alpha = 0.6f),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -430,7 +423,7 @@ fun HomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = {
                                     Text(
-                                        text = "ابحث عن سورة",
+                                        text = stringResource(R.string.search_surah),
                                         fontSize = 14.sp,
                                         color = subTextColor.copy(alpha = 0.5f)
                                     )
@@ -456,7 +449,6 @@ fun HomeScreen(
                     }
                 }
 
-                // قائمة السور
                 items(filteredSurahs) { surah ->
                     GoldenSurahCard(
                         surah = surah,
@@ -469,7 +461,7 @@ fun HomeScreen(
                         isDarkMode = isDarkMode
                     )
                 }
-                
+
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -477,60 +469,77 @@ fun HomeScreen(
         }
     }
 
-    // نافذة التبرع
     if (showDonationDialog) {
-        val context2 = androidx.compose.ui.platform.LocalContext.current
+        val donationTextColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+        val donationSubColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f)
+
         AlertDialog(
             onDismissRequest = { showDonationDialog = false },
             containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFFF8F0),
             title = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color(0xFFE53935),
+                        modifier = Modifier.size(48.dp)
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "ادعم تطوير التطبيق",
+                        stringResource(R.string.support_app_development),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
+                        color = donationTextColor,
                         textAlign = TextAlign.Center
                     )
                 }
             },
             text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
-                        "نسعى لخدمة كتاب الله بأفضل صورة. تبرعك يساعدنا على تحسين التطبيق وتقديم تجربة أفضل لك ولكل من يتلو كتاب الله.",
+                        stringResource(R.string.home_donation_message),
                         fontSize = 14.sp,
-                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
+                        color = donationSubColor,
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "اختر طريقة التبرع:",
+                        stringResource(R.string.choose_donation_method),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                        color = donationTextColor
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+
                     val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
                     val donationOptions = listOf(
-                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
-                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
-                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
-                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                        Triple(stringResource(R.string.donation_5), donationUrl, Color(0xFF4CAF50)),
+                        Triple(stringResource(R.string.donation_10), donationUrl, Color(0xFF2196F3)),
+                        Triple(stringResource(R.string.donation_20), donationUrl, Color(0xFF9C27B0)),
+                        Triple(stringResource(R.string.donation_other), donationUrl, Color(0xFFE53935))
                     )
+
                     donationOptions.chunked(2).forEach { row ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             row.forEach { (label, url, color) ->
                                 OutlinedButton(
                                     onClick = {
                                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                        context2.startActivity(intent)
+                                        context.startActivity(intent)
                                         showDonationDialog = false
                                     },
                                     modifier = Modifier.weight(1f),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
                                     border = androidx.compose.foundation.BorderStroke(1.5.dp, color)
                                 ) {
@@ -545,7 +554,10 @@ fun HomeScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showDonationDialog = false }) {
-                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                    Text(
+                        stringResource(R.string.close),
+                        color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744)
+                    )
                 }
             }
         )
@@ -616,6 +628,7 @@ fun GoldenSurahCard(
     val nameColor = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF4A3F35)
     val subColor = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF7A6B5A)
     val arrowColor = if (isDarkMode) Color(0xFF888888) else Color(0xFF9B8B7A)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -625,10 +638,7 @@ fun GoldenSurahCard(
         colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // نجمة المفضلة في الزاوية العلوية اليسرى
+        Box(modifier = Modifier.fillMaxSize()) {
             IconButton(
                 onClick = { onFavoriteClick() },
                 modifier = Modifier
@@ -638,7 +648,8 @@ fun GoldenSurahCard(
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
-                    contentDescription = if (isFavorite) "إزالة من المفضلة" else "إضافة للمفضلة",
+                    contentDescription = if (isFavorite) stringResource(R.string.remove_from_favorites)
+                                        else stringResource(R.string.add_to_favorites),
                     tint = if (isFavorite) Color(0xFFD4AF37) else Color(0xFFBBAA99),
                     modifier = Modifier.size(20.dp)
                 )
@@ -651,17 +662,15 @@ fun GoldenSurahCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // سهم التنقل (يمين)
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "فتح",
+                    contentDescription = stringResource(R.string.surah_open),
                     tint = arrowColor,
                     modifier = Modifier.size(24.dp)
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // اسم السورة ومعلوماتها
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.Start
@@ -674,20 +683,30 @@ fun GoldenSurahCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "${surah.verses} آية", fontSize = 13.sp, color = subColor)
-                        Text(text = " • ", fontSize = 13.sp, color = subColor)
-                        Text(text = surah.revelationType, fontSize = 13.sp, color = subColor)
+                        Text(
+                            text = stringResource(R.string.verse_count, surah.verses),
+                            fontSize = 13.sp,
+                            color = subColor
+                        )
+                        Text(
+                            text = stringResource(R.string.surah_verse_separator),
+                            fontSize = 13.sp,
+                            color = subColor
+                        )
+                        Text(
+                            text = surah.revelationType,
+                            fontSize = 13.sp,
+                            color = subColor
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // دائرة ذهبية مع رقم السورة (يسار)
                 Box(
                     modifier = Modifier.size(80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // دوائر الزخرفة
                     Box(
                         modifier = Modifier
                             .size(75.dp)
@@ -697,7 +716,6 @@ fun GoldenSurahCard(
                                 shape = CircleShape
                             )
                     )
-
                     Box(
                         modifier = Modifier
                             .size(68.dp)
@@ -707,8 +725,6 @@ fun GoldenSurahCard(
                                 shape = CircleShape
                             )
                     )
-
-                    // الدائرة الرئيسية
                     Box(
                         modifier = Modifier.size(56.dp),
                         contentAlignment = Alignment.Center
@@ -744,7 +760,6 @@ fun GoldenSurahCard(
                                     )
                                 )
                         )
-
                         Text(
                             text = surah.number.toString(),
                             fontSize = 20.sp,
