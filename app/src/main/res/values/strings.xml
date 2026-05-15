@@ -247,4 +247,26 @@
     <string name="surah_al_ikhlas">الإخلاص</string>
     <string name="surah_al_falaq">الفلق</string>
     <string name="surah_an_nas">الناس</string>
+
+    <!-- Missing strings - HomeScreen -->
+    <string name="tab_recent">الأخيرة</string>
+    <string name="home_background_desc">خلفية الصفحة الرئيسية</string>
+    <string name="profile_icon_desc">أيقونة الملف الشخصي</string>
+    <string name="home_app_subtitle">رفيقك في حفظ القرآن الكريم</string>
+    <string name="home_donation_message">ادعم تطوير التطبيق وساعدنا في خدمة القرآن الكريم</string>
+    <string name="surah_open">افتح السورة</string>
+    <string name="surah_verse_separator"> | </string>
+
+    <!-- Missing strings - RecitationScreen -->
+    <string name="recitation_back">رجوع</string>
+    <string name="recitation_donate">تبرع</string>
+    <string name="recitation_stop">إيقاف التسميع</string>
+    <string name="recitation_start">بدء التسميع</string>
+    <string name="recitation_transcribed_title">النص المُسمَّع</string>
+    <string name="recitation_hint">اضغط على زر التسميع وتابع القراءة</string>
+
+    <!-- Missing strings - Donation Dialog -->
+    <string name="donation_title">ادعم تطوير التطبيق</string>
+    <string name="donation_choose_method">اختر طريقة التبرع:</string>
+    <string name="donation_close">إغلاق</string>
 </resources>
