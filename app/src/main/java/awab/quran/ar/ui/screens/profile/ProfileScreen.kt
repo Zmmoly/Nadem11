@@ -117,7 +117,7 @@ fun ProfileScreen(
         if (!isDarkMode) {
             Image(
                 painter = painterResource(id = R.drawable.app_background),
-                contentDescription = "خلفية الملف الشخصي",
+                contentDescription = stringResource(R.string.profile_background_desc),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -127,10 +127,21 @@ fun ProfileScreen(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text(text = stringResource(R.string.profile), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = titleColor) },
+                    title = {
+                        Text(
+                            text = stringResource(R.string.profile),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "رجوع", tint = titleColor)
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                                tint = titleColor
+                            )
                         }
                     },
                     actions = {
@@ -141,8 +152,18 @@ fun ProfileScreen(
                                 .clickable { showDonationDialog = true }
                                 .padding(4.dp)
                         ) {
-                            Icon(Icons.Default.Favorite, contentDescription = stringResource(R.string.donate), tint = Color(0xFFE53935), modifier = Modifier.size(22.dp))
-                            Text(stringResource(R.string.donate), fontSize = 10.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Bold)
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = stringResource(R.string.donate),
+                                tint = Color(0xFFE53935),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Text(
+                                stringResource(R.string.donate),
+                                fontSize = 10.sp,
+                                color = Color(0xFFE53935),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
@@ -169,7 +190,7 @@ fun ProfileScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "صورة المستخدم",
+                            contentDescription = stringResource(R.string.user_avatar_desc),
                             modifier = Modifier.size(60.dp),
                             tint = Color.White
                         )
@@ -193,7 +214,12 @@ fun ProfileScreen(
                             color = titleColor
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = subColor, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                tint = subColor,
+                                modifier = Modifier.size(20.dp)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = userEmail, fontSize = 14.sp, color = subColor)
                         }
@@ -244,7 +270,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = stringResource(R.string.settings),
+                                        text = stringResource(R.string.language),
                                         fontSize = 16.sp,
                                         color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
                                     )
@@ -322,7 +348,7 @@ fun ProfileScreen(
                         ProfileOption(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Settings,
-                            title = stringResource(R.string.settings),
+                            title = stringResource(R.string.recitation_settings),
                             onClick = { showSettingsDialog = true }
                         )
 
@@ -331,7 +357,7 @@ fun ProfileScreen(
                         ProfileOption(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.FolderOpen,
-                            title = "تسجيلاتي",
+                            title = stringResource(R.string.my_recordings),
                             onClick = {
                                 allRecordings = recordingManager.getAllRecordings()
                                 showRecordingsList = true
@@ -343,7 +369,7 @@ fun ProfileScreen(
                         ProfileOption(
                             isDarkMode = isDarkMode,
                             icon = Icons.Default.Info,
-                            title = "عن التطبيق",
+                            title = stringResource(R.string.about_app),
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://zmmoly.github.io/Nadem/nadeem-website.html"))
                                 context.startActivity(intent)
@@ -359,8 +385,18 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Logout, contentDescription = null, modifier = Modifier.padding(end = 8.dp), tint = Color.White)
-                    Text(text = "تسجيل الخروج", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Icon(
+                        imageVector = Icons.Default.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        text = stringResource(R.string.logout),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -377,7 +413,12 @@ fun ProfileScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Language, contentDescription = null, tint = titleColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("اختر اللغة", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = titleColor)
+                    Text(
+                        stringResource(R.string.choose_language),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = titleColor
+                    )
                 }
             },
             text = {
@@ -389,13 +430,10 @@ fun ProfileScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     selectedLanguage = name
-                                    // 1. احفظ اللغة
                                     LocaleHelper.saveLanguage(context, code)
                                     showLanguageDialog = false
-                                    // 2. أعد تشغيل الـ Activity لتطبيق اللغة فوراً
                                     val activity = context as Activity
-                                    activity.finish()
-                                    activity.startActivity(activity.intent)
+                                    activity.recreate()
                                 }
                                 .background(
                                     if (isSelected) avatarColor.copy(alpha = 0.15f) else Color.Transparent,
@@ -422,7 +460,7 @@ fun ProfileScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("إغلاق", color = subColor)
+                    Text(stringResource(R.string.close), color = subColor)
                 }
             }
         )
@@ -432,8 +470,8 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text(text = "تسجيل الخروج", color = titleColor) },
-            text = { Text(text = "هل أنت متأكد من تسجيل الخروج؟", color = subColor) },
+            title = { Text(text = stringResource(R.string.logout), color = titleColor) },
+            text = { Text(text = stringResource(R.string.logout_confirm), color = subColor) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -443,12 +481,12 @@ fun ProfileScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545))
                 ) {
-                    Text("تسجيل الخروج", color = Color.White)
+                    Text(stringResource(R.string.logout), color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("إلغاء", color = titleColor)
+                    Text(stringResource(R.string.cancel), color = titleColor)
                 }
             },
             containerColor = cardColor
@@ -461,7 +499,7 @@ fun ProfileScreen(
             onDismissRequest = { showSettingsDialog = false },
             title = {
                 Text(
-                    text = "إعدادات التسميع",
+                    text = stringResource(R.string.recitation_settings),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = Color(0xFF4A3F35)
@@ -470,14 +508,14 @@ fun ProfileScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "الأخطاء التي يتم تجاهلها:",
+                        text = stringResource(R.string.ignored_errors),
                         fontSize = 14.sp,
                         color = subColor,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     SettingToggleRow(
-                        title = "التشكيل",
-                        subtitle = "تجاهل الحركات والتنوين",
+                        title = stringResource(R.string.diacritics),
+                        subtitle = stringResource(R.string.ignore_harakat_errors),
                         checked = settings.ignoreTashkeel,
                         onCheckedChange = {
                             val updated = settings.copy(ignoreTashkeel = it)
@@ -487,8 +525,8 @@ fun ProfileScreen(
                     )
                     Divider(color = Color(0xFFE0D5C5))
                     SettingToggleRow(
-                        title = "حرف الحاء",
-                        subtitle = "تجاهل الخلط بين ح و ه",
+                        title = stringResource(R.string.letter_ha),
+                        subtitle = stringResource(R.string.ignore_ha_he_confusion),
                         checked = settings.ignoreHaa,
                         onCheckedChange = {
                             val updated = settings.copy(ignoreHaa = it)
@@ -498,8 +536,8 @@ fun ProfileScreen(
                     )
                     Divider(color = Color(0xFFE0D5C5))
                     SettingToggleRow(
-                        title = "حرف العين",
-                        subtitle = "تجاهل الخلط بين ع و أ و ء",
+                        title = stringResource(R.string.letter_ain),
+                        subtitle = stringResource(R.string.ignore_ain_hamza_confusion),
                         checked = settings.ignoreAyn,
                         onCheckedChange = {
                             val updated = settings.copy(ignoreAyn = it)
@@ -509,8 +547,8 @@ fun ProfileScreen(
                     )
                     Divider(color = Color(0xFFE0D5C5))
                     SettingToggleRow(
-                        title = "المدود",
-                        subtitle = "تجاهل أخطاء المد والقصر",
+                        title = stringResource(R.string.madd),
+                        subtitle = stringResource(R.string.ignore_madd_errors),
                         checked = settings.ignoreMadd,
                         onCheckedChange = {
                             val updated = settings.copy(ignoreMadd = it)
@@ -520,8 +558,8 @@ fun ProfileScreen(
                     )
                     Divider(color = Color(0xFFE0D5C5))
                     SettingToggleRow(
-                        title = "مواضع الوقف",
-                        subtitle = "تجاهل كلمات الوقف والوصل",
+                        title = stringResource(R.string.waqf_positions),
+                        subtitle = stringResource(R.string.ignore_waqf_wasl_errors),
                         checked = settings.ignoreWaqf,
                         onCheckedChange = {
                             val updated = settings.copy(ignoreWaqf = it)
@@ -531,8 +569,8 @@ fun ProfileScreen(
                     )
                     Divider(color = Color(0xFFE0D5C5))
                     SettingToggleRow(
-                        title = "المساهمة في تحسين الذكاء الاصطناعي",
-                        subtitle = "السماح بتخزين تسجيلاتك الصوتية للمساعدة في تدريب نموذج الذكاء الاصطناعي",
+                        title = stringResource(R.string.contribute_to_ai),
+                        subtitle = stringResource(R.string.allow_audio_storage),
                         checked = settings.allowAudioStorage,
                         onCheckedChange = {
                             val updated = settings.copy(allowAudioStorage = it)
@@ -547,7 +585,7 @@ fun ProfileScreen(
                     onClick = { showSettingsDialog = false },
                     colors = ButtonDefaults.buttonColors(containerColor = avatarColor)
                 ) {
-                    Text("حفظ", color = Color.White)
+                    Text(stringResource(R.string.save), color = Color.White)
                 }
             },
             containerColor = cardColor
@@ -564,7 +602,7 @@ fun ProfileScreen(
                     Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFE53935), modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "ادعم تطوير التطبيق",
+                        stringResource(R.string.support_app_development),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744),
@@ -575,21 +613,26 @@ fun ProfileScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "جزاك الله خيرًا على اهتمامك بدعم هذا المشروع القرآني الكريم. تبرعك يساعدنا على تطوير التطبيق وخدمة أكبر عدد من المسلمين.",
+                        stringResource(R.string.donation_message),
                         fontSize = 14.sp,
                         color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744).copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("اختر طريقة التبرع:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744))
+                    Text(
+                        stringResource(R.string.choose_donation_method),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFE0E0E0) else Color(0xFF6B5744)
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                     val donationUrl = "https://zmmoly.github.io/Nadem/nadeem-website.html"
                     val donationOptions = listOf(
-                        Triple("5 ريال", donationUrl, Color(0xFF4CAF50)),
-                        Triple("10 ريال", donationUrl, Color(0xFF2196F3)),
-                        Triple("20 ريال", donationUrl, Color(0xFF9C27B0)),
-                        Triple("مبلغ آخر", donationUrl, Color(0xFFE53935))
+                        Triple(stringResource(R.string.donation_5), donationUrl, Color(0xFF4CAF50)),
+                        Triple(stringResource(R.string.donation_10), donationUrl, Color(0xFF2196F3)),
+                        Triple(stringResource(R.string.donation_20), donationUrl, Color(0xFF9C27B0)),
+                        Triple(stringResource(R.string.donation_other), donationUrl, Color(0xFFE53935))
                     )
                     donationOptions.chunked(2).forEach { row ->
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -616,7 +659,7 @@ fun ProfileScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showDonationDialog = false }) {
-                    Text("إغلاق", color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
+                    Text(stringResource(R.string.close), color = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF6B5744))
                 }
             }
         )
@@ -631,7 +674,12 @@ fun ProfileScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null, tint = Color(0xFF6B5744), modifier = Modifier.size(26.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("تسجيلاتي", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF4A3F35))
+                    Text(
+                        stringResource(R.string.my_recordings),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color(0xFF4A3F35)
+                    )
                 }
             },
             text = {
@@ -641,7 +689,7 @@ fun ProfileScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("🎙", fontSize = 40.sp)
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text("لا توجد تسجيلات بعد", color = Color(0xFF8B7355), fontSize = 14.sp)
+                                Text(stringResource(R.string.no_recordings_yet), color = Color(0xFF8B7355), fontSize = 14.sp)
                             }
                         }
                     } else {
@@ -659,16 +707,16 @@ fun ProfileScreen(
                                         Text("$dateStr  •  ${sizeKb} KB", fontSize = 10.sp, color = Color(0xFF8B7355))
                                     }
                                     IconButton(onClick = { recordingManager.playRecording(file) }) {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = "تشغيل", tint = Color(0xFF6B5744))
+                                        Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.play_recording), tint = Color(0xFF6B5744))
                                     }
                                     IconButton(onClick = {
                                         val intent = recordingManager.shareRecording(file)
-                                        context.startActivity(Intent.createChooser(intent, "شارك التسجيل").also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                                        context.startActivity(Intent.createChooser(intent, stringResource(R.string.share_recording)).also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
                                     }) {
-                                        Icon(Icons.Default.Share, contentDescription = "مشاركة", tint = Color(0xFF6B5744))
+                                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_recording), tint = Color(0xFF6B5744))
                                     }
                                     IconButton(onClick = { recordingToDelete = file }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFD32F2F))
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_recording), tint = Color(0xFFD32F2F))
                                     }
                                 }
                             }
@@ -679,7 +727,7 @@ fun ProfileScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showRecordingsList = false }) {
-                    Text("إغلاق", color = Color(0xFF6B5744))
+                    Text(stringResource(R.string.close), color = Color(0xFF6B5744))
                 }
             }
         )
@@ -690,18 +738,18 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { recordingToDelete = null },
             containerColor = Color(0xFFFFF8F0),
-            title = { Text("حذف التسجيل", fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35)) },
-            text = { Text("هل تريد حذف «${file.nameWithoutExtension}»؟", color = Color(0xFF8B7355)) },
+            title = { Text(stringResource(R.string.delete_recording), fontWeight = FontWeight.Bold, color = Color(0xFF4A3F35)) },
+            text = { Text(stringResource(R.string.delete_recording_confirm, file.nameWithoutExtension), color = Color(0xFF8B7355)) },
             confirmButton = {
                 TextButton(onClick = {
                     recordingManager.deleteRecording(file)
                     allRecordings = recordingManager.getAllRecordings()
                     recordingToDelete = null
-                }) { Text("حذف", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold) }
+                }) { Text(stringResource(R.string.delete), color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 TextButton(onClick = { recordingToDelete = null }) {
-                    Text("إلغاء", color = Color(0xFF8B7355))
+                    Text(stringResource(R.string.cancel), color = Color(0xFF8B7355))
                 }
             }
         )
@@ -750,7 +798,7 @@ fun ProfileOption(
             Text(text = title, fontSize = 16.sp, color = tColor)
         }
         IconButton(onClick = onClick) {
-            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "فتح", tint = sColor)
+            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = stringResource(R.string.open), tint = sColor)
         }
     }
 }
