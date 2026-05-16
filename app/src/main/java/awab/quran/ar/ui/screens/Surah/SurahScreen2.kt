@@ -24,10 +24,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -480,9 +479,11 @@ fun ReadingMode(
                     }
 
                     if (hasTranslit && hasTranslation) {
-                        VerticalDivider(
-                            modifier = Modifier.height(24.dp),
-                            color = if (isDarkMode) Color(0xFF444444) else Color(0xFFDDD5C0)
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(24.dp)
+                                .background(if (isDarkMode) Color(0xFF444444) else Color(0xFFDDD5C0))
                         )
                     }
 
@@ -571,7 +572,7 @@ fun ReadingMode(
                                 )
                                 // النقحرة
                                 if (showTransliteration && trans?.transliteration != null) {
-                                    HorizontalDivider(color = dividerColor, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 6.dp))
+                                    Divider(color = dividerColor, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 6.dp))
                                     Text(
                                         text = trans.transliteration,
                                         fontSize = 13.sp,
@@ -582,7 +583,7 @@ fun ReadingMode(
                                 }
                                 // الترجمة
                                 if (showTranslation && trans?.translation != null) {
-                                    HorizontalDivider(color = dividerColor, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 6.dp))
+                                    Divider(color = dividerColor, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 6.dp))
                                     Text(
                                         text = trans.translation,
                                         fontSize = 13.sp,
