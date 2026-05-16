@@ -4,6 +4,7 @@
     <string name="login">Masuk</string>
     <string name="email">Email</string>
     <string name="password">Kata Sandi</string>
+    <string name="google_web_client_id" translatable="false">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
     <string name="forgot_password">Lupa Kata Sandi?</string>
     <string name="confirm_password">Konfirmasi Kata Sandi</string>
     <string name="full_name">Nama Lengkap</string>
@@ -37,6 +38,9 @@
     <string name="close">Tutup</string>
     <string name="cancel">Batal</string>
     <string name="back">Kembali</string>
+    <string name="open">Buka</string>
+    <string name="save">Simpan</string>
+    <string name="delete">Hapus</string>
     <string name="surah_number">Surah %1$d</string>
     <string name="verse_count">%1$d ayat</string>
     <string name="juz_number">Juz %1$d</string>
@@ -47,7 +51,7 @@
     <string name="last_read">Terakhir Dibaca</string>
     <string name="completed_surahs">Surah yang Diselesaikan</string>
     <string name="diacritics">Tanda Baca Harakat</string>
-    <string name="basmala">&#x628;&#x650;&#x633;&#x652;&#x645;&#x650; &#x627;&#x644;&#x644;&#x651;&#x647;&#x650; &#x627;&#x644;&#x631;&#x651;&#x62D;&#x652;&#x645;&#x670;&#x646;&#x650; &#x627;&#x644;&#x631;&#x651;&#x62D;&#x650;&#x64A;&#x645;&#x650;</string>
+    <string name="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
     <string name="quran_reminder">Pengingat Al-Quran</string>
     <string name="quran_review_reminder">Pengingat untuk mengulang hafalan Al-Quran</string>
     <string name="check_your_memorization">Uji hafalan Al-Quran Anda</string>
@@ -67,8 +71,8 @@
     <string name="ignore_ain_hamza_confusion">Abaikan kekeliruan ain dan hamzah</string>
     <string name="ignore_waqf_wasl_errors">Abaikan kesalahan waqaf dan washal</string>
     <string name="test">Kuis</string>
-    <string name="start_test">Mulai Kuis</string>
-    <string name="new_test">Kuis Baru</string>
+    <string name="start_test">Mulai Kuis 🎲</string>
+    <string name="new_test">Kuis Baru 🔄</string>
     <string name="end_test">Akhiri Kuis</string>
     <string name="question_indicator">Pertanyaan %1$s dari %2$s</string>
     <string name="excellent_completed">Bagus! Kuis selesai</string>
@@ -84,6 +88,8 @@
     <string name="donation_5">5 Riyal</string>
     <string name="donation_10">10 Riyal</string>
     <string name="donation_20">20 Riyal</string>
+    <string name="donation_other">Jumlah lainnya</string>
+    <string name="donation_message">Semoga Allah membalas kebaikan Anda atas dukungan terhadap proyek Al-Quran yang mulia ini. Donasi Anda membantu kami mengembangkan aplikasi dan melayani lebih banyak umat Muslim.</string>
     <string name="word_40">40 Kata</string>
     <string name="word_60">60 Kata</string>
     <string name="word_80">80 Kata</string>
@@ -92,6 +98,65 @@
     <string name="allow_audio_storage">Izinkan penyimpanan rekaman suara Anda untuk membantu melatih model AI</string>
     <string name="audio_ai_notice">Rekaman suara mungkin digunakan untuk tujuan peningkatan model AI oleh penyedia layanan.</string>
     <string name="revoke_permission_notice">Anda dapat mencabut izin ini kapan saja dari pengaturan aplikasi.</string>
+    <string name="google_token_error">Gagal mendapatkan Token dari Google</string>
+    <string name="default_user_name">Pengguna</string>
+    <string name="google_signin_firebase_error">Login gagal: %1$s</string>
+    <string name="google_signin_error">Login Google gagal (%1$d)</string>
+    <string name="splash_moon_icon">☪</string>
+    <string name="splash_subtitle">Teman Anda dalam menghafal Al-Quran</string>
+    <string name="splash_ayah">وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا</string>
+    <string name="splash_ayah_source">Surah Al-Muzzammil - Ayat 4</string>
+    <string name="splash_background_desc">Latar belakang aplikasi</string>
+    <string name="recitation_title">Tilawah Al-Quran</string>
+    <string name="recitation_timer_format">%1$02d:%2$02d</string>
+    <string name="recitation_connecting">Menghubungkan ke model...</string>
+    <string name="recitation_model_modal">Model Al-Quran (Modal)</string>
+    <string name="recitation_model_deepgram">Deepgram Nova-3</string>
+    <string name="recitation_status_listening">Sedang mendengarkan...</string>
+    <string name="recitation_status_analyzing">Sedang menganalisis...</string>
+    <string name="recitation_status_error">Kesalahan: %1$s</string>
+    <string name="tab_recent">Terbaru</string>
+    <string name="home_background_desc">Latar belakang beranda</string>
+    <string name="profile_icon_desc">Ikon profil</string>
+    <string name="home_app_subtitle">Teman Anda dalam menghafal Al-Quran</string>
+    <string name="home_donation_message">Dukung pengembangan aplikasi dan bantu kami melayani Al-Quran</string>
+    <string name="surah_open">Buka surah</string>
+    <string name="surah_verse_separator"> | </string>
+    <string name="recitation_back">Kembali</string>
+    <string name="recitation_donate">Donasi</string>
+    <string name="recitation_stop">Hentikan Tilawah</string>
+    <string name="recitation_start">Mulai Tilawah</string>
+    <string name="recitation_transcribed_title">Teks yang Dibaca</string>
+    <string name="recitation_hint">Tekan tombol tilawah dan lanjutkan membaca</string>
+    <string name="donation_title">Dukung pengembangan aplikasi</string>
+    <string name="donation_choose_method">Pilih metode donasi:</string>
+    <string name="donation_close">Tutup</string>
+    <string name="forgot_password_no_account">Tidak ada akun yang terdaftar dengan email ini</string>
+    <string name="forgot_password_too_many_requests">Terlalu banyak percobaan, coba lagi sebentar</string>
+    <string name="error_try_again">Terjadi kesalahan, coba lagi</string>
+    <string name="forgot_password_email_sent">Email terkirim!</string>
+    <string name="forgot_password_check_inbox">Tautan reset kata sandi telah dikirim ke email Anda. Silakan periksa kotak masuk dan folder spam.</string>
+
+    <!-- ====== Baru ====== -->
+    <string name="language">Bahasa</string>
+    <string name="choose_language">Pilih Bahasa</string>
+    <string name="profile_background_desc">Latar belakang profil</string>
+    <string name="user_avatar_desc">Foto pengguna</string>
+    <string name="logout">Keluar</string>
+    <string name="logout_confirm">Apakah Anda yakin ingin keluar?</string>
+    <string name="my_recordings">Rekaman Saya</string>
+    <string name="no_recordings_yet">Belum ada rekaman</string>
+    <string name="play_recording">Putar</string>
+    <string name="share_recording">Bagikan</string>
+    <string name="delete_recording">Hapus Rekaman</string>
+    <string name="delete_recording_confirm">Apakah Anda ingin menghapus «%1$s»?</string>
+    <string name="about_app">Tentang Aplikasi</string>
+    <string name="letter_ha">Huruf Ha (ح)</string>
+    <string name="letter_ain">Huruf Ain (ع)</string>
+    <string name="madd">Mad (Panjang Bacaan)</string>
+    <string name="waqf_positions">Posisi Waqaf</string>
+
+    <!-- Nama-nama Surah -->
     <string name="surah_al_fatihah">Al-Fatihah</string>
     <string name="surah_al_baqarah">Al-Baqarah</string>
     <string name="surah_ali_imran">Ali Imran</string>
@@ -206,5 +271,4 @@
     <string name="surah_al_ikhlas">Al-Ikhlas</string>
     <string name="surah_al_falaq">Al-Falaq</string>
     <string name="surah_an_nas">An-Nas</string>
-    <string name="google_web_client_id" translatable="false">334748963475-pvnd7fkc6viaha774nhl5qok0rujjjmh.apps.googleusercontent.com</string>
 </resources>
