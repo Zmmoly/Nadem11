@@ -137,7 +137,7 @@
     <string name="forgot_password_email_sent">تم إرسال البريد!</string>
     <string name="forgot_password_check_inbox">تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والبريد المزعج.</string>
 
-    <!-- ====== جديد ====== -->
+    <!-- ====== إعدادات اللغة والملف الشخصي ====== -->
     <string name="language">اللغة</string>
     <string name="choose_language">اختر اللغة</string>
     <string name="profile_background_desc">خلفية الملف الشخصي</string>
@@ -155,6 +155,16 @@
     <string name="letter_ain">حرف العين</string>
     <string name="madd">المدود</string>
     <string name="waqf_positions">مواضع الوقف</string>
+
+    <!-- ====== نتائج الاختبار ====== -->
+    <string name="score_excellent">ممتاز!</string>
+    <string name="score_good_plus">جيد جداً!</string>
+    <string name="score_good">جيد!</string>
+    <string name="score_needs_review">تحتاج مراجعة</string>
+    <string name="score_retry">راجع هذا الجزء</string>
+
+    <!-- ====== إذن الميكروفون ====== -->
+    <string name="mic_understood">فهمت، متابعة</string>
 
     <!-- أسماء السور -->
     <string name="surah_al_fatihah">الفاتحة</string>
