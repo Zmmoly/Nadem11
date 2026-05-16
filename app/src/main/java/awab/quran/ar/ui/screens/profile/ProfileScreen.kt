@@ -30,6 +30,7 @@ import awab.quran.ar.R
 import awab.quran.ar.data.RecitationSettings
 import awab.quran.ar.data.RecitationSettingsRepository
 import awab.quran.ar.data.ThemeRepository
+import awab.quran.ar.data.TranslationRepository
 import awab.quran.ar.utils.LocaleHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -71,9 +72,12 @@ fun ProfileScreen(
     // ── Language selector state ──
     var showLanguageDialog by remember { mutableStateOf(false) }
     val languages = listOf(
-        Pair("العربية", "ar"),
+        Pair("العربية",          "ar"),
+        Pair("English",          "en"),
         Pair("Bahasa Indonesia", "in"),
-        Pair("English", "en")
+        Pair("Bahasa Melayu",    "ms"),
+        Pair("Türkçe",           "tr"),
+        Pair("Қазақша",          "kk")
     )
     var selectedLanguage by remember {
         mutableStateOf(
@@ -83,6 +87,7 @@ fun ProfileScreen(
         )
     }
 
+    val translationRepo = remember { TranslationRepository(context) }
     val settingsRepo = remember { RecitationSettingsRepository(context) }
     val themeRepo = remember { ThemeRepository(context) }
     val scope = rememberCoroutineScope()
@@ -431,6 +436,8 @@ fun ProfileScreen(
                                 .clickable {
                                     selectedLanguage = name
                                     LocaleHelper.saveLanguage(context, code)
+                                    // مسح كاش الترجمة حتى يُعاد تحميلها باللغة الجديدة
+                                    translationRepo.clearCache()
                                     showLanguageDialog = false
                                     val activity = context as Activity
                                     activity.recreate()
