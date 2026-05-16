@@ -711,7 +711,8 @@ fun ProfileScreen(
                                     }
                                     IconButton(onClick = {
                                         val intent = recordingManager.shareRecording(file)
-                                        context.startActivity(Intent.createChooser(intent, stringResource(R.string.share_recording)).also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                                        val shareTitle = context.getString(R.string.share_recording)
+                                        context.startActivity(Intent.createChooser(intent, shareTitle).also { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
                                     }) {
                                         Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_recording), tint = Color(0xFF6B5744))
                                     }
