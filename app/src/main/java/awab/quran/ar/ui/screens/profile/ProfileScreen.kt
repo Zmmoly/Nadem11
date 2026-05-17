@@ -77,7 +77,8 @@ fun ProfileScreen(
         Pair("Bahasa Indonesia", "in"),
         Pair("Bahasa Melayu",    "ms"),
         Pair("Türkçe",           "tr"),
-        Pair("Қазақша",          "kk")
+        Pair("Қазақша",          "kk"),
+        Pair("Русский",          "ru")
     )
     var selectedLanguage by remember {
         mutableStateOf(
@@ -436,7 +437,6 @@ fun ProfileScreen(
                                 .clickable {
                                     selectedLanguage = name
                                     LocaleHelper.saveLanguage(context, code)
-                                    // مسح كاش الترجمة حتى يُعاد تحميلها باللغة الجديدة
                                     translationRepo.clearCache()
                                     showLanguageDialog = false
                                     val activity = context as Activity
