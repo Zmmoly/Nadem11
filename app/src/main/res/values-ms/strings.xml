@@ -156,6 +156,16 @@
     <string name="madd">Mad (Panjang Bacaan)</string>
     <string name="waqf_positions">Kedudukan Waqaf</string>
 
+    <!-- ====== Keputusan Ujian ====== -->
+    <string name="score_excellent">Luar Biasa!</string>
+    <string name="score_good_plus">Sangat Baik!</string>
+    <string name="score_good">Baik!</string>
+    <string name="score_needs_review">Perlu Muraja\'ah</string>
+    <string name="score_retry">Ulang Bahagian Ini</string>
+
+    <!-- ====== Kebenaran Mikrofon ====== -->
+    <string name="mic_understood">Faham, Teruskan</string>
+
     <!-- Nama-nama Surah -->
     <string name="surah_al_fatihah">Al-Fatihah</string>
     <string name="surah_al_baqarah">Al-Baqarah</string>
