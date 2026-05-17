@@ -2283,7 +2283,7 @@ fun ExamMode(
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             listOf(
-                                Triple(QuranMode.LENGTH_SHORT to stringResource(R.string.word_40), Color(0xFF4A7C59)),
+                                Triple(QuranMode.LENGTH_SHORT  stringResource(R.string.word_40), Color(0xFF4A7C59)),
                                 Triple(QuranMode.LENGTH_MEDIUM, stringResource(R.string.word_60), Color(0xFF6B5744)),
                                 Triple(QuranMode.LENGTH_LONG, stringResource(R.string.word_80), Color(0xFF8B4513))
                             ).forEach { (label, sub, color) ->
