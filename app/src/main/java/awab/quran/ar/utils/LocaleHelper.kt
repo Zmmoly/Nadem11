@@ -17,8 +17,14 @@ object LocaleHelper {
     }
 
     fun getSavedLanguage(context: Context): String {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_LANGUAGE, "ar") ?: "ar"
+        val saved = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_LANGUAGE, null)
+
+        if (saved != null) return saved
+
+        val deviceLang = Locale.getDefault().language
+        val supportedLangs = setOf("ar", "en", "in", "ms", "tr", "kk", "ru")
+        return if (deviceLang in supportedLangs) deviceLang else "ar"
     }
 
     fun applyLocale(context: Context): Context {
